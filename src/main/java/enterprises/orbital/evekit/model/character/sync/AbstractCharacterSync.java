@@ -18,31 +18,42 @@ import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
 public abstract class AbstractCharacterSync implements SynchronizationHandler<CapsuleerSyncTracker, Capsuleer> {
   private static final Logger log = Logger.getLogger(AbstractCharacterSync.class.getName());
 
-  public static boolean StringChanged(String a, String b) {
+  public static boolean StringChanged(
+                                      String a,
+                                      String b) {
     return !String.valueOf(a).equals(String.valueOf(b));
   }
 
   @Override
-  public CapsuleerSyncTracker getCurrentTracker(SynchronizedEveAccount owner) {
+  public CapsuleerSyncTracker getCurrentTracker(
+                                                SynchronizedEveAccount owner) {
     return CapsuleerSyncTracker.getUnfinishedTracker(owner);
   }
 
   @Override
-  public Capsuleer getExistingContainer(SynchronizedEveAccount owner) {
+  public Capsuleer getExistingContainer(
+                                        SynchronizedEveAccount owner) {
     return Capsuleer.getCapsuleer(owner);
   }
 
   @Override
-  public boolean prereqSatisfied(CapsuleerSyncTracker tracker) {
+  public boolean prereqSatisfied(
+                                 CapsuleerSyncTracker tracker) {
     return true;
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, final CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        final CachedData item) {
     return CachedData.updateData(item) != null;
   }
 
-  protected abstract Object getServerData(ICharacterAPI charRequest) throws IOException;
+  protected abstract Object getServerData(
+                                          ICharacterAPI charRequest) throws IOException;
 
   /**
    * Handle a server error and return the appropriate SyncState we should store in this case. The default behavior is to log the error and return SYNC_ERROR.
@@ -53,7 +64,9 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
    *          string builder which should be populated with error detail we report in the sync status.
    * @return the SyncState we should store as a result of this error.
    */
-  protected static SyncTracker.SyncState handleServerError(ICharacterAPI charRequest, StringBuilder errorDetail) {
+  protected static SyncTracker.SyncState handleServerError(
+                                                           ICharacterAPI charRequest,
+                                                           StringBuilder errorDetail) {
     switch (charRequest.getErrorCode()) {
     case 222:
     case 221:
@@ -84,14 +97,16 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
    *          data already retrieved from server.
    * @param updates
    *          list where items to update should be stored.
-   * @param deletes
-   *          list where keys of items to delete should be stored
    * @return date when next update should be attempted
    * @throws IOException
    *           if an error occurs while processing data
    */
-  protected abstract long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException;
+  protected abstract long processServerData(
+                                            long time,
+                                            SynchronizedEveAccount syncAccount,
+                                            ICharacterAPI charRequest,
+                                            Object data,
+                                            List<CachedData> updates) throws IOException;
 
   /**
    * Synchronize data against the XML API.
@@ -108,7 +123,12 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
    *          description to use for log entries
    * @return HTTP response code to return as the result of this synchronization attempt
    */
-  protected SyncStatus syncData(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest, String description) {
+  protected SyncStatus syncData(
+                                long time,
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil,
+                                ICharacterAPI charRequest,
+                                String description) {
 
     try {
       // Run pre-check.
@@ -170,7 +190,11 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
    *          the synchronization state to record in the tracker
    * @return the outcome of the exclusion. Normally, this will be HttpServletResponse.SC_OK unless there is an error updating the state.
    */
-  protected SyncStatus excludeState(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, String description, SyncTracker.SyncState state) {
+  protected SyncStatus excludeState(
+                                    SynchronizedEveAccount syncAccount,
+                                    SynchronizerUtil syncUtil,
+                                    String description,
+                                    SyncTracker.SyncState state) {
 
     try {
       // Verify we haven't already updated this state.

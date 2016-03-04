@@ -6,7 +6,7 @@
     <version>1.0.0</version>
   </parent>
   <groupId>enterprises.orbital.evekit</groupId>
-  <artifactId>evekit-sync</artifactId>
+  <artifactId>sync</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>EveKit Sync</name>
   <description>Handles periodic synchronization of account data</description>
@@ -37,7 +37,7 @@
   </dependencies>
 
   <build>
-    <finalName>evekit-site-sync-${project.version}</finalName>
+    <finalName>evekit-${project.artifactId}-${project.version}</finalName>
   </build>  
   
 </project>

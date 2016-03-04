@@ -58,17 +58,17 @@ public class SynchronizerUtil {
    *          the type of the container for this data model object.
    * @param accountKey
    *          a reference to the owning synchronized eve account.
-   * @param checkRefresh
-   *          object to determine whether we need to refresh at all.
-   * @param checkPrereqs
-   *          object to determine whether any pre-reqs have been met.
-   * @param getExpiry
-   *          object to return the expiry time of the data model we want to refresh.
-   * @param updateStatus
-   *          object to update tracker status for the data model we want to refresh.
    * @param msgInfo
    *          an arbitrary string to include in logged messages to help identify which data model we're processing.
+   * @param handler
+   *          SynchronizationHandler being used with this synchronization
+   * @param <A>
+   *          type of sync tracker, either Capsuleer or Corporation
+   * @param <C>
+   *          container type for synchronization, either Capsuleer or Corporation
    * @return an instance of SyncOutcome indicating the result of the check.
+   * @throws IOException
+   *           if an IO error occurs during synchronization
    */
   public <A extends SyncTracker, C extends CachedData> SynchOutcome checkProceedWithSynch(
                                                                                           Class<A> trackerType,
@@ -134,7 +134,10 @@ public class SynchronizerUtil {
   }
 
   private interface CommitBlock<B, A extends SyncTracker, C extends CachedData> extends RunInTransaction<B> {
-    public void setParams(A tracker, C container, List<CachedData> elementSet);
+    public void setParams(
+                          A tracker,
+                          C container,
+                          List<CachedData> elementSet);
   };
 
   private class TrackTriple<A extends SyncTracker, C extends CachedData> {
@@ -174,24 +177,22 @@ public class SynchronizerUtil {
    *          a reference to the owning synchronized eve account.
    * @param requestStatus
    *          the status to store for the outcoming of this synchronization.
+   * @param statusDetail
+   *          status detail message
    * @param nextExpiry
    *          the time in millis UTC when we should next synchronization this data model.
-   * @param checkRefresh
-   *          object to determine whether we need to refresh at all.
-   * @param updateStatus
-   *          object to update tracker status for the data model we want to refresh.
-   * @param updateExpiry
-   *          object to update the expire time for this data model.
-   * @param committer
-   *          callback object to handle storing an item to be committed. If the committer returns false for any object, then the entire transaction is aborted.
-   *          This argument may be null, in which case each object is simply stored by calling "put".
-   * @param remover
-   *          callback object to handle removing an item from the datastore. If the remover returns false for any object, then the entire transaction is
-   *          aborted. This argument may be null, in which case each object is simply removed by calling "delete".
    * @param msgInfo
    *          an arbitrary string to include in logged messages to help identify which data model we're processing.
    * @param toStore
    *          a list of CachedData objects to store if we still need to update this tracker.
+   * @param handler
+   *          SynchronizationHandler being used with this synchronization
+   * @param <A>
+   *          type of sync tracker, either Capsuleer or Corporation
+   * @param <C>
+   *          container type for synchronization, either Capsuleer or Corporation
+   * @throws IOException
+   *           if an IO error occurs during synchronization
    */
   public <A extends SyncTracker, C extends CachedData> void storeSynchResults(
                                                                               final long time,
@@ -212,7 +213,10 @@ public class SynchronizerUtil {
       List<CachedData> els;
 
       @Override
-      public void setParams(A tracker, C container, List<CachedData> elementSet) {
+      public void setParams(
+                            A tracker,
+                            C container,
+                            List<CachedData> elementSet) {
         this.tracker = tracker;
         this.container = container;
         this.els = elementSet;
