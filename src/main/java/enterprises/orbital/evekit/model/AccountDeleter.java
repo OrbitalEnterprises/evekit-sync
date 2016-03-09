@@ -12,21 +12,27 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 public class AccountDeleter {
   private static final Logger log = Logger.getLogger(AccountDeleter.class.getName());
 
-  public void deleteMarked(SynchronizedEveAccount toDelete) {
-    log.info("Attempting to delete account: " + toDelete);
+  public static String deletable(
+                                 SynchronizedEveAccount toDelete) {
     // Verify this account is actually eligible for deletion, which means:
     // 1) It is marked for deletion
     // 2) At least 24 hours have elapsed since it was marked
     // If these conditions pass, then we delete the account
     long markTime = toDelete.getMarkedForDelete();
-    if (markTime <= 0) {
-      log.warning("Account no longer marked for delete, not deleting");
-      return;
-    }
+    if (markTime <= 0) return "not marked for delete";
     long now = OrbitalProperties.getCurrentTime();
     long yesterday = now - TimeUnit.MILLISECONDS.convert(24, TimeUnit.HOURS);
-    if (markTime > yesterday) {
-      log.info("Account was marked for deletion less than 24 hours, not deleting");
+    if (markTime > yesterday) { return "marked for deletion less than 24 hours ago"; }
+    return null;
+  }
+
+  public void deleteMarked(
+                           SynchronizedEveAccount toDelete) {
+    // Verify account is deletable
+    log.info("Attempting to delete account: " + toDelete);
+    String msg = deletable(toDelete);
+    if (msg != null) {
+      log.warning("Account not eligible for deletion: " + msg);
       return;
     }
     // Looks good, proceed to delete once we obtain a thread.
