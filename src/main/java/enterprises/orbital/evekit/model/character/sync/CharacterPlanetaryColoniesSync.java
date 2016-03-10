@@ -15,6 +15,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -34,30 +35,42 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterPlanetaryColoniesSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getPlanetaryColoniesStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setPlanetaryColoniesStatus(status);
     tracker.setPlanetaryColoniesDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setPlanetaryColoniesExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getPlanetaryColoniesExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     // Handle the four types of planetary info
     if (item instanceof PlanetaryColony) {
       PlanetaryColony api = (PlanetaryColony) item;
@@ -152,13 +165,18 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
 
   // Can't use generic sync for planetary data
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -181,7 +199,8 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean equals(
+                          Object obj) {
       if (this == obj) return true;
       if (obj == null) return false;
       if (getClass() != obj.getClass()) return false;
@@ -191,7 +210,11 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
     }
   }
 
-  public static SyncStatus syncPlanetaryColonies(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncPlanetaryColonies(
+                                                 long time,
+                                                 SynchronizedEveAccount syncAccount,
+                                                 SynchronizerUtil syncUtil,
+                                                 ICharacterAPI charRequest) {
     try {
       // Run pre-check.
       String description = "PlanetaryColonies";
@@ -211,7 +234,7 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
         // Schedule missing colonies, pins, links and routes for deletion.
         long minRefreshTime = Long.MAX_VALUE;
         Collection<IPlanetaryColony> colonies = charRequest.requestPlanetaryColonies();
-        minRefreshTime = Math.min(charRequest.getCachedUntil().getTime(), minRefreshTime);
+        minRefreshTime = Math.min(ModelUtil.safeConvertDate(charRequest.getCachedUntil()), minRefreshTime);
         if (charRequest.isError()) {
           // erroneous loop termination
           StringBuilder errStr = new StringBuilder();
@@ -230,13 +253,13 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
             long pid = next.getPlanetID();
             linkSet.put(pid, charRequest.requestPlanetaryLinks(pid));
             if (charRequest.isError()) break;
-            minRefreshTime = Math.min(charRequest.getCachedUntil().getTime(), minRefreshTime);
+            minRefreshTime = Math.min(ModelUtil.safeConvertDate(charRequest.getCachedUntil()), minRefreshTime);
             routeSet.put(pid, charRequest.requestPlanetaryRoutes(pid));
             if (charRequest.isError()) break;
-            minRefreshTime = Math.min(charRequest.getCachedUntil().getTime(), minRefreshTime);
+            minRefreshTime = Math.min(ModelUtil.safeConvertDate(charRequest.getCachedUntil()), minRefreshTime);
             pinSet.put(pid, charRequest.requestPlanetaryPins(pid));
             if (charRequest.isError()) break;
-            minRefreshTime = Math.min(charRequest.getCachedUntil().getTime(), minRefreshTime);
+            minRefreshTime = Math.min(ModelUtil.safeConvertDate(charRequest.getCachedUntil()), minRefreshTime);
           }
 
           if (charRequest.isError()) {
@@ -256,7 +279,7 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
             PlanetaryColony newC = new PlanetaryColony(
                 nextColony.getPlanetID(), nextColony.getSolarSystemID(), nextColony.getSolarSystemName(), nextColony.getPlanetName(),
                 nextColony.getPlanetTypeID(), nextColony.getPlanetTypeName(), nextColony.getOwnerID(), nextColony.getOwnerName(),
-                nextColony.getLastUpdate().getTime(), nextColony.getUpgradeLevel(), nextColony.getNumberOfPins());
+                ModelUtil.safeConvertDate(nextColony.getLastUpdate()), nextColony.getUpgradeLevel(), nextColony.getNumberOfPins());
             usedPD.add(new NaryKey(nextColony.getPlanetID()));
             updateList.add(newC);
           }
@@ -273,9 +296,10 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
             long pid = nextPinMap.getKey();
             for (IPlanetaryPin nextPin : nextPinMap.getValue()) {
               PlanetaryPin newP = new PlanetaryPin(
-                  pid, nextPin.getPinID(), nextPin.getTypeID(), nextPin.getTypeName(), nextPin.getSchematicID(), nextPin.getLastLaunchTime().getTime(),
-                  nextPin.getCycleTime(), nextPin.getQuantityPerCycle(), nextPin.getInstallTime().getTime(), nextPin.getExpiryTime().getTime(),
-                  nextPin.getContentTypeID(), nextPin.getContentTypeName(), nextPin.getContentQuantity(), nextPin.getLongitude(), nextPin.getLatitude());
+                  pid, nextPin.getPinID(), nextPin.getTypeID(), nextPin.getTypeName(), nextPin.getSchematicID(),
+                  ModelUtil.safeConvertDate(nextPin.getLastLaunchTime()), nextPin.getCycleTime(), nextPin.getQuantityPerCycle(),
+                  ModelUtil.safeConvertDate(nextPin.getInstallTime()), ModelUtil.safeConvertDate(nextPin.getExpiryTime()), nextPin.getContentTypeID(),
+                  nextPin.getContentTypeName(), nextPin.getContentQuantity(), nextPin.getLongitude(), nextPin.getLatitude());
               usedPD.add(new NaryKey(pid, newP.getPinID()));
               updateList.add(newP);
             }
@@ -354,11 +378,15 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
     }
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "PlanetaryColonies", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "PlanetaryColonies", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

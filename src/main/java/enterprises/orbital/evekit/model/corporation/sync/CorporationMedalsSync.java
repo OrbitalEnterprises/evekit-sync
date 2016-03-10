@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,30 +25,42 @@ public class CorporationMedalsSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationMedalsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getCorpMedalsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setCorpMedalsStatus(status);
     tracker.setCorpMedalsDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setMedalsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getMedalsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof CorporationMedal;
 
     CorporationMedal api = (CorporationMedal) item;
@@ -75,13 +88,18 @@ public class CorporationMedalsSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     return corpRequest.requestMedals();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<ICorporationMedal> medals = (Collection<ICorporationMedal>) data;
 
@@ -89,7 +107,7 @@ public class CorporationMedalsSync extends AbstractCorporationSync {
 
     for (ICorporationMedal next : medals) {
       CorporationMedal newMedal = new CorporationMedal(
-          next.getMedalID(), next.getDescription(), next.getTitle(), next.getCreated().getTime(), next.getCreatorID());
+          next.getMedalID(), next.getDescription(), next.getTitle(), ModelUtil.safeConvertDate(next.getCreated()), next.getCreatorID());
       usedMedals.add(next.getMedalID());
       updates.add(newMedal);
     }
@@ -106,15 +124,23 @@ public class CorporationMedalsSync extends AbstractCorporationSync {
 
   private static final CorporationMedalsSync syncher = new CorporationMedalsSync();
 
-  public static SyncStatus syncCorporationMedals(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncCorporationMedals(
+                                                 long time,
+                                                 SynchronizedEveAccount syncAccount,
+                                                 SynchronizerUtil syncUtil,
+                                                 ICorporationAPI corpRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationMedals");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMedals", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMedals", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

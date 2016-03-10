@@ -12,24 +12,34 @@ public class ModelUtil {
 
   private static final SimpleDateFormat dateformatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 
-  public static boolean isExpired(long cachedUntil) {
+  public static boolean isExpired(
+                                  long cachedUntil) {
     long now = OrbitalProperties.getCurrentTime();
     return cachedUntil < now;
   }
 
-  public long expiresIn(long cachedUntil) {
+  public long expiresIn(
+                        long cachedUntil) {
     return Math.max(cachedUntil - OrbitalProperties.getCurrentTime(), 0);
   }
 
-  public static Date convertEpochToDate(long epochTime) {
+  public static Date convertEpochToDate(
+                                        long epochTime) {
     return new Date(epochTime);
   }
 
-  public static String formatDate(Date asDate) {
+  public static String formatDate(
+                                  Date asDate) {
     return dateformatter.format(asDate);
   }
 
-  public static String formatDate(long epochTime) {
+  public static String formatDate(
+                                  long epochTime) {
     return formatDate(convertEpochToDate(epochTime));
+  }
+
+  public static long safeConvertDate(
+                                     Date dt) {
+    return dt == null ? -1 : dt.getTime();
   }
 }

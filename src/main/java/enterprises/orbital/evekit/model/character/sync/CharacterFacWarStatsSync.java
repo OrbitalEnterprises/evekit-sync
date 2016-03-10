@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -20,30 +21,42 @@ public class CharacterFacWarStatsSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterFacWarStatsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getFacWarStatsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setFacWarStatsStatus(status);
     tracker.setFacWarStatsDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setFacWarStatsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getFacWarStatsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof FacWarStats;
 
     FacWarStats api = (FacWarStats) item;
@@ -66,19 +79,24 @@ public class CharacterFacWarStatsSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestFacWarStats();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     IFacWarStats stats = (IFacWarStats) data;
 
     FacWarStats instance = new FacWarStats(
-        stats.getCurrentRank(), stats.getEnlisted().getTime(), stats.getFactionID(), stats.getFactionName(), stats.getHighestRank(), stats.getKillsLastWeek(),
-        stats.getKillsTotal(), stats.getKillsYesterday(), stats.getPilots(), stats.getVictoryPointsLastWeek(), stats.getVictoryPointsTotal(),
-        stats.getVictoryPointsYesterday());
+        stats.getCurrentRank(), ModelUtil.safeConvertDate(stats.getEnlisted()), stats.getFactionID(), stats.getFactionName(), stats.getHighestRank(),
+        stats.getKillsLastWeek(), stats.getKillsTotal(), stats.getKillsYesterday(), stats.getPilots(), stats.getVictoryPointsLastWeek(),
+        stats.getVictoryPointsTotal(), stats.getVictoryPointsYesterday());
 
     updates.add(instance);
     return charRequest.getCachedUntil().getTime();
@@ -86,15 +104,23 @@ public class CharacterFacWarStatsSync extends AbstractCharacterSync {
 
   private static final CharacterFacWarStatsSync syncher = new CharacterFacWarStatsSync();
 
-  public static SyncStatus syncFacWarStats(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncFacWarStats(
+                                           long time,
+                                           SynchronizedEveAccount syncAccount,
+                                           SynchronizerUtil syncUtil,
+                                           ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterFacWarStats");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterFacWarStats", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterFacWarStats", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

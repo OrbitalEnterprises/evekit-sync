@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,31 +25,43 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationContractItemsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getContractItemsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setContractItemsStatus(status);
     tracker.setContractItemsDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     // Always use expiry from Contracts for items expiry
     container.setContractItemsExpiry(container.getContractsExpiry());
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getContractItemsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof ContractItem;
 
     ContractItem api = (ContractItem) item;
@@ -71,13 +84,15 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
   }
 
   @Override
-  public boolean prereqSatisfied(CorporationSyncTracker tracker) {
+  public boolean prereqSatisfied(
+                                 CorporationSyncTracker tracker) {
     // We require that contracts have been retrieved first since we need contract IDs
     return tracker.getContractsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     // Must reset here since we may never call an API method and thus will inherit any existing error code or message.
     corpRequest.reset();
     List<ContractItemPair> results = new ArrayList<ContractItemPair>();
@@ -100,8 +115,12 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<ContractItemPair> items = (Collection<ContractItemPair>) data;
 
@@ -112,14 +131,18 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
       updates.add(newItem);
     }
 
-    return corpRequest.getCachedUntil().getTime();
+    return ModelUtil.safeConvertDate(corpRequest.getCachedUntil());
 
   }
 
   protected SynchronizedEveAccount currentSyncAccount;
   protected long                   syncTime;
 
-  public static SyncStatus syncCorporationContractItems(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncCorporationContractItems(
+                                                        long time,
+                                                        SynchronizedEveAccount syncAccount,
+                                                        SynchronizerUtil syncUtil,
+                                                        ICorporationAPI corpRequest) {
     // We allocate a new syncher since we use local state to store contract IDs we're tracking.
     CorporationContractItemsSync syncher = new CorporationContractItemsSync();
     syncher.currentSyncAccount = syncAccount;
@@ -127,12 +150,16 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationContractItems");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     CorporationContractItemsSync syncher = new CorporationContractItemsSync();
     return syncher.excludeState(syncAccount, syncUtil, "CorporationContractItems", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     CorporationContractItemsSync syncher = new CorporationContractItemsSync();
     return syncher.excludeState(syncAccount, syncUtil, "CorporationContractItems", SyncTracker.SyncState.NOT_ALLOWED);
   }

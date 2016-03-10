@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,30 +25,42 @@ public class CorporationContractBidsSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationContractBidsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getContractBidsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setContractBidsStatus(status);
     tracker.setContractBidsDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setContractBidsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getContractBidsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof ContractBid;
 
     ContractBid api = (ContractBid) item;
@@ -70,7 +83,8 @@ public class CorporationContractBidsSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     // Continue requesting bids until we receive empty list.
     Collection<IContractBid> bids = new ArrayList<IContractBid>();
     Collection<IContractBid> nextSet = null;
@@ -85,32 +99,45 @@ public class CorporationContractBidsSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IContractBid> bids = (Collection<IContractBid>) data;
 
     for (IContractBid next : bids) {
       ContractBid newBid = new ContractBid(
-          next.getBidID(), next.getContractID(), next.getBidderID(), next.getDateBid().getTime(), next.getAmount().setScale(2, RoundingMode.HALF_UP));
+          next.getBidID(), next.getContractID(), next.getBidderID(), ModelUtil.safeConvertDate(next.getDateBid()),
+          next.getAmount().setScale(2, RoundingMode.HALF_UP));
       updates.add(newBid);
     }
 
-    return corpRequest.getCachedUntil().getTime();
+    return ModelUtil.safeConvertDate(corpRequest.getCachedUntil());
 
   }
 
   private static final CorporationContractBidsSync syncher = new CorporationContractBidsSync();
 
-  public static SyncStatus syncCorporationContractBids(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncCorporationContractBids(
+                                                       long time,
+                                                       SynchronizedEveAccount syncAccount,
+                                                       SynchronizerUtil syncUtil,
+                                                       ICorporationAPI corpRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationContractBids");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationContractBids", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationContractBids", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

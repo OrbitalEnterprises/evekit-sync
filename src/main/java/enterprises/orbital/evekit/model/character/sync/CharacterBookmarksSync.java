@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -27,30 +28,42 @@ public class CharacterBookmarksSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterBookmarksSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getBookmarksStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setBookmarksStatus(status);
     tracker.setBookmarksDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setBookmarksExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getBookmarksExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof Bookmark;
 
     Bookmark api = (Bookmark) item;
@@ -79,11 +92,15 @@ public class CharacterBookmarksSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestBookmarks();
   }
 
-  protected void updateBookmarkSet(Map<Integer, Set<Integer>> map, int folderID, int bookmarkID) {
+  protected void updateBookmarkSet(
+                                   Map<Integer, Set<Integer>> map,
+                                   int folderID,
+                                   int bookmarkID) {
     Set<Integer> bookmarks = map.get(folderID);
     if (bookmarks == null) {
       bookmarks = new HashSet<Integer>();
@@ -93,8 +110,12 @@ public class CharacterBookmarksSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IBookmarkFolder> bookmarks = (Collection<IBookmarkFolder>) data;
     Map<Integer, Set<Integer>> bookmarkSet = new HashMap<Integer, Set<Integer>>();
@@ -102,8 +123,8 @@ public class CharacterBookmarksSync extends AbstractCharacterSync {
       for (IBookmark nextBookmark : nextFolder.getBookmarks()) {
         Bookmark bo = new Bookmark(
             nextFolder.getFolderID(), nextFolder.getFolderName(), nextFolder.getCreatorID(), nextBookmark.getBookmarkID(), nextBookmark.getCreatorID(),
-            nextBookmark.getCreated().getTime(), nextBookmark.getItemID(), nextBookmark.getTypeID(), nextBookmark.getLocationID(), nextBookmark.getX(),
-            nextBookmark.getY(), nextBookmark.getZ(), nextBookmark.getMemo(), nextBookmark.getNote());
+            ModelUtil.safeConvertDate(nextBookmark.getCreated()), nextBookmark.getItemID(), nextBookmark.getTypeID(), nextBookmark.getLocationID(),
+            nextBookmark.getX(), nextBookmark.getY(), nextBookmark.getZ(), nextBookmark.getMemo(), nextBookmark.getNote());
         updates.add(bo);
         updateBookmarkSet(bookmarkSet, nextFolder.getFolderID(), nextBookmark.getBookmarkID());
       }
@@ -122,16 +143,24 @@ public class CharacterBookmarksSync extends AbstractCharacterSync {
 
   private static final CharacterBookmarksSync syncher = new CharacterBookmarksSync();
 
-  public static SyncStatus syncBookmarks(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncBookmarks(
+                                         long time,
+                                         SynchronizedEveAccount syncAccount,
+                                         SynchronizerUtil syncUtil,
+                                         ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterBookmark");
 
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterBookmark", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterBookmark", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

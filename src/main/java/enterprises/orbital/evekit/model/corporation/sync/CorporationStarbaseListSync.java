@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,30 +25,42 @@ public class CorporationStarbaseListSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationStarbaseListSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getStarbaseListStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setStarbaseListStatus(status);
     tracker.setStarbaseListDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setStarbaseListExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getStarbaseListExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof Starbase;
 
     Starbase api = (Starbase) item;
@@ -75,13 +88,18 @@ public class CorporationStarbaseListSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     return corpRequest.requestStarbaseList();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IStarbase> bases = (Collection<IStarbase>) data;
 
@@ -90,8 +108,8 @@ public class CorporationStarbaseListSync extends AbstractCorporationSync {
     for (IStarbase next : bases) {
       usedBases.add(next.getItemID());
       Starbase newBase = new Starbase(
-          next.getItemID(), next.getLocationID(), next.getMoonID(), next.getOnlineTimestamp().getTime(), next.getState(), next.getStateTimestamp().getTime(),
-          next.getTypeID(), next.getStandingOwnerID());
+          next.getItemID(), next.getLocationID(), next.getMoonID(), ModelUtil.safeConvertDate(next.getOnlineTimestamp()), next.getState(),
+          ModelUtil.safeConvertDate(next.getStateTimestamp()), next.getTypeID(), next.getStandingOwnerID());
       updates.add(newBase);
     }
 
@@ -108,15 +126,23 @@ public class CorporationStarbaseListSync extends AbstractCorporationSync {
 
   private static final CorporationStarbaseListSync syncher = new CorporationStarbaseListSync();
 
-  public static SyncStatus syncStarbaseList(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncStarbaseList(
+                                            long time,
+                                            SynchronizedEveAccount syncAccount,
+                                            SynchronizerUtil syncUtil,
+                                            ICorporationAPI corpRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "StarbaseList");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "StarbaseList", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "StarbaseList", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,30 +25,42 @@ public class CharacterResearchAgentSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterResearchAgentSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getResearchStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setResearchStatus(status);
     tracker.setResearchDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setResearchExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getResearchExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof ResearchAgent;
 
     ResearchAgent api = (ResearchAgent) item;
@@ -76,13 +89,18 @@ public class CharacterResearchAgentSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestResearchAgents();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IResearchAgent> agents = (Collection<IResearchAgent>) data;
 
@@ -91,7 +109,7 @@ public class CharacterResearchAgentSync extends AbstractCharacterSync {
     // Create set of agents to update
     for (IResearchAgent next : agents) {
       ResearchAgent instance = new ResearchAgent(
-          next.getAgentID(), next.getCurrentPoints(), next.getPointsPerDay(), next.getRemainderPoints(), next.getResearchStartDate().getTime(),
+          next.getAgentID(), next.getCurrentPoints(), next.getPointsPerDay(), next.getRemainderPoints(), ModelUtil.safeConvertDate(next.getResearchStartDate()),
           next.getSkillTypeID());
       seenAgents.add(instance.getAgentID());
       updates.add(instance);
@@ -118,15 +136,23 @@ public class CharacterResearchAgentSync extends AbstractCharacterSync {
 
   private static final CharacterResearchAgentSync syncher = new CharacterResearchAgentSync();
 
-  public static SyncStatus syncResearchAgents(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncResearchAgents(
+                                              long time,
+                                              SynchronizedEveAccount syncAccount,
+                                              SynchronizerUtil syncUtil,
+                                              ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "ResearchAgents");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "ResearchAgents", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "ResearchAgents", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

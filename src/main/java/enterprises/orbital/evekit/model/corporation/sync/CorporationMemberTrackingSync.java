@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,30 +25,42 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationMemberTrackingSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getMemberTrackingStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setMemberTrackingStatus(status);
     tracker.setMemberTrackingDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setMemberTrackingExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getMemberTrackingExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof MemberTracking;
 
     MemberTracking api = (MemberTracking) item;
@@ -75,13 +88,18 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     return corpRequest.requestMemberTracking();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IMemberTracking> tracks = (Collection<IMemberTracking>) data;
 
@@ -90,8 +108,8 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
     for (IMemberTracking next : tracks) {
       MemberTracking newTracking = new MemberTracking(
           next.getCharacterID(), next.getBase(), next.getBaseID(), next.getGrantableRoles(), next.getLocation(), next.getLocationID(),
-          next.getLogoffDateTime().getTime(), next.getLogonDateTime().getTime(), next.getName(), next.getRoles(), next.getShipType(), next.getShipTypeID(),
-          next.getStartDateTime().getTime(), next.getTitle());
+          ModelUtil.safeConvertDate(next.getLogoffDateTime()), ModelUtil.safeConvertDate(next.getLogonDateTime()), next.getName(), next.getRoles(),
+          next.getShipType(), next.getShipTypeID(), ModelUtil.safeConvertDate(next.getStartDateTime()), next.getTitle());
       members.add(next.getCharacterID());
       updates.add(newTracking);
     }
@@ -123,11 +141,15 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationMemberTracking");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMemberTracking", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMemberTracking", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

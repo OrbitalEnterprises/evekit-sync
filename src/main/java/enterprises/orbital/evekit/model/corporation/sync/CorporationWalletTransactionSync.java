@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -30,30 +31,42 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
   public static final int       MAX_RECORD_DOWNLOAD = 2560;
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getWalletTransactionsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setWalletTransactionsStatus(status);
     tracker.setWalletTransactionsDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setWalletTransactionsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getWalletTransactionsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof WalletTransaction;
 
     WalletTransaction api = (WalletTransaction) item;
@@ -71,7 +84,8 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     Collection<IAccountBalance> accounts = corpRequest.requestAccountBalances();
     if (corpRequest.isError()) return null;
     Map<Integer, Collection<IWalletTransaction>> recordMap = new HashMap<Integer, Collection<IWalletTransaction>>();
@@ -163,8 +177,12 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Map<Integer, Collection<IWalletTransaction>> recordMap = (Map<Integer, Collection<IWalletTransaction>>) data;
 
@@ -176,9 +194,9 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
 
         // Populate record
         WalletTransaction newRecord = new WalletTransaction(
-            accountKey, next.getTransactionID(), next.getTransactionDateTime().getTime(), (int) next.getQuantity(), next.getTypeName(), (int) next.getTypeID(),
-            next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(), next.getStationName(),
-            next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID());
+            accountKey, next.getTransactionID(), ModelUtil.safeConvertDate(next.getTransactionDateTime()), (int) next.getQuantity(), next.getTypeName(),
+            (int) next.getTypeID(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(),
+            next.getStationName(), next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID());
         updates.add(newRecord);
       }
     }
@@ -197,11 +215,15 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
     return result;
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationWalletTransaction", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationWalletTransaction", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

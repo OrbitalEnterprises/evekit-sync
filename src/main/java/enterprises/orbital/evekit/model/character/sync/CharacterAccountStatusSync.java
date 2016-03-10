@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
@@ -22,30 +23,42 @@ public class CharacterAccountStatusSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterAccountStatusSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getAccountStatusStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getAccountStatusExpiry();
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncTracker.SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncTracker.SyncState status,
+                           String detail) {
     tracker.setAccountStatusStatus(status);
     tracker.setAccountStatusDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setAccountStatusExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof AccountStatus;
 
     AccountStatus api = (AccountStatus) item;
@@ -68,26 +81,34 @@ public class CharacterAccountStatusSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return acctRequester.requestAccountStatus();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
 
     IAccountStatus statusResult = (IAccountStatus) data;
 
     AccountStatus status = new AccountStatus(
-        statusResult.getPaidUntil().getTime(), statusResult.getCreateDate().getTime(), statusResult.getLogonCount(), statusResult.getLogonMinutes());
+        ModelUtil.safeConvertDate(statusResult.getPaidUntil()), ModelUtil.safeConvertDate(statusResult.getCreateDate()), statusResult.getLogonCount(),
+        statusResult.getLogonMinutes());
     for (IMultiCharacterTraining mct : statusResult.getMultiCharacterTraining()) {
-      status.getMultiCharacterTraining().add(mct.getTrainingEnd().getTime());
+      status.getMultiCharacterTraining().add(ModelUtil.safeConvertDate(mct.getTrainingEnd()));
     }
     updates.add(status);
     return acctRequester.getCachedUntil().getTime();
   }
 
-  protected SyncTracker.SyncState localHandleServerError(IAccountAPI acctRequest, StringBuilder errorDetail) {
+  protected SyncTracker.SyncState localHandleServerError(
+                                                         IAccountAPI acctRequest,
+                                                         StringBuilder errorDetail) {
     switch (acctRequest.getErrorCode()) {
     case 222:
     case 221:
@@ -106,7 +127,12 @@ public class CharacterAccountStatusSync extends AbstractCharacterSync {
 
   // Override the inherited syncData because our result status is based on IAccountAPIRequest instead of ICharacterAPI
   @Override
-  protected SyncStatus syncData(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest, String description) {
+  protected SyncStatus syncData(
+                                long time,
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil,
+                                ICharacterAPI charRequest,
+                                String description) {
 
     try {
       // Run pre-check.
@@ -165,12 +191,16 @@ public class CharacterAccountStatusSync extends AbstractCharacterSync {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterAccountStatus");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     CharacterAccountStatusSync syncher = new CharacterAccountStatusSync();
     return syncher.excludeState(syncAccount, syncUtil, "CharacterAccountStatus", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     CharacterAccountStatusSync syncher = new CharacterAccountStatusSync();
     return syncher.excludeState(syncAccount, syncUtil, "CharacterAccountStatus", SyncTracker.SyncState.NOT_ALLOWED);
   }

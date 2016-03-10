@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -27,30 +28,42 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationMemberSecurityLogSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getMemberSecurityLogStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setMemberSecurityLogStatus(status);
     tracker.setMemberSecurityLogDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setMemberSecurityLogExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getMemberSecurityLogExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     // Item is one of MemberSecurityLog or SecurityRole
     if (item instanceof MemberSecurityLog) {
       MemberSecurityLog api = (MemberSecurityLog) item;
@@ -92,7 +105,8 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     return corpRequest.requestMemberSecurityLog();
   }
 
@@ -106,7 +120,10 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
    * @param roleSet
    *          role set to update.
    */
-  protected void updateRoleSet(Collection<ISecurityRole> memberSet, Map<Long, SecurityRole> usedRoles, Set<Long> roleSet) {
+  protected void updateRoleSet(
+                               Collection<ISecurityRole> memberSet,
+                               Map<Long, SecurityRole> usedRoles,
+                               Set<Long> roleSet) {
     assert roleSet.size() == 0;
     for (ISecurityRole role : memberSet) {
       roleSet.add(role.getRoleID());
@@ -118,8 +135,12 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IMemberSecurityLog> memSecurity = (Collection<IMemberSecurityLog>) data;
 
@@ -129,7 +150,8 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
     for (IMemberSecurityLog next : memSecurity) {
       // Add this security entry.
       MemberSecurityLog newLog = new MemberSecurityLog(
-          next.getChangeTime().getTime(), next.getCharacterID(), next.getCharacterName(), next.getIssuerID(), next.getIssuerName(), next.getRoleLocationType());
+          ModelUtil.safeConvertDate(next.getChangeTime()), next.getCharacterID(), next.getCharacterName(), next.getIssuerID(), next.getIssuerName(),
+          next.getRoleLocationType());
 
       // Update all role sets.
       updateRoleSet(next.getOldRoles(), roleMap, newLog.getOldRoles());
@@ -155,11 +177,15 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationMemberSecurityLog");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMemberSecurityLog", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationMemberSecurityLog", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

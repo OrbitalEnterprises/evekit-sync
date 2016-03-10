@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -22,30 +23,42 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterIndustryJobsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getIndustryJobsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setIndustryJobsStatus(status);
     tracker.setIndustryJobsDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setIndustryJobsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getIndustryJobsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof IndustryJob;
 
     IndustryJob api = (IndustryJob) item;
@@ -68,13 +81,18 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestIndustryJobs();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IIndustryJob> jobs = (Collection<IIndustryJob>) data;
 
@@ -84,8 +102,8 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
           next.getStationID(), next.getActivityID(), next.getBlueprintID(), next.getBlueprintTypeID(), next.getBlueprintTypeName(),
           next.getBlueprintLocationID(), next.getOutputLocationID(), next.getRuns(), next.getCost().setScale(2, RoundingMode.HALF_UP), next.getTeamID(),
           next.getLicensedRuns(), next.getProbability(), next.getProductTypeID(), next.getProductTypeName(), next.getStatus(), next.getTimeInSeconds(),
-          next.getStartDate().getTime(), next.getEndDate().getTime(), next.getPauseDate().getTime(), Math.max(0L, next.getCompletedDate().getTime()),
-          next.getCompletedCharacterID(), next.getSuccessfulRuns());
+          ModelUtil.safeConvertDate(next.getStartDate()), ModelUtil.safeConvertDate(next.getEndDate()), ModelUtil.safeConvertDate(next.getPauseDate()),
+          Math.max(0L, ModelUtil.safeConvertDate(next.getCompletedDate())), next.getCompletedCharacterID(), next.getSuccessfulRuns());
       updates.add(instance);
     }
 
@@ -94,15 +112,23 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
 
   private static final CharacterIndustryJobsSync syncher = new CharacterIndustryJobsSync();
 
-  public static SyncStatus syncCharacterIndustryJobs(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterIndustryJobs(
+                                                     long time,
+                                                     SynchronizedEveAccount syncAccount,
+                                                     SynchronizerUtil syncUtil,
+                                                     ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterIndustryJobs");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterIndustryJobs", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterIndustryJobs", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

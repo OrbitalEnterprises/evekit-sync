@@ -12,6 +12,7 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -25,30 +26,42 @@ public class CharacterMarketOrderSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterMarketOrderSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getMarketOrdersStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setMarketOrdersStatus(status);
     tracker.setMarketOrdersDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setMarketOrdersExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getMarketOrdersExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof MarketOrder;
 
     MarketOrder api = (MarketOrder) item;
@@ -71,13 +84,18 @@ public class CharacterMarketOrderSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestMarketOrders();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IMarketOrder> orders = (Collection<IMarketOrder>) data;
 
@@ -86,8 +104,8 @@ public class CharacterMarketOrderSync extends AbstractCharacterSync {
       seenOrders.add(next.getOrderID());
       MarketOrder instance = new MarketOrder(
           next.getOrderID(), next.getAccountKey(), next.getBid() != 0, next.getCharID(), next.getDuration(), next.getEscrow().setScale(2, RoundingMode.HALF_UP),
-          next.getIssued().getTime(), next.getMinVolume(), next.getOrderState(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getRange(),
-          next.getStationID(), next.getTypeID(), next.getVolEntered(), next.getVolRemaining());
+          ModelUtil.safeConvertDate(next.getIssued()), next.getMinVolume(), next.getOrderState(), next.getPrice().setScale(2, RoundingMode.HALF_UP),
+          next.getRange(), next.getStationID(), next.getTypeID(), next.getVolEntered(), next.getVolRemaining());
       updates.add(instance);
     }
 
@@ -109,7 +127,7 @@ public class CharacterMarketOrderSync extends AbstractCharacterSync {
         // BigDecimal price, int orderRange, long stationID, int typeID, int volEntered, int volRemaining) {
         MarketOrder instance = new MarketOrder(
             updatedOrder.getOrderID(), updatedOrder.getAccountKey(), updatedOrder.getBid() != 0, updatedOrder.getCharID(), updatedOrder.getDuration(),
-            updatedOrder.getEscrow().setScale(2, RoundingMode.HALF_UP), updatedOrder.getIssued().getTime(), updatedOrder.getMinVolume(),
+            updatedOrder.getEscrow().setScale(2, RoundingMode.HALF_UP), ModelUtil.safeConvertDate(updatedOrder.getIssued()), updatedOrder.getMinVolume(),
             updatedOrder.getOrderState(), updatedOrder.getPrice().setScale(2, RoundingMode.HALF_UP), updatedOrder.getRange(), updatedOrder.getStationID(),
             updatedOrder.getTypeID(), updatedOrder.getVolEntered(), updatedOrder.getVolRemaining());
         updates.add(instance);
@@ -121,15 +139,23 @@ public class CharacterMarketOrderSync extends AbstractCharacterSync {
 
   private static final CharacterMarketOrderSync syncher = new CharacterMarketOrderSync();
 
-  public static SyncStatus syncCharacterMarketOrders(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterMarketOrders(
+                                                     long time,
+                                                     SynchronizedEveAccount syncAccount,
+                                                     SynchronizerUtil syncUtil,
+                                                     ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterMarketOrders");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterMarketOrders", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterMarketOrders", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -30,30 +31,42 @@ public class CharacterKillLogSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterKillLogSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getKilllogStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setKilllogStatus(status);
     tracker.setKilllogDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setKilllogExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getKilllogExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     // Handle the four types of kill info
     if (item instanceof Kill) {
       Kill api = (Kill) item;
@@ -129,13 +142,18 @@ public class CharacterKillLogSync extends AbstractCharacterSync {
 
   // Can't use generic sync for the kill log
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -152,7 +170,11 @@ public class CharacterKillLogSync extends AbstractCharacterSync {
     }
   }
 
-  public static SyncStatus syncCharacterKillLog(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterKillLog(
+                                                long time,
+                                                SynchronizedEveAccount syncAccount,
+                                                SynchronizerUtil syncUtil,
+                                                ICharacterAPI charRequest) {
     try {
       // Run pre-check.
       String description = "CharacterKillLog";
@@ -205,7 +227,7 @@ public class CharacterKillLogSync extends AbstractCharacterSync {
           for (IKill nextKill : toPopulate) {
             long killID = nextKill.getKillID();
 
-            Kill makeKill = new Kill(killID, nextKill.getKillTime().getTime(), nextKill.getMoonID(), nextKill.getSolarSystemID());
+            Kill makeKill = new Kill(killID, ModelUtil.safeConvertDate(nextKill.getKillTime()), nextKill.getMoonID(), nextKill.getSolarSystemID());
             updateList.add(makeKill);
 
             IKillVictim nextVictim = nextKill.getVictim();
@@ -265,11 +287,15 @@ public class CharacterKillLogSync extends AbstractCharacterSync {
     }
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterKillLog", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterKillLog", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

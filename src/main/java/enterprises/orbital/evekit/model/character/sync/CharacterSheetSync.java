@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -37,30 +38,42 @@ public class CharacterSheetSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterSheetSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getCharacterSheetStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getCharacterSheetExpiry();
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setCharacterSheetStatus(status);
     tracker.setCharacterSheetDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setCharacterSheetExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     // Things which can be EOL:
     //
     // CharacterRole
@@ -260,13 +273,18 @@ public class CharacterSheetSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestCharacterSheet();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
 
     // Multiple items we need to process here:
     //
@@ -287,19 +305,21 @@ public class CharacterSheetSync extends AbstractCharacterSync {
     CharacterSheetBalance balance = new CharacterSheetBalance(charSheet.getBalance().setScale(2, RoundingMode.HALF_UP));
     updates.add(balance);
 
-    CharacterSheetClone clone = new CharacterSheetClone(charSheet.getCloneJumpDate().getTime());
+    CharacterSheetClone clone = new CharacterSheetClone(ModelUtil.safeConvertDate(charSheet.getCloneJumpDate()));
     updates.add(clone);
 
     CharacterSheetJump jump = new CharacterSheetJump(
-        charSheet.getJumpActivation().getTime(), charSheet.getJumpFatigue().getTime(), charSheet.getJumpLastUpdate().getTime());
+        ModelUtil.safeConvertDate(charSheet.getJumpActivation()), ModelUtil.safeConvertDate(charSheet.getJumpFatigue()),
+        ModelUtil.safeConvertDate(charSheet.getJumpLastUpdate()));
     updates.add(jump);
 
     CharacterSheet sheet = new CharacterSheet(
         charSheet.getCharacterID(), charSheet.getName(), charSheet.getCorporationID(), charSheet.getCorporationName(), charSheet.getRace(),
-        charSheet.getDoB().getTime(), charSheet.getBloodline(), charSheet.getAncestry(), charSheet.getGender(), charSheet.getAllianceName(),
+        ModelUtil.safeConvertDate(charSheet.getDoB()), charSheet.getBloodline(), charSheet.getAncestry(), charSheet.getGender(), charSheet.getAllianceName(),
         charSheet.getAllianceID(), charSheet.getFactionName(), charSheet.getFactionID(), charSheet.getIntelligence(), charSheet.getMemory(),
-        charSheet.getCharisma(), charSheet.getPerception(), charSheet.getWillpower(), charSheet.getHomeStationID(), charSheet.getLastRespecDate().getTime(),
-        charSheet.getLastTimedRespec().getTime(), charSheet.getFreeRespecs(), charSheet.getFreeSkillPoints(), charSheet.getRemoteStationDate().getTime());
+        charSheet.getCharisma(), charSheet.getPerception(), charSheet.getWillpower(), charSheet.getHomeStationID(),
+        ModelUtil.safeConvertDate(charSheet.getLastRespecDate()), ModelUtil.safeConvertDate(charSheet.getLastTimedRespec()), charSheet.getFreeRespecs(),
+        charSheet.getFreeSkillPoints(), ModelUtil.safeConvertDate(charSheet.getRemoteStationDate()));
     updates.add(sheet);
 
     // Update skill set. We only need to add/update here.
@@ -427,15 +447,23 @@ public class CharacterSheetSync extends AbstractCharacterSync {
 
   private static final CharacterSheetSync syncher = new CharacterSheetSync();
 
-  public static SyncStatus syncCharacterSheet(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterSheet(
+                                              long time,
+                                              SynchronizedEveAccount syncAccount,
+                                              SynchronizerUtil syncUtil,
+                                              ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterSheet");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSheet", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSheet", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

@@ -11,6 +11,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -30,30 +31,42 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationKillLogSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getKilllogStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setKilllogStatus(status);
     tracker.setKilllogDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setKilllogExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getKilllogExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     // Handle the four types of kill info
     if (item instanceof Kill) {
       Kill api = (Kill) item;
@@ -129,13 +142,18 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
 
   // Can't use generic sync for the kill log
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -152,7 +170,11 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
     }
   }
 
-  public static SyncStatus syncCorporationKillLog(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncCorporationKillLog(
+                                                  long time,
+                                                  SynchronizedEveAccount syncAccount,
+                                                  SynchronizerUtil syncUtil,
+                                                  ICorporationAPI corpRequest) {
     try {
       // Run pre-check.
       String description = "CorporationKillLog";
@@ -208,7 +230,7 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
           for (IKill nextKill : toPopulate) {
             long killID = nextKill.getKillID();
 
-            Kill makeKill = new Kill(killID, nextKill.getKillTime().getTime(), nextKill.getMoonID(), nextKill.getSolarSystemID());
+            Kill makeKill = new Kill(killID, ModelUtil.safeConvertDate(nextKill.getKillTime()), nextKill.getMoonID(), nextKill.getSolarSystemID());
             updateList.add(makeKill);
 
             IKillVictim nextVictim = nextKill.getVictim();
@@ -268,11 +290,15 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
     }
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationKillLog", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationKillLog", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

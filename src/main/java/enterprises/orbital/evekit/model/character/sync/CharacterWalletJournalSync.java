@@ -1,6 +1,7 @@
 package enterprises.orbital.evekit.model.character.sync;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,6 +11,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -26,30 +28,42 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
   public static final int       MAX_RECORD_DOWNLOAD = 2560;
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getWalletJournalStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setWalletJournalStatus(status);
     tracker.setWalletJournalDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setWalletJournalExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getWalletJournalExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof WalletJournal;
     WalletJournal api = (WalletJournal) item;
 
@@ -66,7 +80,8 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     Collection<IWalletJournalEntry> allRecords = new ArrayList<IWalletJournalEntry>();
     // The EVE api docs are a little sketchy here. This is how things seem to work right now. First, the journal API provides at most one month of data. So no
     // matter what, you can't scan backwards further than that. Second, the journal API limits the maximum number of entries that will be returned until the
@@ -166,18 +181,22 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IWalletJournalEntry> allRecords = (Collection<IWalletJournalEntry>) data;
 
     for (IWalletJournalEntry next : allRecords) {
       // Populate record
       WalletJournal newRecord = new WalletJournal(
-          1000, next.getRefID(), next.getDate().getTime(), next.getRefTypeID(), next.getOwnerName1(), next.getOwnerID1(), next.getOwnerName2(),
+          1000, next.getRefID(), ModelUtil.safeConvertDate(next.getDate()), next.getRefTypeID(), next.getOwnerName1(), next.getOwnerID1(), next.getOwnerName2(),
           next.getOwnerID2(), next.getArgName1(), next.getArgID1(), next.getAmount().setScale(2, RoundingMode.HALF_UP),
           next.getBalance().setScale(2, RoundingMode.HALF_UP), next.getReason(), next.getTaxReceiverID(),
-          next.getTaxAmount().setScale(2, RoundingMode.HALF_UP));
+          next.getTaxAmount() != null ? next.getTaxAmount().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
       updates.add(newRecord);
     }
 
@@ -186,16 +205,24 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
 
   private static final CharacterWalletJournalSync syncher = new CharacterWalletJournalSync();
 
-  public static SyncStatus syncCharacterWalletJournal(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterWalletJournal(
+                                                      long time,
+                                                      SynchronizedEveAccount syncAccount,
+                                                      SynchronizerUtil syncUtil,
+                                                      ICharacterAPI charRequest) {
     SyncStatus result = syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterWalletJournal");
     return result;
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterWalletJournal", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterWalletJournal", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

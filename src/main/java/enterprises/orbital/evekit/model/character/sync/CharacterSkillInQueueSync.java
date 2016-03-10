@@ -8,6 +8,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -22,30 +23,42 @@ public class CharacterSkillInQueueSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterSkillInQueueSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getSkillQueueStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setSkillQueueStatus(status);
     tracker.setSkillQueueDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setSkillQueueExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getSkillQueueExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     SkillInQueue api = (SkillInQueue) item;
 
     if (api.getLifeStart() != 0) {
@@ -71,13 +84,18 @@ public class CharacterSkillInQueueSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestSkillQueue();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<ISkillInQueue> skillQueue = (Collection<ISkillInQueue>) data;
 
@@ -90,8 +108,8 @@ public class CharacterSkillInQueueSync extends AbstractCharacterSync {
 
     for (ISkillInQueue next : skillQueue) {
       SkillInQueue newSkill = new SkillInQueue(
-          next.getEndSP(), next.getEndTime().getTime(), next.getLevel(), next.getQueuePosition(), next.getStartSP(), next.getStartTime().getTime(),
-          next.getTypeID());
+          next.getEndSP(), ModelUtil.safeConvertDate(next.getEndTime()), next.getLevel(), next.getQueuePosition(), next.getStartSP(),
+          ModelUtil.safeConvertDate(next.getStartTime()), next.getTypeID());
       updates.add(newSkill);
     }
 
@@ -100,15 +118,23 @@ public class CharacterSkillInQueueSync extends AbstractCharacterSync {
 
   private static final CharacterSkillInQueueSync syncher = new CharacterSkillInQueueSync();
 
-  public static SyncStatus syncSkillQueue(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncSkillQueue(
+                                          long time,
+                                          SynchronizedEveAccount syncAccount,
+                                          SynchronizerUtil syncUtil,
+                                          ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterSkillQueue");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSkillQueue", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSkillQueue", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

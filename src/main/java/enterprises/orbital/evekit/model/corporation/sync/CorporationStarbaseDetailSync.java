@@ -13,6 +13,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -30,30 +31,42 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationStarbaseDetailSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getStarbaseDetailStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setStarbaseDetailStatus(status);
     tracker.setStarbaseDetailDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setStarbaseDetailExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getStarbaseDetailExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     if (item instanceof StarbaseDetail) {
       StarbaseDetail api = (StarbaseDetail) item;
 
@@ -104,7 +117,8 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     Map<Long, IStarbaseDetail> detailMap = new HashMap<Long, IStarbaseDetail>();
     Collection<IStarbase> starbaseList = corpRequest.requestStarbaseList();
     if (corpRequest.isError()) return null;
@@ -116,8 +130,12 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Map<Long, IStarbaseDetail> details = (Map<Long, IStarbaseDetail>) data;
 
@@ -126,8 +144,8 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
     for (Entry<Long, IStarbaseDetail> nextPair : details.entrySet()) {
       IStarbaseDetail next = nextPair.getValue();
       StarbaseDetail newDetail = new StarbaseDetail(
-          nextPair.getKey(), next.getState(), next.getStateTimestamp().getTime(), next.getOnlineTimestamp().getTime(), next.getUsageFlags(),
-          next.getDeployFlags(), next.isAllowAllianceMembers(), next.isAllowCorporationMembers(), next.getUseStandingsFrom(),
+          nextPair.getKey(), next.getState(), ModelUtil.safeConvertDate(next.getStateTimestamp()), ModelUtil.safeConvertDate(next.getOnlineTimestamp()),
+          next.getUsageFlags(), next.getDeployFlags(), next.isAllowAllianceMembers(), next.isAllowCorporationMembers(), next.getUseStandingsFrom(),
           next.getOnAggression().isEnabled(), next.getOnAggression().getStanding(), next.getOnCorporationWar().isEnabled(),
           next.getOnCorporationWar().getStanding(), next.getOnStandingDrop().isEnabled(), next.getOnStandingDrop().getStanding(),
           next.getOnStatusDrop().isEnabled(), next.getOnStatusDrop().getStanding());
@@ -161,15 +179,23 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
 
   private static final CorporationStarbaseDetailSync syncher = new CorporationStarbaseDetailSync();
 
-  public static SyncStatus syncStarbaseDetail(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncStarbaseDetail(
+                                              long time,
+                                              SynchronizedEveAccount syncAccount,
+                                              SynchronizerUtil syncUtil,
+                                              ICorporationAPI corpRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "StarbaseDetail");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "StarbaseDetail", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "StarbaseDetail", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

@@ -9,6 +9,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -24,31 +25,43 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterContractItemsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getContractItemsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setContractItemsStatus(status);
     tracker.setContractItemsDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     // Always use expiry from Contracts for items expiry
     container.setContractItemsExpiry(container.getContractsExpiry());
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getContractItemsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof ContractItem;
 
     ContractItem api = (ContractItem) item;
@@ -71,13 +84,15 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
   }
 
   @Override
-  public boolean prereqSatisfied(CapsuleerSyncTracker tracker) {
+  public boolean prereqSatisfied(
+                                 CapsuleerSyncTracker tracker) {
     // We require that contracts have been retrieved first since we need contract IDs
     return tracker.getContractsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     // Must reset here since we may never call an API method and thus will inherit any existing error code or message.
     charRequest.reset();
     List<ContractItemPair> results = new ArrayList<ContractItemPair>();
@@ -100,8 +115,12 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<ContractItemPair> items = (Collection<ContractItemPair>) data;
 
@@ -112,14 +131,18 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
       updates.add(newItem);
     }
 
-    return charRequest.getCachedUntil().getTime();
+    return ModelUtil.safeConvertDate(charRequest.getCachedUntil());
 
   }
 
   protected SynchronizedEveAccount currentSyncAccount;
   protected long                   syncTime;
 
-  public static SyncStatus syncCharacterContractItems(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCharacterContractItems(
+                                                      long time,
+                                                      SynchronizedEveAccount syncAccount,
+                                                      SynchronizerUtil syncUtil,
+                                                      ICharacterAPI charRequest) {
     // We allocate a new syncher since we use local state to store contract IDs we're tracking.
     CharacterContractItemsSync syncher = new CharacterContractItemsSync();
     syncher.currentSyncAccount = syncAccount;
@@ -127,12 +150,16 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterContractItems");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     CharacterContractItemsSync syncher = new CharacterContractItemsSync();
     return syncher.excludeState(syncAccount, syncUtil, "CharacterContractItems", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     CharacterContractItemsSync syncher = new CharacterContractItemsSync();
     return syncher.excludeState(syncAccount, syncUtil, "CharacterContractItems", SyncTracker.SyncState.NOT_ALLOWED);
   }

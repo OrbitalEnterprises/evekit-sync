@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -163,29 +164,29 @@ public class CharacterChatChannelsSync extends AbstractCharacterSync {
       // Process channel member sets
       for (IChatChannelMember nextMember : nextChannel.getAllowed()) {
         ChatChannelMember cm = new ChatChannelMember(
-            nextChannel.getChannelID(), "allowed", nextMember.getAccessorID(), nextMember.getAccessorName(), nextMember.getUntilWhen().getTime(),
-            nextMember.getReason());
+            nextChannel.getChannelID(), "allowed", nextMember.getAccessorID(), nextMember.getAccessorName(),
+            ModelUtil.safeConvertDate(nextMember.getUntilWhen()), nextMember.getReason());
         updates.add(cm);
         updateChannelMemberMap(channelMemberMap, nextChannel.getChannelID(), "allowed", nextMember.getAccessorID());
       }
       for (IChatChannelMember nextMember : nextChannel.getBlocked()) {
         ChatChannelMember cm = new ChatChannelMember(
-            nextChannel.getChannelID(), "blocked", nextMember.getAccessorID(), nextMember.getAccessorName(), nextMember.getUntilWhen().getTime(),
-            nextMember.getReason());
+            nextChannel.getChannelID(), "blocked", nextMember.getAccessorID(), nextMember.getAccessorName(),
+            ModelUtil.safeConvertDate(nextMember.getUntilWhen()), nextMember.getReason());
         updates.add(cm);
         updateChannelMemberMap(channelMemberMap, nextChannel.getChannelID(), "blocked", nextMember.getAccessorID());
       }
       for (IChatChannelMember nextMember : nextChannel.getMuted()) {
         ChatChannelMember cm = new ChatChannelMember(
-            nextChannel.getChannelID(), "muted", nextMember.getAccessorID(), nextMember.getAccessorName(), nextMember.getUntilWhen().getTime(),
+            nextChannel.getChannelID(), "muted", nextMember.getAccessorID(), nextMember.getAccessorName(), ModelUtil.safeConvertDate(nextMember.getUntilWhen()),
             nextMember.getReason());
         updates.add(cm);
         updateChannelMemberMap(channelMemberMap, nextChannel.getChannelID(), "muted", nextMember.getAccessorID());
       }
       for (IChatChannelMember nextMember : nextChannel.getOperators()) {
         ChatChannelMember cm = new ChatChannelMember(
-            nextChannel.getChannelID(), "operators", nextMember.getAccessorID(), nextMember.getAccessorName(), nextMember.getUntilWhen().getTime(),
-            nextMember.getReason());
+            nextChannel.getChannelID(), "operators", nextMember.getAccessorID(), nextMember.getAccessorName(),
+            ModelUtil.safeConvertDate(nextMember.getUntilWhen()), nextMember.getReason());
         updates.add(cm);
         updateChannelMemberMap(channelMemberMap, nextChannel.getChannelID(), "operators", nextMember.getAccessorID());
       }

@@ -10,6 +10,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -26,30 +27,42 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterUpcomingCalendarEventsSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getUpcomingCalendarEventsStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setUpcomingCalendarEventsStatus(status);
     tracker.setUpcomingCalendarEventsDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setUpcomingCalendarEventsExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getUpcomingCalendarEventsExpiry();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     UpcomingCalendarEvent api = (UpcomingCalendarEvent) item;
 
     if (api.getLifeStart() != 0) {
@@ -75,13 +88,18 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestUpcomingCalendarEvents();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IUpcomingCalendarEvent> events = (Collection<IUpcomingCalendarEvent>) data;
 
@@ -91,7 +109,7 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
     // Prepare set of events to add/update
     for (IUpcomingCalendarEvent next : events) {
       UpcomingCalendarEvent newEvent = new UpcomingCalendarEvent(
-          next.getDuration(), next.getEventDate().getTime(), next.getEventID(), next.getEventText(), next.getEventTitle(), next.getOwnerID(),
+          next.getDuration(), ModelUtil.safeConvertDate(next.getEventDate()), next.getEventID(), next.getEventText(), next.getEventTitle(), next.getOwnerID(),
           next.getOwnerName(), next.getResponse(), next.isImportant());
       updates.add(newEvent);
       eventSet.add(next.getEventID());
@@ -111,15 +129,23 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
 
   private static final CharacterUpcomingCalendarEventsSync syncher = new CharacterUpcomingCalendarEventsSync();
 
-  public static SyncStatus syncUpcomingCalendarEvents(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncUpcomingCalendarEvents(
+                                                      long time,
+                                                      SynchronizedEveAccount syncAccount,
+                                                      SynchronizerUtil syncUtil,
+                                                      ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "UpcomingCalendarEvents");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "UpcomingCalendarEvents", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "UpcomingCalendarEvents", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

@@ -7,6 +7,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CapsuleerSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -20,35 +21,48 @@ public class CharacterSkillInTrainingSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterSkillInTrainingSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getSkillInTrainingStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getSkillInTrainingExpiry();
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setSkillInTrainingStatus(status);
     tracker.setSkillInTrainingDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setSkillInTrainingExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest) throws IOException {
     return charRequest.requestSkillInTraining();
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof CharacterSkillInTraining;
 
     CharacterSkillInTraining api = (CharacterSkillInTraining) item;
@@ -70,28 +84,40 @@ public class CharacterSkillInTrainingSync extends AbstractCharacterSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     ISkillInTraining skillTraining = (ISkillInTraining) data;
     CharacterSkillInTraining skill = new CharacterSkillInTraining(
-        skillTraining.isSkillInTraining(), skillTraining.getCurrentTrainingQueueTime().getTime(), skillTraining.getTrainingStartTime().getTime(),
-        skillTraining.getTrainingEndTime().getTime(), skillTraining.getTrainingStartSP(), skillTraining.getTrainingDestinationSP(),
-        skillTraining.getTrainingToLevel(), skillTraining.getSkillTypeID());
+        skillTraining.isSkillInTraining(), ModelUtil.safeConvertDate(skillTraining.getCurrentTrainingQueueTime()),
+        ModelUtil.safeConvertDate(skillTraining.getTrainingStartTime()), ModelUtil.safeConvertDate(skillTraining.getTrainingEndTime()),
+        skillTraining.getTrainingStartSP(), skillTraining.getTrainingDestinationSP(), skillTraining.getTrainingToLevel(), skillTraining.getSkillTypeID());
     updates.add(skill);
     return charRequest.getCachedUntil().getTime();
   }
 
   private static final CharacterSkillInTrainingSync syncher = new CharacterSkillInTrainingSync();
 
-  public static SyncStatus syncSkillInTraining(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncSkillInTraining(
+                                               long time,
+                                               SynchronizedEveAccount syncAccount,
+                                               SynchronizerUtil syncUtil,
+                                               ICharacterAPI charRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterSkillInTraining");
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSkillInTraining", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CharacterSkillInTraining", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

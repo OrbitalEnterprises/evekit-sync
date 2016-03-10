@@ -12,6 +12,7 @@ import java.util.logging.Logger;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.CachedData;
 import enterprises.orbital.evekit.model.CorporationSyncTracker;
+import enterprises.orbital.evekit.model.ModelUtil;
 import enterprises.orbital.evekit.model.SyncTracker;
 import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
@@ -27,30 +28,42 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
   protected static final Logger log = Logger.getLogger(CorporationBookmarksSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CorporationSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CorporationSyncTracker tracker) {
     return tracker.getBookmarksStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public void updateStatus(CorporationSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CorporationSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setBookmarksStatus(status);
     tracker.setBookmarksDetail(detail);
     CorporationSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(
+                           Corporation container,
+                           long expiry) {
     container.setBookmarksExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public long getExpiryTime(Corporation container) {
+  public long getExpiryTime(
+                            Corporation container) {
     return container.getBookmarksExpiry();
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof Bookmark;
 
     Bookmark api = (Bookmark) item;
@@ -78,11 +91,15 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected Object getServerData(ICorporationAPI corpRequest) throws IOException {
+  protected Object getServerData(
+                                 ICorporationAPI corpRequest) throws IOException {
     return corpRequest.requestBookmarks();
   }
 
-  protected void updateBookmarkSet(Map<Integer, Set<Integer>> map, int folderID, int bookmarkID) {
+  protected void updateBookmarkSet(
+                                   Map<Integer, Set<Integer>> map,
+                                   int folderID,
+                                   int bookmarkID) {
     Set<Integer> bookmarks = map.get(folderID);
     if (bookmarks == null) {
       bookmarks = new HashSet<Integer>();
@@ -92,8 +109,12 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException {
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICorporationAPI corpRequest,
+                                   Object data,
+                                   List<CachedData> updates) throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IBookmarkFolder> bookmarks = (Collection<IBookmarkFolder>) data;
     Map<Integer, Set<Integer>> bookmarkSet = new HashMap<Integer, Set<Integer>>();
@@ -101,8 +122,8 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
       for (IBookmark nextBookmark : nextFolder.getBookmarks()) {
         Bookmark bo = new Bookmark(
             nextFolder.getFolderID(), nextFolder.getFolderName(), nextFolder.getCreatorID(), nextBookmark.getBookmarkID(), nextBookmark.getCreatorID(),
-            nextBookmark.getCreated().getTime(), nextBookmark.getItemID(), nextBookmark.getTypeID(), nextBookmark.getLocationID(), nextBookmark.getX(),
-            nextBookmark.getY(), nextBookmark.getZ(), nextBookmark.getMemo(), nextBookmark.getNote());
+            ModelUtil.safeConvertDate(nextBookmark.getCreated()), nextBookmark.getItemID(), nextBookmark.getTypeID(), nextBookmark.getLocationID(),
+            nextBookmark.getX(), nextBookmark.getY(), nextBookmark.getZ(), nextBookmark.getMemo(), nextBookmark.getNote());
         updates.add(bo);
         updateBookmarkSet(bookmarkSet, nextFolder.getFolderID(), nextBookmark.getBookmarkID());
       }
@@ -121,16 +142,24 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
 
   private static final CorporationBookmarksSync syncher = new CorporationBookmarksSync();
 
-  public static SyncStatus syncBookmarks(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest) {
+  public static SyncStatus syncBookmarks(
+                                         long time,
+                                         SynchronizedEveAccount syncAccount,
+                                         SynchronizerUtil syncUtil,
+                                         ICorporationAPI corpRequest) {
     return syncher.syncData(time, syncAccount, syncUtil, corpRequest, "CorporationBookmark");
 
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationBookmark", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CorporationBookmark", SyncTracker.SyncState.NOT_ALLOWED);
   }
 
