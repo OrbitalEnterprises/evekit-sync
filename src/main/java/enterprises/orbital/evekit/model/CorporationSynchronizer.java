@@ -146,9 +146,7 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     // Check if we can finish this tracker.
     if (tracker != null && tracker.trackerComplete(supportedFeatures.keySet()) == null) {
       log.fine("Tracker done, marking as finished");
-      tracker = SyncTracker.finishTracker(tracker);
-      syncAccount.setLastSynchronized(tracker.getSyncEnd());
-      SynchronizedEveAccount.update(syncAccount);
+      SyncTracker.finishTracker(tracker);
     }
   }
 

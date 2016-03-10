@@ -237,9 +237,7 @@ public abstract class AbstractSynchronizer {
       if (delaySinceStart > terminateDelay) {
         // This sync has been running too long, finish it immediately
         log.fine("Forcing tracker to terminate due to delay: " + next);
-        next = SyncTracker.finishTracker(next);
-        syncAccount.setLastSynchronized(next.getSyncEnd());
-        SynchronizedEveAccount.update(syncAccount);
+        SyncTracker.finishTracker(next);
         return false;
       }
     }
