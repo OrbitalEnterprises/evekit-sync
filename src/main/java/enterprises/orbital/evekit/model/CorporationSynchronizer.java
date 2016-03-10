@@ -56,7 +56,12 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
   // Class which encapsulates sync state execution
   public static interface CorpStateHandler extends AbstractSynchronizer.StateHandler {
-    public SyncStatus sync(long syncTime, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest, IAccountAPI acctRequest);
+    public SyncStatus sync(
+                           long syncTime,
+                           SynchronizedEveAccount syncAccount,
+                           SynchronizerUtil syncUtil,
+                           ICorporationAPI corpRequest,
+                           IAccountAPI acctRequest);
   }
 
   // Support synchronization features (see bottom of file for initialization)
@@ -66,7 +71,8 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
    * {@inheritDoc}
    */
   @Override
-  public void synchronize(SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException {
+  public void synchronize(
+                          SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException {
     log.fine("Starting sync: " + syncAccount);
     // Steps:
     // 1) Verify the API key is not expired. Synchronization is skipped if the key is expired.
@@ -140,7 +146,9 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     // Check if we can finish this tracker.
     if (tracker != null && tracker.trackerComplete(supportedFeatures.keySet()) == null) {
       log.fine("Tracker done, marking as finished");
-      SyncTracker.finishTracker(tracker);
+      tracker = SyncTracker.finishTracker(tracker);
+      syncAccount.setLastSynchronized(tracker.getSyncEnd());
+      SynchronizedEveAccount.update(syncAccount);
     }
   }
 
@@ -148,13 +156,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
   static {
     supportedFeatures.put(SynchronizationState.SYNC_CORP_ACCOUNTBALANCE, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationAccountBalanceSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationAccountBalanceSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -173,13 +185,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_ASSETLIST, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationAssetsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationAssetsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -197,13 +213,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPSHEET, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationSheetSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationSheetSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -221,13 +241,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTACTLIST, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationContactListSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationContactListSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -245,13 +269,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_BLUEPRINTS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationBlueprintsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationBlueprintsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -269,13 +297,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_BOOKMARKS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationBookmarksSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationBookmarksSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -293,13 +325,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationContractsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationContractsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -317,13 +353,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTITEMS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationContractItemsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationContractItemsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -341,13 +381,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTBIDS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationContractBidsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationContractBidsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -365,13 +409,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CUSTOMSOFFICE, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationCustomsOfficesSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationCustomsOfficesSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -389,13 +437,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_FACILITIES, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationFacilitiesSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationFacilitiesSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -413,13 +465,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_FACWARSTATS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationFacWarStatsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationFacWarStatsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -437,13 +493,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationIndustryJobsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationIndustryJobsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -461,13 +521,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBSHISTORY, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationIndustryJobsHistorySync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationIndustryJobsHistorySync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -485,13 +549,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_KILLLOG, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationKillLogSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationKillLogSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -509,13 +577,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_MARKETORDERS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMarketOrderSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMarketOrderSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -533,13 +605,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERMEDALS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMemberMedalsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMemberMedalsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -557,13 +633,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_STANDINGS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationStandingSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationStandingSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -581,13 +661,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETJOURNAL, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationWalletJournalSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationWalletJournalSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -605,13 +689,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETTRANSACTIONS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationWalletTransactionSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationWalletTransactionSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -629,13 +717,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_SECURITY, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMemberSecuritySync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMemberSecuritySync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -653,13 +745,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTAINERLOG, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationContainerLogSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationContainerLogSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -677,13 +773,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERSECURITYLOG, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMemberSecurityLogSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMemberSecurityLogSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -701,13 +801,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERTRACKING, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMemberTrackingSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMemberTrackingSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -725,13 +829,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPMEDALS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationMedalsSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationMedalsSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -749,13 +857,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_OUTPOSTLIST, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationOutpostListSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationOutpostListSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -773,13 +885,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_OUTPOSTDETAIL, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationOutpostServiceDetailSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationOutpostServiceDetailSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -797,13 +913,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_SHAREHOLDERS, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationShareholdersSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationShareholdersSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -821,13 +941,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_STARBASELIST, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationStarbaseListSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationStarbaseListSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -845,13 +969,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_STARBASEDETAIL, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationStarbaseDetailSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationStarbaseDetailSync.notAllowed(syncAccount, syncUtil);
 
       }
@@ -869,13 +997,17 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
     });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPTITLES, new CorpStateHandler() {
       @Override
-      public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
         return CorporationTitlesSync.exclude(syncAccount, syncUtil);
 
       }
 
       @Override
-      public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
         return CorporationTitlesSync.notAllowed(syncAccount, syncUtil);
 
       }

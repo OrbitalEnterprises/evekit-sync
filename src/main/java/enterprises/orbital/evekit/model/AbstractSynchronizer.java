@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -52,9 +53,13 @@ public abstract class AbstractSynchronizer {
   public static final String    PROP_XML_API_URL             = "enterprises.orbital.evekit.api_server_url";
 
   public static interface StateHandler {
-    public SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil);
+    public SyncStatus exclude(
+                              SynchronizedEveAccount syncAccount,
+                              SynchronizerUtil syncUtil);
 
-    public SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil);
+    public SyncStatus notAllowed(
+                                 SynchronizedEveAccount syncAccount,
+                                 SynchronizerUtil syncUtil);
   }
 
   /**
@@ -111,7 +116,8 @@ public abstract class AbstractSynchronizer {
    *          the Account API handle to use.
    * @return API key info with appropriate defaults if an error occurs while retrieving the handle.
    */
-  protected static IAPIKeyInfo getKeyInfo(IAccountAPI acctRequest) {
+  protected static IAPIKeyInfo getKeyInfo(
+                                          IAccountAPI acctRequest) {
     IAPIKeyInfo keyInfo = null;
     try {
       keyInfo = acctRequest.requestAPIKeyInfo();
@@ -184,7 +190,8 @@ public abstract class AbstractSynchronizer {
    *          the API key to check.
    * @return true if not expired, false otherwise.
    */
-  protected static boolean verifyNotExpired(IAPIKeyInfo keyInfo) {
+  protected static boolean verifyNotExpired(
+                                            IAPIKeyInfo keyInfo) {
     if (keyInfo.getExpires() != null && keyInfo.getExpires().before(OrbitalProperties.getCurrentDate())) {
       log.fine("Skipping sync because key expired at time: " + keyInfo.getExpires());
       return false;
@@ -199,7 +206,8 @@ public abstract class AbstractSynchronizer {
    *          the account to check
    * @return true if user is active and account not marked for delete, false otherwise.
    */
-  protected static boolean verifyActiveAndNotDeleted(SynchronizedEveAccount syncAccount) {
+  protected static boolean verifyActiveAndNotDeleted(
+                                                     SynchronizedEveAccount syncAccount) {
     if (!syncAccount.getUserAccount().isActive()) {
       log.fine("Skipping sync because user account is inactive: " + syncAccount.getUserAccount());
       return false;
@@ -218,7 +226,8 @@ public abstract class AbstractSynchronizer {
    *          account to check.
    * @return true if a stuck tracker was not found, false if a stuck tracker was found and terminated
    */
-  protected static boolean verifyTrackerNotStuck(SynchronizedEveAccount syncAccount) {
+  protected static boolean verifyTrackerNotStuck(
+                                                 SynchronizedEveAccount syncAccount) {
     long terminateDelay = PersistentProperty.getLongPropertyWithFallback(AbstractSynchronizer.PROP_SYNC_TERM_DELAY, Long.MAX_VALUE);
     long now = OrbitalProperties.getCurrentTime();
     SyncTracker next = SyncTracker.getUnfinishedTracker(syncAccount);
@@ -228,7 +237,9 @@ public abstract class AbstractSynchronizer {
       if (delaySinceStart > terminateDelay) {
         // This sync has been running too long, finish it immediately
         log.fine("Forcing tracker to terminate due to delay: " + next);
-        SyncTracker.finishTracker(next);
+        next = SyncTracker.finishTracker(next);
+        syncAccount.setLastSynchronized(next.getSyncEnd());
+        SynchronizedEveAccount.update(syncAccount);
         return false;
       }
     }
@@ -242,8 +253,10 @@ public abstract class AbstractSynchronizer {
    *          the account to check
    * @return true if enough time has passed since the last sync of this account, false otherwise.
    */
-  protected static boolean verifyTrackerSeparation(SynchronizedEveAccount syncAccount) {
-    long spacing = PersistentProperty.getLongPropertyWithFallback(AbstractSynchronizer.PROP_SYNC_ATTEMPT_SEPARATION, 300000);
+  protected static boolean verifyTrackerSeparation(
+                                                   SynchronizedEveAccount syncAccount) {
+    long spacing = PersistentProperty.getLongPropertyWithFallback(AbstractSynchronizer.PROP_SYNC_ATTEMPT_SEPARATION,
+                                                                  TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES));
     SyncTracker tracker = SyncTracker.getLatestFinishedTracker(syncAccount);
     long now = OrbitalProperties.getCurrentTime();
     long earliestStart = tracker != null ? tracker.getSyncEnd() + spacing : now;
@@ -261,6 +274,7 @@ public abstract class AbstractSynchronizer {
    * @throws URISyntaxException
    *           if an error occurs while trying to build an XML API endpoint handle.
    */
-  public abstract void synchronize(SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException;
+  public abstract void synchronize(
+                                   SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException;
 
 }
