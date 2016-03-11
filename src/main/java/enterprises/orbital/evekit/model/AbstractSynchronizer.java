@@ -258,7 +258,9 @@ public abstract class AbstractSynchronizer {
     SyncTracker tracker = SyncTracker.getLatestFinishedTracker(syncAccount);
     long now = OrbitalProperties.getCurrentTime();
     long earliestStart = tracker != null ? tracker.getSyncEnd() + spacing : now;
-    return earliestStart <= now;
+    boolean sync = earliestStart <= now;
+    if (!sync) log.fine("Insufficient tracker separation, skipping: " + syncAccount);
+    return sync;
   }
 
   /**
