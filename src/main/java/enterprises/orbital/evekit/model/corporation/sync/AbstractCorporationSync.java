@@ -3,6 +3,7 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
@@ -18,31 +19,42 @@ import enterprises.orbital.evexmlapi.crp.ICorporationAPI;
 public abstract class AbstractCorporationSync implements SynchronizationHandler<CorporationSyncTracker, Corporation> {
   private static final Logger log = Logger.getLogger(AbstractCorporationSync.class.getName());
 
-  public static boolean StringChanged(String a, String b) {
+  public static boolean StringChanged(
+                                      String a,
+                                      String b) {
     return !String.valueOf(a).equals(String.valueOf(b));
   }
 
   @Override
-  public CorporationSyncTracker getCurrentTracker(SynchronizedEveAccount owner) {
+  public CorporationSyncTracker getCurrentTracker(
+                                                  SynchronizedEveAccount owner) {
     return CorporationSyncTracker.getUnfinishedTracker(owner);
   }
 
   @Override
-  public Corporation getExistingContainer(SynchronizedEveAccount owner) {
+  public Corporation getExistingContainer(
+                                          SynchronizedEveAccount owner) {
     return Corporation.getCorporation(owner);
   }
 
   @Override
-  public boolean prereqSatisfied(CorporationSyncTracker tracker) {
+  public boolean prereqSatisfied(
+                                 CorporationSyncTracker tracker) {
     return true;
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, final CachedData item) {
+  public boolean commit(
+                        long time,
+                        CorporationSyncTracker tracker,
+                        Corporation container,
+                        SynchronizedEveAccount accountKey,
+                        final CachedData item) {
     return CachedData.updateData(item) != null;
   }
 
-  protected abstract Object getServerData(ICorporationAPI charRequest) throws IOException;
+  protected abstract Object getServerData(
+                                          ICorporationAPI charRequest) throws IOException;
 
   /**
    * Handle a server error and return the appropriate SyncState we should store in this case. The default behavior is to log the error and return SYNC_ERROR.
@@ -53,7 +65,9 @@ public abstract class AbstractCorporationSync implements SynchronizationHandler<
    *          string builder which should be populated with error detail we report in the sync status.
    * @return the SyncState we should store as a result of this error.
    */
-  protected static SyncTracker.SyncState handleServerError(ICorporationAPI corpRequest, StringBuilder errorDetail) {
+  protected static SyncTracker.SyncState handleServerError(
+                                                           ICorporationAPI corpRequest,
+                                                           StringBuilder errorDetail) {
     switch (corpRequest.getErrorCode()) {
     case 222:
     case 221:
@@ -70,10 +84,19 @@ public abstract class AbstractCorporationSync implements SynchronizationHandler<
     }
   }
 
-  protected abstract long processServerData(long time, SynchronizedEveAccount syncAccount, ICorporationAPI corpRequest, Object data, List<CachedData> updates)
-    throws IOException;
+  protected abstract long processServerData(
+                                            long time,
+                                            SynchronizedEveAccount syncAccount,
+                                            ICorporationAPI corpRequest,
+                                            Object data,
+                                            List<CachedData> updates) throws IOException;
 
-  protected SyncStatus syncData(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICorporationAPI corpRequest, String description) {
+  protected SyncStatus syncData(
+                                long time,
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil,
+                                ICorporationAPI corpRequest,
+                                String description) {
 
     try {
       // Run pre-check.
@@ -103,7 +126,7 @@ public abstract class AbstractCorporationSync implements SynchronizationHandler<
       } catch (IOException e) {
         status = SyncTracker.SyncState.SYNC_ERROR;
         errorDetail = "request failed with IO error";
-        log.warning("request failed with error " + e);
+        log.log(Level.WARNING, "request failed with error", e);
       }
 
       log.fine("Completed refresh request for " + description + " for account " + syncAccount);
@@ -135,7 +158,11 @@ public abstract class AbstractCorporationSync implements SynchronizationHandler<
    *          the synchronization state to record in the tracker
    * @return the outcome of the exclusion. Normally, this will be HttpServletResponse.SC_OK unless there is an error updating the state.
    */
-  protected SyncStatus excludeState(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, String description, SyncTracker.SyncState state) {
+  protected SyncStatus excludeState(
+                                    SynchronizedEveAccount syncAccount,
+                                    SynchronizerUtil syncUtil,
+                                    String description,
+                                    SyncTracker.SyncState state) {
 
     try {
       // Verify we havnen't already updated this state.

@@ -3,6 +3,7 @@ package enterprises.orbital.evekit.model.character.sync;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
@@ -158,7 +159,7 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
       } catch (IOException e) {
         status = SyncTracker.SyncState.SYNC_ERROR;
         errorDetail = "request failed with IO error";
-        log.warning("request failed with error " + e);
+        log.log(Level.WARNING, "request failed with error", e);
       }
 
       log.fine("Completed refresh request for " + description + " for account " + syncAccount);
