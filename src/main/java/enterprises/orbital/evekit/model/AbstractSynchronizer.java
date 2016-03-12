@@ -140,7 +140,7 @@ public abstract class AbstractSynchronizer {
 
             @Override
             public Date getExpires() {
-              throw new UnsupportedOperationException();
+              return new Date(0L);
             }
 
             @Override
@@ -171,7 +171,7 @@ public abstract class AbstractSynchronizer {
 
         @Override
         public Date getExpires() {
-          throw new UnsupportedOperationException();
+          return new Date(Long.MAX_VALUE);
         }
 
         @Override
