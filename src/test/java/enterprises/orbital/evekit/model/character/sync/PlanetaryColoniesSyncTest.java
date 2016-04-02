@@ -141,7 +141,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IPlanetaryColony makeColony(final Object[] instanceData, final long pidAdjustment, final String tweak) {
+  public IPlanetaryColony makeColony(
+                                     final Object[] instanceData,
+                                     final long pidAdjustment,
+                                     final String tweak) {
     IPlanetaryColony colony = new IPlanetaryColony() {
 
       @Override
@@ -203,7 +206,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return colony;
   }
 
-  public IPlanetaryPin makePin(final Object[] instanceData, final long pidAdjustment, final String tweak) {
+  public IPlanetaryPin makePin(
+                               final Object[] instanceData,
+                               final long pidAdjustment,
+                               final String tweak) {
     IPlanetaryPin pin = new IPlanetaryPin() {
 
       @Override
@@ -281,7 +287,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return pin;
   }
 
-  public IPlanetaryRoute makeRoute(final Object[] instanceData, final long pidAdjustment, final String tweak) {
+  public IPlanetaryRoute makeRoute(
+                                   final Object[] instanceData,
+                                   final long pidAdjustment,
+                                   final String tweak) {
     IPlanetaryRoute route = new IPlanetaryRoute() {
 
       @Override
@@ -344,7 +353,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return route;
   }
 
-  public IPlanetaryLink makeLink(final Object[] instanceData, final long pidAdjustment, final String tweak) {
+  public IPlanetaryLink makeLink(
+                                 final Object[] instanceData,
+                                 final long pidAdjustment,
+                                 final String tweak) {
     IPlanetaryLink link = new IPlanetaryLink() {
 
       @Override
@@ -367,7 +379,9 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return link;
   }
 
-  public Collection<IPlanetaryColony> assembleColonies(long pidAdjustment, String tweak) {
+  public Collection<IPlanetaryColony> assembleColonies(
+                                                       long pidAdjustment,
+                                                       String tweak) {
     List<IPlanetaryColony> colonies = new ArrayList<IPlanetaryColony>();
     for (int i = 0; i < testData.length; i++) {
       colonies.add(makeColony(testData[i], pidAdjustment, tweak));
@@ -376,7 +390,9 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return colonies;
   }
 
-  public Collection<IPlanetaryPin> assemblePins(long planetID, String tweak) {
+  public Collection<IPlanetaryPin> assemblePins(
+                                                long planetID,
+                                                String tweak) {
     List<IPlanetaryPin> pins = new ArrayList<IPlanetaryPin>();
     for (int i = 0; i < testData.length; i++) {
       long nextPID = (Long) testData[i][0];
@@ -392,7 +408,9 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return pins;
   }
 
-  public Collection<IPlanetaryLink> assembleLinks(long planetID, String tweak) {
+  public Collection<IPlanetaryLink> assembleLinks(
+                                                  long planetID,
+                                                  String tweak) {
     List<IPlanetaryLink> links = new ArrayList<IPlanetaryLink>();
     for (int i = 0; i < testData.length; i++) {
       long nextPID = (Long) testData[i][0];
@@ -408,7 +426,9 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return links;
   }
 
-  public Collection<IPlanetaryRoute> assembleRoutes(long planetID, String tweak) {
+  public Collection<IPlanetaryRoute> assembleRoutes(
+                                                    long planetID,
+                                                    String tweak) {
     List<IPlanetaryRoute> routes = new ArrayList<IPlanetaryRoute>();
     for (int i = 0; i < testData.length; i++) {
       long nextPID = (Long) testData[i][0];
@@ -424,7 +444,11 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return routes;
   }
 
-  public PlanetaryColony makePlanetaryColonyObject(long time, final Object[] instanceData, long pidAdjustment, String tweak) throws Exception {
+  public PlanetaryColony makePlanetaryColonyObject(
+                                                   long time,
+                                                   final Object[] instanceData,
+                                                   long pidAdjustment,
+                                                   String tweak) throws Exception {
     IPlanetaryColony template = makeColony(instanceData, pidAdjustment, tweak);
     long pid = template.getPlanetID();
     PlanetaryColony colony = new PlanetaryColony(
@@ -434,7 +458,12 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return colony;
   }
 
-  public PlanetaryPin makePlanetaryPinObject(long time, final Object[] instanceData, long pid, long pidAdjustment, String tweak) throws Exception {
+  public PlanetaryPin makePlanetaryPinObject(
+                                             long time,
+                                             final Object[] instanceData,
+                                             long pid,
+                                             long pidAdjustment,
+                                             String tweak) throws Exception {
     IPlanetaryPin template = makePin(instanceData, pidAdjustment, tweak);
     PlanetaryPin pin = new PlanetaryPin(
         pid, template.getPinID(), template.getTypeID(), template.getTypeName(), template.getSchematicID(), template.getLastLaunchTime().getTime(),
@@ -444,7 +473,12 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return pin;
   }
 
-  public PlanetaryRoute makePlanetaryRouteObject(long time, final Object[] instanceData, long pid, long pidAdjustment, String tweak) throws Exception {
+  public PlanetaryRoute makePlanetaryRouteObject(
+                                                 long time,
+                                                 final Object[] instanceData,
+                                                 long pid,
+                                                 long pidAdjustment,
+                                                 String tweak) throws Exception {
     IPlanetaryRoute template = makeRoute(instanceData, pidAdjustment, tweak);
     PlanetaryRoute route = new PlanetaryRoute(
         pid, template.getRouteID(), template.getSourcePinID(), template.getDestinationPinID(), template.getContentTypeID(), template.getContentTypeName(),
@@ -453,14 +487,21 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     return route;
   }
 
-  public PlanetaryLink makePlanetaryLinkObject(long time, final Object[] instanceData, long pid, long pidAdjustment, String tweak) throws Exception {
+  public PlanetaryLink makePlanetaryLinkObject(
+                                               long time,
+                                               final Object[] instanceData,
+                                               long pid,
+                                               long pidAdjustment,
+                                               String tweak) throws Exception {
     IPlanetaryLink template = makeLink(instanceData, pidAdjustment, tweak);
     PlanetaryLink link = new PlanetaryLink(pid, template.getSourcePinID(), template.getDestinationPinID(), template.getLinkLevel());
     link.setup(syncAccount, time);
     return link;
   }
 
-  public void setupOkMock(final long pidAdjustment, final String tweak) throws Exception {
+  public void setupOkMock(
+                          final long pidAdjustment,
+                          final String tweak) throws Exception {
     mockServer = EasyMock.createMock(ICharacterAPI.class);
 
     // There should be one request for colonies, followed at least one request for pins, links and routes for each colony.
@@ -482,7 +523,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     }
   }
 
-  public void checkNoColoniesFromTestData(long time, long pidAdjustment, String tweak) throws Exception {
+  public void checkNoColoniesFromTestData(
+                                          long time,
+                                          long pidAdjustment,
+                                          String tweak) throws Exception {
     for (int i = 0; i < testData.length; i++) {
       long pid = (Long) testData[i][0] + pidAdjustment;
       PlanetaryColony check = PlanetaryColony.get(syncAccount, time, pid);
@@ -490,7 +534,7 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
       // Check pins
       Object[][] subData = (Object[][]) testData[i][11];
       for (int j = 0; j < subData.length; j++) {
-        PlanetaryPin.get(syncAccount, time, pid, (Long) subData[j][1]);
+        PlanetaryPin.get(syncAccount, time, pid, (Long) subData[j][1], (Integer) subData[j][10]);
         Assert.assertNull(check);
       }
       // Check links
@@ -508,7 +552,10 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     }
   }
 
-  public void checkColoniesMatchTestData(long time, long pidAdjustment, String tweak) throws Exception {
+  public void checkColoniesMatchTestData(
+                                         long time,
+                                         long pidAdjustment,
+                                         String tweak) throws Exception {
     for (int i = 0; i < testData.length; i++) {
       // Check colony
       long pid = (Long) testData[i][0] + pidAdjustment;
@@ -530,7 +577,7 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
       Object[][] subData = (Object[][]) testData[i][11];
       for (int j = 0; j < subData.length; j++) {
         IPlanetaryPin nextObj = makePin(subData[j], pidAdjustment, tweak);
-        PlanetaryPin checkObj = PlanetaryPin.get(syncAccount, time, pid, nextObj.getPinID());
+        PlanetaryPin checkObj = PlanetaryPin.get(syncAccount, time, pid, nextObj.getPinID(), nextObj.getContentTypeID());
         Assert.assertNotNull(checkObj);
         Assert.assertEquals(pid, checkObj.getPlanetID());
         Assert.assertEquals(nextObj.getPinID(), checkObj.getPinID());

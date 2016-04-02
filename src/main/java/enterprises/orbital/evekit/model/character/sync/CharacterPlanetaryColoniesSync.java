@@ -121,7 +121,7 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
         // Special case. This is an existing PlanetaryPin to be EOL
         super.commit(time, tracker, container, accountKey, api);
       } else {
-        PlanetaryPin existing = PlanetaryPin.get(accountKey, time, api.getPlanetID(), api.getPinID());
+        PlanetaryPin existing = PlanetaryPin.get(accountKey, time, api.getPlanetID(), api.getPinID(), api.getContentTypeID());
         if (existing != null) {
           if (!existing.equivalent(api)) {
             // Evolve
@@ -300,14 +300,15 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
                   ModelUtil.safeConvertDate(nextPin.getLastLaunchTime()), nextPin.getCycleTime(), nextPin.getQuantityPerCycle(),
                   ModelUtil.safeConvertDate(nextPin.getInstallTime()), ModelUtil.safeConvertDate(nextPin.getExpiryTime()), nextPin.getContentTypeID(),
                   nextPin.getContentTypeName(), nextPin.getContentQuantity(), nextPin.getLongitude(), nextPin.getLatitude());
-              usedPD.add(new NaryKey(pid, newP.getPinID()));
+              usedPD.add(new NaryKey(pid, newP.getPinID(), newP.getContentTypeID()));
               updateList.add(newP);
             }
           }
           for (PlanetaryPin check : PlanetaryPin.getAllPlanetaryPins(syncAccount, time)) {
             long planetID = check.getPlanetID();
             long pinID = check.getPinID();
-            if (!usedPD.contains(new NaryKey(planetID, pinID))) {
+            int contentTypeID = check.getContentTypeID();
+            if (!usedPD.contains(new NaryKey(planetID, pinID, contentTypeID))) {
               check.evolve(null, time);
               updateList.add(check);
             }
