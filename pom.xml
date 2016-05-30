@@ -7,14 +7,14 @@
   </parent>
   <groupId>enterprises.orbital.evekit</groupId>
   <artifactId>sync</artifactId>
-  <version>1.0.0</version>
+  <version>1.0.2</version>
   <name>EveKit Sync</name>
   <description>Handles periodic synchronization of account data</description>
   <url>https://github.com/OrbitalEnterprises/evekit-sync</url>
   <scm>
   	<url>https://github.com/OrbitalEnterprises/evekit-sync</url>
   	<connection>scm:git:https://github.com/OrbitalEnterprises/evekit-sync.git</connection>
-  	<tag>rel_1_0_0</tag>
+  	<tag>rel_1_0_2</tag>
   	<developerConnection>scm:git:git@github.com:OrbitalEnterprises/evekit-sync.git</developerConnection>
   </scm>
   
@@ -22,12 +22,12 @@
   	<dependency>
   		<groupId>enterprises.orbital.evekit</groupId>
   		<artifactId>model</artifactId>
-  		<version>1.0.0</version>
+  		<version>1.0.2</version>
   	</dependency>
   	<dependency>
   		<groupId>enterprises.orbital</groupId>
   		<artifactId>eve-xml-api</artifactId>
-  		<version>1.0.1</version>
+  		<version>1.0.2</version>
   	</dependency>
     <dependency>
 	    <groupId>org.hsqldb</groupId>

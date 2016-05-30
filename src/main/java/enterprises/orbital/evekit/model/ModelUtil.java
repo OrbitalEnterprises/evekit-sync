@@ -1,7 +1,9 @@
 package enterprises.orbital.evekit.model;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import enterprises.orbital.base.OrbitalProperties;
 
@@ -10,7 +12,15 @@ import enterprises.orbital.base.OrbitalProperties;
  */
 public class ModelUtil {
 
-  private static final SimpleDateFormat dateformatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
+  private static final ThreadLocal<DateFormat> dateFormat = OrbitalProperties.dateFormatFactory(new OrbitalProperties.DateFormatGenerator() {
+
+    @Override
+    public DateFormat generate() {
+      SimpleDateFormat result = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
+      result.setTimeZone(TimeZone.getTimeZone("UTC"));
+      return result;
+    }
+  });
 
   public static boolean isExpired(
                                   long cachedUntil) {
@@ -30,7 +40,7 @@ public class ModelUtil {
 
   public static String formatDate(
                                   Date asDate) {
-    return dateformatter.format(asDate);
+    return dateFormat.get().format(asDate);
   }
 
   public static String formatDate(
