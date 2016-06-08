@@ -39,6 +39,7 @@ import enterprises.orbital.evexmlapi.chr.IMailList;
 import enterprises.orbital.evexmlapi.chr.IMailMessage;
 import enterprises.orbital.evexmlapi.chr.INotification;
 import enterprises.orbital.evexmlapi.chr.INotificationText;
+import enterprises.orbital.evexmlapi.chr.IPartialCharacterSheet;
 import enterprises.orbital.evexmlapi.chr.IPlanetaryColony;
 import enterprises.orbital.evexmlapi.chr.IPlanetaryLink;
 import enterprises.orbital.evexmlapi.chr.IPlanetaryPin;
@@ -46,6 +47,7 @@ import enterprises.orbital.evexmlapi.chr.IPlanetaryRoute;
 import enterprises.orbital.evexmlapi.chr.IResearchAgent;
 import enterprises.orbital.evexmlapi.chr.ISkillInQueue;
 import enterprises.orbital.evexmlapi.chr.ISkillInTraining;
+import enterprises.orbital.evexmlapi.chr.ISkillInfo;
 import enterprises.orbital.evexmlapi.chr.IUpcomingCalendarEvent;
 import enterprises.orbital.evexmlapi.shared.IAccountBalance;
 import enterprises.orbital.evexmlapi.shared.IAsset;
@@ -124,7 +126,12 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public CharacterNotification makeNotificationObject(long time, final Object[] instanceData, final String tweak, boolean retrieved) throws Exception {
+  public CharacterNotification makeNotificationObject(
+                                                      long time,
+                                                      final Object[] instanceData,
+                                                      final String tweak,
+                                                      boolean retrieved)
+    throws Exception {
     long notificationID = (Long) instanceData[0];
     CharacterNotification note = new CharacterNotification(
         notificationID, (Integer) instanceData[1], (Long) instanceData[2], (Long) instanceData[3], (Boolean) instanceData[4]);
@@ -132,14 +139,21 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     return note;
   }
 
-  public CharacterNotificationBody makeNotificationBodyObject(long time, final Object[] instanceData, final String tweak, boolean retrieved) throws Exception {
+  public CharacterNotificationBody makeNotificationBodyObject(
+                                                              long time,
+                                                              final Object[] instanceData,
+                                                              final String tweak,
+                                                              boolean retrieved)
+    throws Exception {
     long notificationID = (Long) instanceData[0];
     CharacterNotificationBody note = new CharacterNotificationBody(notificationID, retrieved, (String) instanceData[5] + tweak, (Boolean) instanceData[7]);
     note.setup(syncAccount, time);
     return note;
   }
 
-  public INotificationText makeNotificationText(final Object[] instanceData, final String tweak) {
+  public INotificationText makeNotificationText(
+                                                final Object[] instanceData,
+                                                final String tweak) {
     return new INotificationText() {
 
       @Override
@@ -159,7 +173,10 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     };
   }
 
-  public void compareNoteWithTestData(CharacterNotification note, Object[] instanceData, String tweak) {
+  public void compareNoteWithTestData(
+                                      CharacterNotification note,
+                                      Object[] instanceData,
+                                      String tweak) {
     Assert.assertEquals(note.getNotificationID(), (long) ((Long) instanceData[0]));
     Assert.assertEquals(note.getTypeID(), (int) ((Integer) instanceData[1]));
     Assert.assertEquals(note.getSenderID(), (long) ((Long) instanceData[2]));
@@ -167,14 +184,19 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     Assert.assertEquals(note.isMsgRead(), (boolean) ((Boolean) instanceData[4]));
   }
 
-  public void compareBodyWithTestData(CharacterNotificationBody note, Object[] instanceData, String tweak) {
+  public void compareBodyWithTestData(
+                                      CharacterNotificationBody note,
+                                      Object[] instanceData,
+                                      String tweak) {
     Assert.assertEquals(note.getNotificationID(), (long) ((Long) instanceData[0]));
     Assert.assertEquals(note.getText(), (String) instanceData[5] + tweak);
     Assert.assertEquals(note.isRetrieved(), (boolean) ((Boolean) instanceData[6]));
     Assert.assertEquals(note.isMissing(), (boolean) ((Boolean) instanceData[7]));
   }
 
-  public void setupOkMock(String tweak) throws Exception {
+  public void setupOkMock(
+                          String tweak)
+    throws Exception {
 
     mockServer = EasyMock.createMock(ICharacterAPI.class);
     final Map<Long, INotificationText> bodies = new HashMap<Long, INotificationText>();
@@ -193,7 +215,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<INotificationText> requestNotificationTexts(long... notificationID) throws IOException {
+      public Collection<INotificationText> requestNotificationTexts(
+                                                                    long... notificationID)
+        throws IOException {
         List<INotificationText> result = new ArrayList<INotificationText>();
         for (int i = 0; i < notificationID.length; i++) {
           Assert.assertTrue(bodies.containsKey(notificationID[i]));
@@ -204,7 +228,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
 
       // The rest of the methods are ignored.
       @Override
-      public Collection<IMailBody> requestMailBodies(long... messageID) throws IOException {
+      public Collection<IMailBody> requestMailBodies(
+                                                     long... messageID)
+        throws IOException {
         return null;
       }
 
@@ -249,12 +275,19 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<ICalendarEventAttendee> requestCalendarEventAttendees(int... eventID) throws IOException {
+      public Collection<ICalendarEventAttendee> requestCalendarEventAttendees(
+                                                                              int... eventID)
+        throws IOException {
         return null;
       }
 
       @Override
       public ICharacterSheet requestCharacterSheet() throws IOException {
+        return null;
+      }
+
+      @Override
+      public IPartialCharacterSheet requestClones() throws IOException {
         return null;
       }
 
@@ -284,7 +317,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IKill> requestKillMails(long beforeKillID) throws IOException {
+      public Collection<IKill> requestKillMails(
+                                                long beforeKillID)
+        throws IOException {
         return null;
       }
 
@@ -329,6 +364,11 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
+      public ISkillInfo requestSkills() throws IOException {
+        return null;
+      }
+
+      @Override
       public IStandingSet requestStandings() throws IOException {
         return null;
       }
@@ -344,7 +384,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IWalletJournalEntry> requestWalletJournalEntries(long beforeRefID) throws IOException {
+      public Collection<IWalletJournalEntry> requestWalletJournalEntries(
+                                                                         long beforeRefID)
+        throws IOException {
         return null;
       }
 
@@ -354,7 +396,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IWalletTransaction> requestWalletTransactions(long beforeTransID) throws IOException {
+      public Collection<IWalletTransaction> requestWalletTransactions(
+                                                                      long beforeTransID)
+        throws IOException {
         return null;
       }
 
@@ -369,7 +413,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IContractItem> requestContractItems(long contractID) throws IOException {
+      public Collection<IContractItem> requestContractItems(
+                                                            long contractID)
+        throws IOException {
         return null;
       }
 
@@ -392,22 +438,30 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IPlanetaryLink> requestPlanetaryLinks(long planetID) throws IOException {
+      public Collection<IPlanetaryLink> requestPlanetaryLinks(
+                                                              long planetID)
+        throws IOException {
         return null;
       }
 
       @Override
-      public Collection<IPlanetaryPin> requestPlanetaryPins(long planetID) throws IOException {
+      public Collection<IPlanetaryPin> requestPlanetaryPins(
+                                                            long planetID)
+        throws IOException {
         return null;
       }
 
       @Override
-      public Collection<IPlanetaryRoute> requestPlanetaryRoutes(long planetID) throws IOException {
+      public Collection<IPlanetaryRoute> requestPlanetaryRoutes(
+                                                                long planetID)
+        throws IOException {
         return null;
       }
 
       @Override
-      public IMarketOrder requestMarketOrder(long orderID) throws IOException {
+      public IMarketOrder requestMarketOrder(
+                                             long orderID)
+        throws IOException {
         return null;
       }
 
@@ -422,7 +476,9 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<ILocation> requestLocations(long... itemID) throws IOException {
+      public Collection<ILocation> requestLocations(
+                                                    long... itemID)
+        throws IOException {
         return null;
       }
 

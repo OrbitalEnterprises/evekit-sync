@@ -40,10 +40,12 @@ import enterprises.orbital.evekit.model.character.sync.CharacterResearchAgentSyn
 import enterprises.orbital.evekit.model.character.sync.CharacterSheetSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterSkillInQueueSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterSkillInTrainingSync;
+import enterprises.orbital.evekit.model.character.sync.CharacterSkillsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterStandingSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterUpcomingCalendarEventsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterWalletJournalSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterWalletTransactionSync;
+import enterprises.orbital.evekit.model.character.sync.PartialCharacterSheetSync;
 import enterprises.orbital.evexmlapi.IEveXmlApi;
 import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
 import enterprises.orbital.evexmlapi.act.IAccountAPI;
@@ -73,7 +75,8 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
    */
   @Override
   public void synchronize(
-                          SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException {
+                          SynchronizedEveAccount syncAccount)
+    throws IOException, URISyntaxException {
     log.fine("Starting sync: " + syncAccount);
     // Steps:
     // 1) Verify the API key is not expired. Synchronization is skipped if the key is expired.
@@ -253,6 +256,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
                              ICharacterAPI charRequest,
                              IAccountAPI acctRequest) {
         return CharacterSheetSync.syncCharacterSheet(syncTime, syncAccount, syncUtil, charRequest);
+      }
+    });
+    supportedFeatures.put(SynchronizationState.SYNC_CHAR_PARTIALCHARACTERSHEET, new CharStateHandler() {
+      @Override
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
+        return PartialCharacterSheetSync.exclude(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
+        return PartialCharacterSheetSync.notAllowed(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             SynchronizedEveAccount syncAccount,
+                             SynchronizerUtil syncUtil,
+                             ICharacterAPI charRequest,
+                             IAccountAPI acctRequest) {
+        return PartialCharacterSheetSync.syncCharacterSheet(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_CHATCHANNELS, new CharStateHandler() {
@@ -878,6 +906,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
                              ICharacterAPI charRequest,
                              IAccountAPI acctRequest) {
         return CharacterSkillInQueueSync.syncSkillQueue(syncTime, syncAccount, syncUtil, charRequest);
+      }
+    });
+    supportedFeatures.put(SynchronizationState.SYNC_CHAR_SKILLS, new CharStateHandler() {
+      @Override
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
+        return CharacterSkillsSync.exclude(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
+        return CharacterSkillsSync.notAllowed(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             SynchronizedEveAccount syncAccount,
+                             SynchronizerUtil syncUtil,
+                             ICharacterAPI charRequest,
+                             IAccountAPI acctRequest) {
+        return CharacterSkillsSync.syncCharacterSheet(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_STANDINGS, new CharStateHandler() {

@@ -1,7 +1,6 @@
 package enterprises.orbital.evekit.model.character.sync;
 
 import java.io.IOException;
-import java.math.RoundingMode;
 import java.util.Iterator;
 import java.util.List;
 import java.util.logging.Logger;
@@ -15,38 +14,31 @@ import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
 import enterprises.orbital.evekit.model.character.Capsuleer;
-import enterprises.orbital.evekit.model.character.CharacterRole;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
-import enterprises.orbital.evekit.model.character.CharacterSheetBalance;
 import enterprises.orbital.evekit.model.character.CharacterSheetClone;
 import enterprises.orbital.evekit.model.character.CharacterSheetJump;
-import enterprises.orbital.evekit.model.character.CharacterSkill;
-import enterprises.orbital.evekit.model.character.CharacterTitle;
 import enterprises.orbital.evekit.model.character.Implant;
 import enterprises.orbital.evekit.model.character.JumpClone;
 import enterprises.orbital.evekit.model.character.JumpCloneImplant;
 import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
-import enterprises.orbital.evexmlapi.chr.ICharacterRole;
-import enterprises.orbital.evexmlapi.chr.ICharacterSheet;
-import enterprises.orbital.evexmlapi.chr.ICharacterTitle;
 import enterprises.orbital.evexmlapi.chr.IImplant;
 import enterprises.orbital.evexmlapi.chr.IJumpClone;
 import enterprises.orbital.evexmlapi.chr.IJumpCloneImplant;
-import enterprises.orbital.evexmlapi.chr.ISkill;
+import enterprises.orbital.evexmlapi.chr.IPartialCharacterSheet;
 
-public class CharacterSheetSync extends AbstractCharacterSync {
-  protected static final Logger log = Logger.getLogger(CharacterSheetSync.class.getName());
+public class PartialCharacterSheetSync extends AbstractCharacterSync {
+  protected static final Logger log = Logger.getLogger(PartialCharacterSheetSync.class.getName());
 
   @Override
   public boolean isRefreshed(
                              CapsuleerSyncTracker tracker) {
-    return tracker.getCharacterSheetStatus() != SyncTracker.SyncState.NOT_PROCESSED;
+    return tracker.getPartialCharacterSheetStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
   public long getExpiryTime(
                             Capsuleer container) {
-    return container.getCharacterSheetExpiry();
+    return container.getPartialCharacterSheetExpiry();
   }
 
   @Override
@@ -54,12 +46,8 @@ public class CharacterSheetSync extends AbstractCharacterSync {
                            CapsuleerSyncTracker tracker,
                            SyncState status,
                            String detail) {
-    tracker.setCharacterSheetStatus(status);
-    tracker.setCharacterSheetDetail(detail);
     tracker.setPartialCharacterSheetStatus(status);
     tracker.setPartialCharacterSheetDetail(detail);
-    tracker.setSkillsStatus(status);
-    tracker.setSkillsDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
@@ -67,9 +55,7 @@ public class CharacterSheetSync extends AbstractCharacterSync {
   public void updateExpiry(
                            Capsuleer container,
                            long expiry) {
-    container.setCharacterSheetExpiry(expiry);
     container.setPartialCharacterSheetExpiry(expiry);
-    container.setSkillsExpiry(expiry);
     CachedData.updateData(container);
   }
 
@@ -82,8 +68,6 @@ public class CharacterSheetSync extends AbstractCharacterSync {
                         CachedData item) {
     // Things which can be EOL:
     //
-    // CharacterRole
-    // CharacerTitle
     // Implant
     // JumpClone
     // JumpCloneImplant
@@ -153,85 +137,16 @@ public class CharacterSheetSync extends AbstractCharacterSync {
           super.commit(time, tracker, container, accountKey, api);
         }
       }
-    } else if (item instanceof CharacterSkill) {
-      CharacterSkill api = (CharacterSkill) item;
-      CharacterSkill existing = CharacterSkill.get(accountKey, time, api.getTypeID());
-      if (existing != null) {
-        if (!existing.equivalent(api)) {
-          // Evolve
-          existing.evolve(api, time);
-          super.commit(time, tracker, container, accountKey, existing);
-          super.commit(time, tracker, container, accountKey, api);
-        }
-      } else {
-        // New entity
-        api.setup(accountKey, time);
-        super.commit(time, tracker, container, accountKey, api);
-      }
-    } else if (item instanceof CharacterRole) {
-      CharacterRole api = (CharacterRole) item;
-
-      if (api.getLifeStart() != 0) {
-        // Special case. This is an existing CharacterRole to be EOL
-        super.commit(time, tracker, container, accountKey, api);
-      } else {
-        CharacterRole existing = CharacterRole.get(accountKey, time, api.getRoleCategory(), api.getRoleID());
-        if (existing != null) {
-          if (!existing.equivalent(api)) {
-            // Evolve
-            existing.evolve(api, time);
-            super.commit(time, tracker, container, accountKey, existing);
-            super.commit(time, tracker, container, accountKey, api);
-          }
-        } else {
-          // New entity
-          api.setup(accountKey, time);
-          super.commit(time, tracker, container, accountKey, api);
-        }
-      }
-    } else if (item instanceof CharacterTitle) {
-      CharacterTitle api = (CharacterTitle) item;
-
-      if (api.getLifeStart() != 0) {
-        // Special case. This is an existing CharacterTitle to be EOL
-        super.commit(time, tracker, container, accountKey, api);
-      } else {
-        CharacterTitle existing = CharacterTitle.get(accountKey, time, api.getTitleID());
-        if (existing != null) {
-          if (!existing.equivalent(api)) {
-            // Evolve
-            existing.evolve(api, time);
-            super.commit(time, tracker, container, accountKey, existing);
-            super.commit(time, tracker, container, accountKey, api);
-          }
-        } else {
-          // New entity
-          api.setup(accountKey, time);
-          super.commit(time, tracker, container, accountKey, api);
-        }
-      }
     } else if (item instanceof CharacterSheet) {
       CharacterSheet api = (CharacterSheet) item;
       CharacterSheet existing = CharacterSheet.get(accountKey, time);
       if (existing != null) {
-        if (!existing.equivalent(api)) {
+        // Slightly more complicate check here since not all fields can change in a Clones request
+        if (!existing.equivalentClonesCheck(api)) {
           // Evolve
           existing.evolve(api, time);
-          super.commit(time, tracker, container, accountKey, existing);
-          super.commit(time, tracker, container, accountKey, api);
-        }
-      } else {
-        // New entity
-        api.setup(accountKey, time);
-        super.commit(time, tracker, container, accountKey, api);
-      }
-    } else if (item instanceof CharacterSheetBalance) {
-      CharacterSheetBalance api = (CharacterSheetBalance) item;
-      CharacterSheetBalance existing = CharacterSheetBalance.get(accountKey, time);
-      if (existing != null) {
-        if (!existing.equivalent(api)) {
-          // Evolve
-          existing.evolve(api, time);
+          // Copy over the non-affected settings to the new sheet
+          api.copyForClones(existing);
           super.commit(time, tracker, container, accountKey, existing);
           super.commit(time, tracker, container, accountKey, api);
         }
@@ -282,7 +197,7 @@ public class CharacterSheetSync extends AbstractCharacterSync {
   protected Object getServerData(
                                  ICharacterAPI charRequest)
     throws IOException {
-    return charRequest.requestCharacterSheet();
+    return charRequest.requestClones();
   }
 
   @Override
@@ -297,21 +212,14 @@ public class CharacterSheetSync extends AbstractCharacterSync {
     // Multiple items we need to process here:
     //
     // CharacterSheet
-    // CharacterSheetBalance
     // CharacterSheetJump
     // CharacterSheetClone
-    // CharacterSkill
-    // CharacterRole
-    // CharacterTitle
     // Implant
     // JumpClone
     // JumpCloneImplant
 
     // Update character sheet components
-    ICharacterSheet charSheet = (ICharacterSheet) data;
-
-    CharacterSheetBalance balance = new CharacterSheetBalance(charSheet.getBalance().setScale(2, RoundingMode.HALF_UP));
-    updates.add(balance);
+    IPartialCharacterSheet charSheet = (IPartialCharacterSheet) data;
 
     CharacterSheetClone clone = new CharacterSheetClone(ModelUtil.safeConvertDate(charSheet.getCloneJumpDate()));
     updates.add(clone);
@@ -322,65 +230,11 @@ public class CharacterSheetSync extends AbstractCharacterSync {
     updates.add(jump);
 
     CharacterSheet sheet = new CharacterSheet(
-        charSheet.getCharacterID(), charSheet.getName(), charSheet.getCorporationID(), charSheet.getCorporationName(), charSheet.getRace(),
-        ModelUtil.safeConvertDate(charSheet.getDoB()), charSheet.getBloodlineID(), charSheet.getBloodline(), charSheet.getAncestryID(), charSheet.getAncestry(),
-        charSheet.getGender(), charSheet.getAllianceName(), charSheet.getAllianceID(), charSheet.getFactionName(), charSheet.getFactionID(),
-        charSheet.getIntelligence(), charSheet.getMemory(), charSheet.getCharisma(), charSheet.getPerception(), charSheet.getWillpower(),
-        charSheet.getHomeStationID(), ModelUtil.safeConvertDate(charSheet.getLastRespecDate()), ModelUtil.safeConvertDate(charSheet.getLastTimedRespec()),
-        charSheet.getFreeRespecs(), charSheet.getFreeSkillPoints(), ModelUtil.safeConvertDate(charSheet.getRemoteStationDate()));
+        0, "", 0, "", charSheet.getRace(), ModelUtil.safeConvertDate(charSheet.getDoB()), charSheet.getBloodlineID(), charSheet.getBloodline(),
+        charSheet.getAncestryID(), charSheet.getAncestry(), charSheet.getGender(), "", 0, "", 0, charSheet.getIntelligence(), charSheet.getMemory(),
+        charSheet.getCharisma(), charSheet.getPerception(), charSheet.getWillpower(), 0, ModelUtil.safeConvertDate(charSheet.getLastRespecDate()),
+        ModelUtil.safeConvertDate(charSheet.getLastTimedRespec()), charSheet.getFreeRespecs(), 0, ModelUtil.safeConvertDate(charSheet.getRemoteStationDate()));
     updates.add(sheet);
-
-    // Update skill set. We only need to add/update here.
-    for (ISkill skill : charSheet.getSkills()) {
-      CharacterSkill newSkill = new CharacterSkill(skill.getTypeID(), skill.getLevel(), skill.getSkillpoints(), skill.isPublished());
-      updates.add(newSkill);
-    }
-
-    // Update character roles. Roles which no longer exist are EOL.
-    List<CharacterRole> existingRoles = CharacterRole.getAllRoles(syncAccount, time);
-    for (ICharacterRole next : charSheet.getRoles()) {
-      // Add role for update check
-      CharacterRole role = new CharacterRole(next.getRoleCategory().name(), next.getRoleID(), next.getRoleName());
-      updates.add(role);
-
-      // Remove this role from our list if we've already seen it.
-      for (Iterator<CharacterRole> it = existingRoles.iterator(); it.hasNext();) {
-        CharacterRole check = it.next();
-        long roleID = check.getRoleID();
-        String roleCategory = check.getRoleCategory();
-        if (roleID == role.getRoleID() && roleCategory.equals(role.getRoleCategory())) {
-          it.remove();
-          break;
-        }
-      }
-    }
-    // Anything left in existing roles should be EOL.
-    for (CharacterRole next : existingRoles) {
-      next.evolve(null, time);
-      updates.add(next);
-    }
-
-    // Update character title. Titles which no longer exist are EOL.
-    List<CharacterTitle> existingTitles = CharacterTitle.getAllTitles(syncAccount, time);
-    for (ICharacterTitle next : charSheet.getTitles()) {
-      // Add title for update check
-      CharacterTitle title = new CharacterTitle(next.getTitleID(), next.getTitleName());
-      updates.add(title);
-
-      // Remove this title from our list if we've already seen it
-      for (Iterator<CharacterTitle> it = existingTitles.iterator(); it.hasNext();) {
-        CharacterTitle check = it.next();
-        if (check.getTitleID() == title.getTitleID()) {
-          it.remove();
-          break;
-        }
-      }
-    }
-    // Anything left in existing titles should be EOL.
-    for (CharacterTitle next : existingTitles) {
-      next.evolve(null, time);
-      updates.add(next);
-    }
 
     // Update implants. Implants which no longer exist are deleted.
     List<Implant> implants = Implant.getAll(syncAccount, time);
@@ -453,26 +307,26 @@ public class CharacterSheetSync extends AbstractCharacterSync {
     return charRequest.getCachedUntil().getTime();
   }
 
-  private static final CharacterSheetSync syncher = new CharacterSheetSync();
+  private static final PartialCharacterSheetSync syncher = new PartialCharacterSheetSync();
 
   public static SyncStatus syncCharacterSheet(
                                               long time,
                                               SynchronizedEveAccount syncAccount,
                                               SynchronizerUtil syncUtil,
                                               ICharacterAPI charRequest) {
-    return syncher.syncData(time, syncAccount, syncUtil, charRequest, "CharacterSheet");
+    return syncher.syncData(time, syncAccount, syncUtil, charRequest, "PartialCharacterSheet");
   }
 
   public static SyncStatus exclude(
                                    SynchronizedEveAccount syncAccount,
                                    SynchronizerUtil syncUtil) {
-    return syncher.excludeState(syncAccount, syncUtil, "CharacterSheet", SyncTracker.SyncState.SYNC_ERROR);
+    return syncher.excludeState(syncAccount, syncUtil, "PartialCharacterSheet", SyncTracker.SyncState.SYNC_ERROR);
   }
 
   public static SyncStatus notAllowed(
                                       SynchronizedEveAccount syncAccount,
                                       SynchronizerUtil syncUtil) {
-    return syncher.excludeState(syncAccount, syncUtil, "CharacterSheet", SyncTracker.SyncState.NOT_ALLOWED);
+    return syncher.excludeState(syncAccount, syncUtil, "PartialCharacterSheet", SyncTracker.SyncState.NOT_ALLOWED);
   }
 
 }

@@ -1,14 +1,9 @@
 package enterprises.orbital.evekit.model.character.sync;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.easymock.EasyMock;
 import org.junit.Assert;
@@ -26,24 +21,19 @@ import enterprises.orbital.evekit.model.SynchronizerUtil;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
 import enterprises.orbital.evekit.model.character.Capsuleer;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
-import enterprises.orbital.evekit.model.character.CharacterSheetBalance;
 import enterprises.orbital.evekit.model.character.CharacterSheetClone;
 import enterprises.orbital.evekit.model.character.CharacterSheetJump;
-import enterprises.orbital.evekit.model.character.CharacterSkill;
 import enterprises.orbital.evekit.model.character.Implant;
 import enterprises.orbital.evekit.model.character.JumpClone;
 import enterprises.orbital.evekit.model.character.JumpCloneImplant;
 import enterprises.orbital.evexmlapi.chr.CharacterRoleCategory;
 import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
-import enterprises.orbital.evexmlapi.chr.ICharacterRole;
-import enterprises.orbital.evexmlapi.chr.ICharacterSheet;
-import enterprises.orbital.evexmlapi.chr.ICharacterTitle;
 import enterprises.orbital.evexmlapi.chr.IImplant;
 import enterprises.orbital.evexmlapi.chr.IJumpClone;
 import enterprises.orbital.evexmlapi.chr.IJumpCloneImplant;
-import enterprises.orbital.evexmlapi.chr.ISkill;
+import enterprises.orbital.evexmlapi.chr.IPartialCharacterSheet;
 
-public class CharacterSheetSyncTest extends SyncTestBase {
+public class PartialCharacterSheetSyncTest extends SyncTestBase {
 
   // Local mocks and other objects
   long                   testDate;
@@ -196,11 +186,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public void compareCharacterSheetBalanceWithTestData(
-                                                       CharacterSheetBalance sheet) {
-    Assert.assertEquals(sheet.getBalance().doubleValue(), ((Double) testData[0][22]), 0.1);
-  }
-
   public void compareCharacterSheetJumpWithTestData(
                                                     CharacterSheetJump sheet) {
     Assert.assertEquals(sheet.getJumpActivation(), (long) ((Long) testData[0][33]));
@@ -214,9 +199,10 @@ public class CharacterSheetSyncTest extends SyncTestBase {
   }
 
   public void compareCharacterSheetWithTestData(
-                                                CharacterSheet sheet) {
-    Assert.assertEquals(sheet.getCorporationID(), (long) ((Long) testData[0][0]));
-    Assert.assertEquals(sheet.getCorporationName(), testData[0][1]);
+                                                CharacterSheet sheet,
+                                                boolean unchanged) {
+    Assert.assertEquals(sheet.getCorporationID(), unchanged ? (long) ((Long) testData[0][0]) : 0);
+    Assert.assertEquals(sheet.getCorporationName(), unchanged ? testData[0][1] : "");
     Assert.assertEquals(sheet.getRace(), testData[0][2]);
     Assert.assertEquals(sheet.getDoB(), (long) ((Long) testData[0][3]));
     Assert.assertEquals(sheet.getBloodlineID(), (int) ((Integer) testData[0][39]));
@@ -224,32 +210,23 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     Assert.assertEquals(sheet.getAncestryID(), (int) ((Integer) testData[0][40]));
     Assert.assertEquals(sheet.getAncestry(), testData[0][5]);
     Assert.assertEquals(sheet.getGender(), testData[0][6]);
-    Assert.assertEquals(sheet.getAllianceName(), testData[0][7]);
-    Assert.assertEquals(sheet.getAllianceID(), (long) ((Long) testData[0][8]));
+    Assert.assertEquals(sheet.getAllianceName(), unchanged ? testData[0][7] : "");
+    Assert.assertEquals(sheet.getAllianceID(), unchanged ? (long) ((Long) testData[0][8]) : 0);
     Assert.assertEquals(sheet.getIntelligence(), (int) ((Integer) testData[0][11]));
     Assert.assertEquals(sheet.getMemory(), (int) ((Integer) testData[0][12]));
     Assert.assertEquals(sheet.getCharisma(), (int) ((Integer) testData[0][13]));
     Assert.assertEquals(sheet.getPerception(), (int) ((Integer) testData[0][14]));
     Assert.assertEquals(sheet.getWillpower(), (int) ((Integer) testData[0][15]));
-    Assert.assertEquals(sheet.getName(), testData[0][19]);
-    Assert.assertEquals(sheet.getCharacterID(), (long) ((Long) testData[0][20]));
-    Assert.assertEquals(sheet.getFactionName(), testData[0][23]);
-    Assert.assertEquals(sheet.getFactionID(), (long) ((Long) testData[0][24]));
-    Assert.assertEquals(sheet.getHomeStationID(), (long) ((Long) testData[0][25]));
+    Assert.assertEquals(sheet.getName(), unchanged ? testData[0][19] : "");
+    Assert.assertEquals(sheet.getCharacterID(), unchanged ? (long) ((Long) testData[0][20]) : 0);
+    Assert.assertEquals(sheet.getFactionName(), unchanged ? testData[0][23] : "");
+    Assert.assertEquals(sheet.getFactionID(), unchanged ? (long) ((Long) testData[0][24]) : 0);
+    Assert.assertEquals(sheet.getHomeStationID(), unchanged ? (long) ((Long) testData[0][25]) : 0);
     Assert.assertEquals(sheet.getLastRespecDate(), (long) ((Long) testData[0][27]));
     Assert.assertEquals(sheet.getLastTimedRespec(), (long) ((Long) testData[0][28]));
     Assert.assertEquals(sheet.getFreeRespecs(), (int) ((Integer) testData[0][29]));
-    Assert.assertEquals(sheet.getFreeSkillPoints(), (int) ((Integer) testData[0][30]));
+    Assert.assertEquals(sheet.getFreeSkillPoints(), unchanged ? (int) ((Integer) testData[0][30]) : 0);
     Assert.assertEquals(sheet.getRemoteStationDate(), (long) ((Long) testData[0][32]));
-  }
-
-  public CharacterSheetBalance makeCharacterSheetBalanceObject(
-                                                               long time,
-                                                               Object[] instanceData)
-    throws Exception {
-    CharacterSheetBalance sheet = new CharacterSheetBalance((new BigDecimal((Double) testData[0][22])).setScale(2, RoundingMode.HALF_UP));
-    sheet.setup(syncAccount, time);
-    return sheet;
   }
 
   public CharacterSheetJump makeCharacterSheetJumpObject(
@@ -282,35 +259,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
         (Long) testData[0][27], (Long) testData[0][28], (Integer) testData[0][29], (Integer) testData[0][30], (Long) testData[0][32]);
     sheet.setup(syncAccount, time);
     return sheet;
-  }
-
-  public void compareSkillWithTestData(
-                                       Collection<CharacterSkill> skills) {
-    Object[][] skillData = (Object[][]) testData[0][17];
-    Assert.assertEquals(skills.size(), skillData.length);
-    for (CharacterSkill next : skills) {
-      boolean found = false;
-      int typeID = next.getTypeID();
-      for (int i = 0; i < skillData.length; i++) {
-        if (typeID == (Integer) skillData[i][2]) {
-          found = true;
-          Assert.assertEquals(next.isPublished(), (boolean) ((Boolean) skillData[i][3]));
-          Assert.assertEquals(next.getSkillpoints(), (int) ((Integer) skillData[i][1]));
-          Assert.assertEquals(next.getLevel(), (int) ((Integer) skillData[i][0]));
-          break;
-        }
-      }
-      Assert.assertTrue(found);
-    }
-  }
-
-  public CharacterSkill makeSkillObject(
-                                        long time,
-                                        Object[] instanceData)
-    throws Exception {
-    CharacterSkill skill = new CharacterSkill((Integer) instanceData[2], (Integer) instanceData[0], (Integer) instanceData[1], (Boolean) instanceData[3]);
-    skill.setup(syncAccount, time);
-    return skill;
   }
 
   public void compareImplantWithTestData(
@@ -400,92 +348,11 @@ public class CharacterSheetSyncTest extends SyncTestBase {
   public void setupOkMock() throws Exception {
     mockServer = EasyMock.createMock(ICharacterAPI.class);
     final Object[] instanceData = testData[0];
-    ICharacterSheet sheet = new ICharacterSheet() {
+    IPartialCharacterSheet sheet = new IPartialCharacterSheet() {
 
       @Override
       public int getWillpower() {
         return (Integer) instanceData[15];
-      }
-
-      @Override
-      public Collection<ICharacterTitle> getTitles() {
-        final Object[][] titleData = (Object[][]) instanceData[16];
-        List<ICharacterTitle> titles = new ArrayList<ICharacterTitle>();
-        for (int i = 0; i < titleData.length; i++) {
-          final int j = i;
-          titles.add(new ICharacterTitle() {
-
-            @Override
-            public long getTitleID() {
-              return (Long) titleData[j][0];
-            }
-
-            @Override
-            public String getTitleName() {
-              return (String) titleData[j][1];
-            }
-          });
-        }
-        return titles;
-      }
-
-      @Override
-      public Set<ISkill> getSkills() {
-        final Object[][] skillData = (Object[][]) instanceData[17];
-        Set<ISkill> skills = new HashSet<ISkill>();
-        for (int i = 0; i < skillData.length; i++) {
-          final int j = i;
-          skills.add(new ISkill() {
-
-            @Override
-            public boolean isPublished() {
-              return (Boolean) skillData[j][3];
-            }
-
-            @Override
-            public int getTypeID() {
-              return (Integer) skillData[j][2];
-            }
-
-            @Override
-            public int getSkillpoints() {
-              return (Integer) skillData[j][1];
-            }
-
-            @Override
-            public int getLevel() {
-              return (Integer) skillData[j][0];
-            }
-          });
-        }
-        return skills;
-      }
-
-      @Override
-      public Collection<ICharacterRole> getRoles() {
-        final Object[][] roleData = (Object[][]) instanceData[18];
-        List<ICharacterRole> roles = new ArrayList<ICharacterRole>();
-        for (int i = 0; i < roleData.length; i++) {
-          final int j = i;
-          roles.add(new ICharacterRole() {
-
-            @Override
-            public String getRoleName() {
-              return (String) roleData[j][2];
-            }
-
-            @Override
-            public long getRoleID() {
-              return (Long) roleData[j][1];
-            }
-
-            @Override
-            public CharacterRoleCategory getRoleCategory() {
-              return (CharacterRoleCategory) roleData[j][0];
-            }
-          });
-        }
-        return roles;
       }
 
       @Override
@@ -496,11 +363,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       @Override
       public int getPerception() {
         return (Integer) instanceData[14];
-      }
-
-      @Override
-      public String getName() {
-        return (String) instanceData[19];
       }
 
       @Override
@@ -524,33 +386,8 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       }
 
       @Override
-      public String getCorporationName() {
-        return (String) instanceData[1];
-      }
-
-      @Override
-      public long getCorporationID() {
-        return (Long) instanceData[0];
-      }
-
-      @Override
-      public int getCloneSkillPoints() {
-        return (Integer) instanceData[10];
-      }
-
-      @Override
-      public String getCloneName() {
-        return (String) instanceData[9];
-      }
-
-      @Override
       public int getCharisma() {
         return (Integer) instanceData[13];
-      }
-
-      @Override
-      public long getCharacterID() {
-        return (Long) instanceData[20];
       }
 
       @Override
@@ -564,11 +401,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       }
 
       @Override
-      public BigDecimal getBalance() {
-        return new BigDecimal((Double) instanceData[22]).setScale(2, RoundingMode.HALF_UP);
-      }
-
-      @Override
       public int getAncestryID() {
         return (Integer) instanceData[40];
       }
@@ -576,31 +408,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       @Override
       public String getAncestry() {
         return (String) instanceData[5];
-      }
-
-      @Override
-      public String getAllianceName() {
-        return (String) instanceData[7];
-      }
-
-      @Override
-      public long getAllianceID() {
-        return (Long) instanceData[8];
-      }
-
-      @Override
-      public String getFactionName() {
-        return (String) instanceData[23];
-      }
-
-      @Override
-      public long getFactionID() {
-        return (Long) instanceData[24];
-      }
-
-      @Override
-      public long getHomeStationID() {
-        return (Long) instanceData[25];
       }
 
       @Override
@@ -621,16 +428,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       @Override
       public int getFreeRespecs() {
         return (Integer) instanceData[29];
-      }
-
-      @Override
-      public int getFreeSkillPoints() {
-        return (Integer) instanceData[30];
-      }
-
-      @Override
-      public int getCloneTypeID() {
-        return (Integer) instanceData[31];
       }
 
       @Override
@@ -737,55 +534,49 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       }
     };
 
-    EasyMock.expect(mockServer.requestCharacterSheet()).andReturn(sheet);
+    EasyMock.expect(mockServer.requestClones()).andReturn(sheet);
     EasyMock.expect(mockServer.isError()).andReturn(false);
     EasyMock.expect(mockServer.getCachedUntil()).andReturn(new Date(testDate));
   }
 
   // Test update with new character sheet
   @Test
-  public void testCharacterSheetSyncUpdate() throws Exception {
+  public void testPartialCharacterSheetSyncUpdate() throws Exception {
     setupOkMock();
     EasyMock.replay(mockServer);
     long testTime = 1234L;
 
     // Perform the sync
-    SyncStatus syncOutcome = CharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
+    SyncStatus syncOutcome = PartialCharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
     Assert.assertEquals(SyncStatus.DONE, syncOutcome);
     EasyMock.verify(mockServer);
 
     // Verify the following elements were added correctly:
     // CharacterSheet
-    // CharacterSkill
-    // CharacterCertificate
     // Implant
     // JumpClone
     // JumpCloneImplant
-    // CharacterSheetBalance
     // CharacterSheetJump
     // CharacterSheetClone
     CharacterSheet sheet = CharacterSheet.get(syncAccount, testTime);
-    Collection<CharacterSkill> skills = CharacterSkill.getAll(syncAccount, testTime, -1, 0);
     List<Implant> implants = Implant.getAll(syncAccount, testTime);
     List<JumpClone> clones = JumpClone.getAll(syncAccount, testTime);
     List<JumpCloneImplant> cloneImplants = JumpCloneImplant.getAll(syncAccount, testTime);
-    CharacterSheetBalance balance = CharacterSheetBalance.get(syncAccount, testTime);
     CharacterSheetJump jump = CharacterSheetJump.get(syncAccount, testTime);
     CharacterSheetClone clone = CharacterSheetClone.get(syncAccount, testTime);
     Assert.assertNotNull(sheet);
-    compareCharacterSheetWithTestData(sheet);
-    compareSkillWithTestData(skills);
+    // No prior data so non-updated fields should have default values
+    compareCharacterSheetWithTestData(sheet, false);
     compareImplantWithTestData(implants);
     compareJumpCloneWithTestData(clones);
     compareJumpCloneImplantWithTestData(cloneImplants);
-    compareCharacterSheetBalanceWithTestData(balance);
     compareCharacterSheetJumpWithTestData(jump);
     compareCharacterSheetCloneWithTestData(clone);
 
     // Verify tracker and container were updated properly
-    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getCharacterSheetExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetDetail());
+    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getPartialCharacterSheetExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetDetail());
   }
 
   // Test update with character sheet already populated
@@ -796,12 +587,8 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     EasyMock.replay(mockServer);
     long testTime = 1234L;
 
-    // Populate character sheet, skills, certificates, implants, jump clones, jump clone implants, balance, jump and clone
+    // Populate character sheet, implants, jump clones, jump clone implants, jump and clone
     CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
-    Object[][] skillData = (Object[][]) testData[0][17];
-    for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
-    }
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
       CachedData.updateData(makeImplantObject(testTime, implantData[i]));
@@ -814,47 +601,40 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     for (int i = 0; i < cloneImplantData.length; i++) {
       CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetBalanceObject(testTime, testData[0]));
     CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
     CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Perform the sync
-    SyncStatus syncOutcome = CharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
+    SyncStatus syncOutcome = PartialCharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
     Assert.assertEquals(SyncStatus.DONE, syncOutcome);
     EasyMock.verify(mockServer);
 
     // Verify the following elements are unchanged:
     // CharacterSheet
-    // CharacterSkill
-    // CharacterCertificate
     // Implants
     // Jump Clones
     // Jump Clone Implants
-    // CharacterSheetBalance
     // CharacterSheetJump
     // CharacterSheetClone
     CharacterSheet sheet = CharacterSheet.get(syncAccount, testTime);
-    Collection<CharacterSkill> skills = CharacterSkill.getAll(syncAccount, testTime, -1, 0);
     List<Implant> implants = Implant.getAll(syncAccount, testTime);
     List<JumpClone> clones = JumpClone.getAll(syncAccount, testTime);
     List<JumpCloneImplant> cloneImplants = JumpCloneImplant.getAll(syncAccount, testTime);
-    CharacterSheetBalance balance = CharacterSheetBalance.get(syncAccount, testTime);
     CharacterSheetJump jump = CharacterSheetJump.get(syncAccount, testTime);
     CharacterSheetClone clone = CharacterSheetClone.get(syncAccount, testTime);
     Assert.assertNotNull(sheet);
-    compareCharacterSheetWithTestData(sheet);
-    compareSkillWithTestData(skills);
+    // Existing data, even not populated, should not be changed
+    compareCharacterSheetWithTestData(sheet, true);
     compareImplantWithTestData(implants);
     compareJumpCloneWithTestData(clones);
     compareJumpCloneImplantWithTestData(cloneImplants);
-    compareCharacterSheetBalanceWithTestData(balance);
     compareCharacterSheetJumpWithTestData(jump);
     compareCharacterSheetCloneWithTestData(clone);
 
     // Verify tracker and container were updated properly
-    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getCharacterSheetExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetDetail());
+    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getPartialCharacterSheetExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetDetail());
   }
 
   // Test skips update when already updated
@@ -867,10 +647,6 @@ public class CharacterSheetSyncTest extends SyncTestBase {
 
     // Populate existing character sheet
     CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
-    Object[][] skillData = (Object[][]) testData[0][17];
-    for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
-    }
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
       CachedData.updateData(makeImplantObject(testTime, implantData[i]));
@@ -883,51 +659,45 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     for (int i = 0; i < cloneImplantData.length; i++) {
       CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetBalanceObject(testTime, testData[0]));
     CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
     CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Set the tracker as already updated and populate the container
-    tracker.setCharacterSheetStatus(SyncState.UPDATED);
-    tracker.setCharacterSheetDetail(null);
+    tracker.setPartialCharacterSheetStatus(SyncState.UPDATED);
+    tracker.setPartialCharacterSheetDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
-    container.setCharacterSheetExpiry(prevDate);
+    container.setPartialCharacterSheetExpiry(prevDate);
     container = CachedData.updateData(container);
 
     // Perform the sync
-    SyncStatus syncOutcome = CharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
+    SyncStatus syncOutcome = PartialCharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
     Assert.assertEquals(SyncStatus.DONE, syncOutcome);
     // Skip the verify here since the calls should never be made
 
     // Verify the following elements are unchanged:
     // CharacterSheet
-    // CharacterSkill
-    // CharacterCertificate
     // Implants
     // Jump Clones
     // Jump Clone Implants
     CharacterSheet sheet = CharacterSheet.get(syncAccount, testTime);
-    Collection<CharacterSkill> skills = CharacterSkill.getAll(syncAccount, testTime, -1, 0);
     List<Implant> implants = Implant.getAll(syncAccount, testTime);
     List<JumpClone> clones = JumpClone.getAll(syncAccount, testTime);
     List<JumpCloneImplant> cloneImplants = JumpCloneImplant.getAll(syncAccount, testTime);
-    CharacterSheetBalance balance = CharacterSheetBalance.get(syncAccount, testTime);
     CharacterSheetJump jump = CharacterSheetJump.get(syncAccount, testTime);
     CharacterSheetClone clone = CharacterSheetClone.get(syncAccount, testTime);
     Assert.assertNotNull(sheet);
-    compareCharacterSheetWithTestData(sheet);
-    compareSkillWithTestData(skills);
+    // Existing population should not be changed
+    compareCharacterSheetWithTestData(sheet, true);
     compareImplantWithTestData(implants);
     compareJumpCloneWithTestData(clones);
     compareJumpCloneImplantWithTestData(cloneImplants);
-    compareCharacterSheetBalanceWithTestData(balance);
     compareCharacterSheetJumpWithTestData(jump);
     compareCharacterSheetCloneWithTestData(clone);
 
     // Verify tracker and container unchanged
-    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getCharacterSheetExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getCharacterSheetDetail());
+    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getPartialCharacterSheetExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getPartialCharacterSheetDetail());
   }
 
 }
