@@ -56,10 +56,15 @@ public class CharacterSheetSync extends AbstractCharacterSync {
                            String detail) {
     tracker.setCharacterSheetStatus(status);
     tracker.setCharacterSheetDetail(detail);
-    tracker.setPartialCharacterSheetStatus(status);
-    tracker.setPartialCharacterSheetDetail(detail);
-    tracker.setSkillsStatus(status);
-    tracker.setSkillsDetail(detail);
+    if (status == SyncState.UPDATED || status == SyncState.NOT_EXPIRED) {
+      // If we succeed in updating the entire sheet (or skip because the timer hasn't expired), then we can mark partial sheet downloads as completed as well.
+      // This avoids two extra sync's we don't need
+      // to do.
+      tracker.setPartialCharacterSheetStatus(status);
+      tracker.setPartialCharacterSheetDetail(detail);
+      tracker.setSkillsStatus(status);
+      tracker.setSkillsDetail(detail);
+    }
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
@@ -68,8 +73,6 @@ public class CharacterSheetSync extends AbstractCharacterSync {
                            Capsuleer container,
                            long expiry) {
     container.setCharacterSheetExpiry(expiry);
-    container.setPartialCharacterSheetExpiry(expiry);
-    container.setSkillsExpiry(expiry);
     CachedData.updateData(container);
   }
 
