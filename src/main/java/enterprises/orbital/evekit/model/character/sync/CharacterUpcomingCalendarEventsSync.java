@@ -89,7 +89,8 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
 
   @Override
   protected Object getServerData(
-                                 ICharacterAPI charRequest) throws IOException {
+                                 ICharacterAPI charRequest)
+    throws IOException {
     return charRequest.requestUpcomingCalendarEvents();
   }
 
@@ -99,12 +100,13 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICharacterAPI charRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IUpcomingCalendarEvent> events = (Collection<IUpcomingCalendarEvent>) data;
 
     // Add and update events
-    Set<Integer> eventSet = new HashSet<Integer>();
+    Set<Long> eventSet = new HashSet<Long>();
 
     // Prepare set of events to add/update
     for (IUpcomingCalendarEvent next : events) {
@@ -117,7 +119,7 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
 
     // Scan for events we need to remove
     for (UpcomingCalendarEvent next : UpcomingCalendarEvent.getAllUpcomingCalendarEvents(syncAccount, time)) {
-      int eventID = next.getEventID();
+      long eventID = next.getEventID();
       if (!eventSet.contains(eventID)) {
         next.evolve(null, time);
         updates.add(next);

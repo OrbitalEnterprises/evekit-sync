@@ -59,44 +59,44 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
   // int flag
   // long itemID
   // long locationID
-  // int quantity
+  // long quantity
   // boolean singleton
   // int typeID
-  // int rawQuantity
+  // long rawQuantity
   Object[][] testData = new Object[][] {
       {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }, {
-          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
-          gen.nextInt(max) + 1
+          gen.nextInt(max) + 1, getUnusedItemID(), (long) gen.nextInt(max) + 1, (long) gen.nextInt(max) + 1, gen.nextBoolean(), gen.nextInt(max) + 1,
+          (long) gen.nextInt(max) + 1
       }
   };
 
@@ -122,7 +122,8 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IAsset makeAsset(final Object[] instanceData) {
+  public IAsset makeAsset(
+                          final Object[] instanceData) {
     return new IAsset() {
       private final Collection<IAsset> contained = new ArrayList<IAsset>();
 
@@ -147,8 +148,8 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getQuantity() {
-        return (Integer) instanceData[3];
+      public long getQuantity() {
+        return (Long) instanceData[3];
       }
 
       @Override
@@ -162,8 +163,8 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getRawQuantity() {
-        return (Integer) instanceData[6];
+      public long getRawQuantity() {
+        return (Long) instanceData[6];
       }
     };
   }
@@ -198,7 +199,10 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     return assets;
   }
 
-  public void checkAsset(Object[] instanceData, Asset ref, Asset container) {
+  public void checkAsset(
+                         Object[] instanceData,
+                         Asset ref,
+                         Asset container) {
     Assert.assertNotNull(ref);
     Assert.assertEquals(ref.getFlag(), Integer.parseInt(instanceData[0].toString()));
     Assert.assertEquals(ref.getItemID(), Long.parseLong(instanceData[1].toString()));
@@ -210,7 +214,10 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     Assert.assertEquals(container == null ? Asset.TOP_LEVEL : container.getItemID(), ref.getContainer());
   }
 
-  public void checkAssetPair(Asset testdata, Asset ref, Asset container) {
+  public void checkAssetPair(
+                             Asset testdata,
+                             Asset ref,
+                             Asset container) {
     Assert.assertNotNull(ref);
     Assert.assertEquals(ref.getFlag(), testdata.getFlag());
     Assert.assertEquals(ref.getItemID(), testdata.getItemID());
@@ -230,14 +237,17 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     EasyMock.expect(mockServer.getCachedUntil()).andReturn(new Date(testDate));
   }
 
-  public Asset findWithId(Collection<Asset> assets, long itemID) {
+  public Asset findWithId(
+                          Collection<Asset> assets,
+                          long itemID) {
     for (Asset i : assets) {
       if (i.getItemID() == itemID) { return i; }
     }
     return null;
   }
 
-  public void checkAssetsMatchTestData(List<Asset> assets) {
+  public void checkAssetsMatchTestData(
+                                       List<Asset> assets) {
     Assert.assertEquals(testData.length, assets.size());
 
     // First three assets are top level
@@ -270,7 +280,9 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     checkAsset(testData[10], findWithId(assets, (Long) testData[10][1]), container);
   }
 
-  public void checkAssetsMatchOtherData(List<Asset> ref, List<Asset> assets) {
+  public void checkAssetsMatchOtherData(
+                                        List<Asset> ref,
+                                        List<Asset> assets) {
     Assert.assertEquals(ref.size(), assets.size());
 
     // First three assets are top level
@@ -374,8 +386,8 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
       }
 
       Asset next = new Asset(
-          (Long) testData[i][1], (Long) testData[i][2], i, (Integer) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
-          (Integer) testData[i][6], container);
+          (Long) testData[i][1], (Long) testData[i][2], (Integer) testData[i][5], (Long) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
+          (Long) testData[i][6], container);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
       allAssets.add(next);
@@ -445,8 +457,8 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
       }
 
       Asset next = new Asset(
-          (Long) testData[i][1], (Long) testData[i][2], i, (Integer) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
-          (Integer) testData[i][6], container);
+          (Long) testData[i][1], (Long) testData[i][2], (Integer) testData[i][5], (Long) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
+          (Long) testData[i][6], container);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
       allAssets.add(next);

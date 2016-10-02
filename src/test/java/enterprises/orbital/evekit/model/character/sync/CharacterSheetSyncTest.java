@@ -71,7 +71,7 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     testData[0][7] = TestBase.getRandomText(50);
     testData[0][8] = TestBase.getRandomLong();
     testData[0][9] = TestBase.getRandomText(50);
-    testData[0][10] = TestBase.getRandomInt();
+    testData[0][10] = TestBase.getRandomLong();
     testData[0][11] = TestBase.getRandomInt();
     testData[0][12] = TestBase.getRandomInt();
     testData[0][13] = TestBase.getRandomInt();
@@ -135,7 +135,7 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     testData[0][27] = TestBase.getRandomLong();
     testData[0][28] = TestBase.getRandomLong();
     testData[0][29] = TestBase.getRandomInt();
-    testData[0][30] = TestBase.getRandomInt();
+    testData[0][30] = TestBase.getRandomLong();
     testData[0][31] = TestBase.getRandomInt();
     testData[0][32] = TestBase.getRandomLong();
     testData[0][33] = TestBase.getRandomLong();
@@ -239,7 +239,7 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     Assert.assertEquals(sheet.getLastRespecDate(), (long) ((Long) testData[0][27]));
     Assert.assertEquals(sheet.getLastTimedRespec(), (long) ((Long) testData[0][28]));
     Assert.assertEquals(sheet.getFreeRespecs(), (int) ((Integer) testData[0][29]));
-    Assert.assertEquals(sheet.getFreeSkillPoints(), (int) ((Integer) testData[0][30]));
+    Assert.assertEquals(sheet.getFreeSkillPoints(), (long) ((Long) testData[0][30]));
     Assert.assertEquals(sheet.getRemoteStationDate(), (long) ((Long) testData[0][32]));
   }
 
@@ -279,7 +279,7 @@ public class CharacterSheetSyncTest extends SyncTestBase {
         (Integer) instanceData[39], (String) instanceData[4], (Integer) instanceData[40], (String) instanceData[5], (String) instanceData[6],
         (String) instanceData[7], (Long) instanceData[8], (String) testData[0][23], (Long) testData[0][24], (Integer) instanceData[11],
         (Integer) instanceData[12], (Integer) instanceData[13], (Integer) instanceData[14], (Integer) instanceData[15], (Long) testData[0][25],
-        (Long) testData[0][27], (Long) testData[0][28], (Integer) testData[0][29], (Integer) testData[0][30], (Long) testData[0][32]);
+        (Long) testData[0][27], (Long) testData[0][28], (Integer) testData[0][29], (Long) testData[0][30], (Long) testData[0][32]);
     sheet.setup(syncAccount, time);
     return sheet;
   }
@@ -534,8 +534,8 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getCloneSkillPoints() {
-        return (Integer) instanceData[10];
+      public long getCloneSkillPoints() {
+        return (Long) instanceData[10];
       }
 
       @Override
@@ -624,8 +624,8 @@ public class CharacterSheetSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getFreeSkillPoints() {
-        return (Integer) instanceData[30];
+      public long getFreeSkillPoints() {
+        return (Long) instanceData[30];
       }
 
       @Override

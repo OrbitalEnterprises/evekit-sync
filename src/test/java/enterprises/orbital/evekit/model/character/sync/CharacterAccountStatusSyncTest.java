@@ -91,13 +91,13 @@ public class CharacterAccountStatusSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getLogonCount() {
-        return 2827;
+      public long getLogonCount() {
+        return 2827L;
       }
 
       @Override
-      public int getLogonMinutes() {
-        return 161197;
+      public long getLogonMinutes() {
+        return 161197L;
       }
 
       @Override

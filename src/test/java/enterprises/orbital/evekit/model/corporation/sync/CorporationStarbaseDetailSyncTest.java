@@ -140,8 +140,8 @@ public class CorporationStarbaseDetailSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getLocationID() {
-          return 0;
+        public long getLocationID() {
+          return 0L;
         }
 
         @Override

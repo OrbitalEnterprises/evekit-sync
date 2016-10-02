@@ -42,7 +42,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
   // 0 long stationID;
   // 1 long ownerID;
   // 2 String stationName;
-  // 3 long solarSystemID;
+  // 3 int solarSystemID;
   // 4 BigDecimal dockingCostPerShipVolume;
   // 5 BigDecimal officeRentalCost;
   // 6 int stationTypeID;
@@ -62,7 +62,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
       testData[i][0] = TestBase.getUniqueRandomLong();
       testData[i][1] = TestBase.getRandomLong();
       testData[i][2] = TestBase.getRandomText(100);
-      testData[i][3] = TestBase.getRandomLong();
+      testData[i][3] = TestBase.getRandomInt();
       testData[i][4] = (new BigDecimal(TestBase.getRandomDouble(1000000))).setScale(2, RoundingMode.HALF_UP);
       testData[i][5] = (new BigDecimal(TestBase.getRandomDouble(1000000))).setScale(2, RoundingMode.HALF_UP);
       testData[i][6] = TestBase.getRandomInt();
@@ -119,8 +119,8 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getSolarSystemID() {
-          return (Long) instanceData[3];
+        public int getSolarSystemID() {
+          return (Integer) instanceData[3];
         }
 
         @Override
@@ -224,7 +224,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
     int totalDetailCount = 0;
     for (int i = 0; i < testData.length; i++) {
       Outpost next = new Outpost(
-          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (String) testData[i][2] + "A", (Long) testData[i][3] + 2,
+          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (String) testData[i][2] + "A", (Integer) testData[i][3] + 2,
           ((BigDecimal) testData[i][4]).add(new BigDecimal(2)), ((BigDecimal) testData[i][5]).add(new BigDecimal(2)), (Integer) testData[i][6] + 2,
           (Double) testData[i][7] + 2, (Double) testData[i][8] + 2, (Long) testData[i][9] + 2, (Long) testData[i][10] + 2, (Long) testData[i][11] + 2,
           (Long) testData[i][12] + 2);
@@ -285,7 +285,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
     int totalDetail = 0;
     for (int i = 0; i < testData.length; i++) {
       Outpost next = new Outpost(
-          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (String) testData[i][2] + "A", (Long) testData[i][3] + 2,
+          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (String) testData[i][2] + "A", (Integer) testData[i][3] + 2,
           ((BigDecimal) testData[i][4]).add(new BigDecimal(2)), ((BigDecimal) testData[i][5]).add(new BigDecimal(2)), (Integer) testData[i][6] + 2,
           (Double) testData[i][7] + 2, (Double) testData[i][8] + 2, (Long) testData[i][9] + 2, (Long) testData[i][10] + 2, (Long) testData[i][11] + 2,
           (Long) testData[i][12] + 2);
@@ -320,7 +320,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
       Assert.assertEquals((Long) testData[i][0] + 2, next.getStationID());
       Assert.assertEquals((Long) testData[i][1] + 2, next.getOwnerID());
       Assert.assertEquals((String) testData[i][2] + "A", next.getStationName());
-      Assert.assertEquals((Long) testData[i][3] + 2, next.getSolarSystemID());
+      Assert.assertEquals((Integer) testData[i][3] + 2, next.getSolarSystemID());
       Assert.assertEquals(((BigDecimal) testData[i][4]).add(new BigDecimal(2)), next.getDockingCostPerShipVolume());
       Assert.assertEquals(((BigDecimal) testData[i][5]).add(new BigDecimal(2)), next.getOfficeRentalCost());
       Assert.assertEquals((Integer) testData[i][6] + 2, next.getStationTypeID());

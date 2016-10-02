@@ -42,16 +42,14 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
   // characterName
   // response
   Object[][]             testData = new Object[][] {
-                                      {
-                                          1234, 8711L, "test char one", "response one"
-                                        },
-                                      {
-                                          1234, 4522L, "test char two", "response two"
-                                        },
-                                      {
-                                          4321, 8711L, "test char three", "response three"
-                                        }
-                                    };
+      {
+          1234L, 8711L, "test char one", "response one"
+      }, {
+          1234L, 4522L, "test char two", "response two"
+      }, {
+          4321L, 8711L, "test char three", "response three"
+      }
+  };
 
   // Mock up server interface
   @Override
@@ -84,8 +82,8 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
       ICalendarEventAttendee attendee = new ICalendarEventAttendee() {
 
         @Override
-        public int getEventID() {
-          return (Integer) instanceData[0];
+        public long getEventID() {
+          return (Long) instanceData[0];
         }
 
         @Override
@@ -125,10 +123,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Integer) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Integer) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
@@ -149,7 +147,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
 
     // Verify notifications were added correctly.
     for (int i = 0; i < testData.length; i++) {
-      CalendarEventAttendee next = CalendarEventAttendee.get(syncAccount, testTime, (Integer) testData[i][0], (Long) testData[i][1]);
+      CalendarEventAttendee next = CalendarEventAttendee.get(syncAccount, testTime, (Long) testData[i][0], (Long) testData[i][1]);
       Assert.assertEquals(testData[i][2], next.getCharacterName());
       Assert.assertEquals(testData[i][3], next.getResponse());
     }
@@ -169,16 +167,16 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Integer) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Integer) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
     // Populate attendees
     for (int i = 0; i < testData.length; i++) {
-      CalendarEventAttendee next = new CalendarEventAttendee((Integer) testData[i][0], (Long) testData[i][1], (String) testData[i][2], (String) testData[i][3]);
+      CalendarEventAttendee next = new CalendarEventAttendee((Long) testData[i][0], (Long) testData[i][1], (String) testData[i][2], (String) testData[i][3]);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
     }
@@ -200,7 +198,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
 
     // Verify attendees are unchanged
     for (int i = 0; i < testData.length; i++) {
-      CalendarEventAttendee next = CalendarEventAttendee.get(syncAccount, testTime, (Integer) testData[i][0], (Long) testData[i][1]);
+      CalendarEventAttendee next = CalendarEventAttendee.get(syncAccount, testTime, (Long) testData[i][0], (Long) testData[i][1]);
       Assert.assertEquals(testData[i][2], next.getCharacterName());
       Assert.assertEquals(testData[i][3], next.getResponse());
     }
@@ -233,10 +231,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Integer) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Integer) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
@@ -263,8 +261,8 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     // Skip the verify here since the calls should never be made
 
     // Verify no attendees added
-    Assert.assertTrue(CalendarEventAttendee.getByEventID(syncAccount, testTime, (Integer) testData[0][0]).isEmpty());
-    Assert.assertTrue(CalendarEventAttendee.getByEventID(syncAccount, testTime, (Integer) testData[2][0]).isEmpty());
+    Assert.assertTrue(CalendarEventAttendee.getByEventID(syncAccount, testTime, (Long) testData[0][0]).isEmpty());
+    Assert.assertTrue(CalendarEventAttendee.getByEventID(syncAccount, testTime, (Long) testData[2][0]).isEmpty());
 
     // Verify tracker and container unchanged
     Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getCalendarEventAttendeesExpiry());
@@ -281,18 +279,18 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Integer) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Integer) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
     // Populate attendees, these should be deleted
-    CalendarEventAttendee next = new CalendarEventAttendee((Integer) testData[0][0], 5678L, "del char one", "del response one");
+    CalendarEventAttendee next = new CalendarEventAttendee((Long) testData[0][0], 5678L, "del char one", "del response one");
     next.setup(syncAccount, testTime);
     next = CachedData.updateData(next);
-    next = new CalendarEventAttendee((Integer) testData[2][0], 567822L, "del char two", "del response two");
+    next = new CalendarEventAttendee((Long) testData[2][0], 567822L, "del char two", "del response two");
     next.setup(syncAccount, testTime);
     next = CachedData.updateData(next);
 
@@ -313,7 +311,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
 
     // Verify new attendees are added.
     for (int i = 0; i < testData.length; i++) {
-      next = CalendarEventAttendee.get(syncAccount, testTime, (Integer) testData[i][0], (Long) testData[i][1]);
+      next = CalendarEventAttendee.get(syncAccount, testTime, (Long) testData[i][0], (Long) testData[i][1]);
       Assert.assertEquals(testData[i][2], next.getCharacterName());
       Assert.assertEquals(testData[i][3], next.getResponse());
     }

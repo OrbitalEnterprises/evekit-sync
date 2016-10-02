@@ -49,12 +49,12 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
       testData[i][1] = TestBase.getRandomLong();
       testData[i][2] = TestBase.getRandomText(50);
       testData[i][3] = TestBase.getRandomLong();
-      testData[i][4] = TestBase.getRandomLong();
+      testData[i][4] = TestBase.getRandomInt();
       testData[i][5] = TestBase.getRandomText(50);
       testData[i][6] = TestBase.getRandomLong();
-      testData[i][7] = TestBase.getRandomLong();
+      testData[i][7] = TestBase.getRandomInt();
       testData[i][8] = TestBase.getRandomLong();
-      testData[i][9] = TestBase.getRandomLong();
+      testData[i][9] = TestBase.getRandomInt();
       testData[i][10] = TestBase.getRandomText(50);
       testData[i][11] = TestBase.getRandomLong();
       testData[i][12] = TestBase.getRandomLong();
@@ -63,10 +63,10 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
       testData[i][15] = TestBase.getRandomLong();
       testData[i][16] = TestBase.getRandomInt(200);
       testData[i][17] = TestBase.getRandomDouble(1);
-      testData[i][18] = TestBase.getRandomLong();
+      testData[i][18] = TestBase.getRandomInt();
       testData[i][19] = TestBase.getRandomText(50);
       testData[i][20] = (i % 2) == 0 ? Integer.MIN_VALUE : TestBase.getRandomInt(10);
-      testData[i][21] = new Long(TestBase.getRandomInt(1000));
+      testData[i][21] = TestBase.getRandomInt(1000);
       testData[i][22] = TestBase.getRandomLong();
       testData[i][23] = TestBase.getRandomLong();
       testData[i][24] = TestBase.getRandomLong();
@@ -100,32 +100,40 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IndustryJob makeJob(long time, Object[] instanceData, Long completedCharacterID, Long completedDate, Integer status, Integer successfulRuns)
+  public IndustryJob makeJob(
+                             long time,
+                             Object[] instanceData,
+                             Long completedCharacterID,
+                             Long completedDate,
+                             Integer status,
+                             Integer successfulRuns)
     throws Exception {
     IndustryJob job = new IndustryJob(
-        (Long) instanceData[0], (Long) instanceData[1], (String) instanceData[2], (Long) instanceData[3], (Long) instanceData[4], (String) instanceData[5],
-        (Long) instanceData[6], (Long) instanceData[7], (Long) instanceData[8], (Long) instanceData[9], (String) instanceData[10], (Long) instanceData[11],
-        (Long) instanceData[12], (Integer) instanceData[13], (BigDecimal) instanceData[14], (Long) instanceData[15], (Integer) instanceData[16],
-        (Double) instanceData[17], (Long) instanceData[18], (String) instanceData[19], status != null ? status : (Integer) instanceData[20],
-        (Long) instanceData[21], (Long) instanceData[22], (Long) instanceData[23], (Long) instanceData[24],
-        completedDate != null ? completedDate : (Long) instanceData[25], completedCharacterID != null ? completedCharacterID : (Long) instanceData[26],
-        successfulRuns != null ? successfulRuns : (Integer) instanceData[27]);
+        (Long) instanceData[0], (Long) instanceData[1], (String) instanceData[2], (Long) instanceData[3], (Integer) instanceData[4], (String) instanceData[5],
+        (Long) instanceData[6], (Integer) instanceData[7], (Long) instanceData[8], (Integer) instanceData[9], (String) instanceData[10],
+        (Long) instanceData[11], (Long) instanceData[12], (Integer) instanceData[13], (BigDecimal) instanceData[14], (Long) instanceData[15],
+        (Integer) instanceData[16], (Double) instanceData[17], (Integer) instanceData[18], (String) instanceData[19],
+        status != null ? status : (Integer) instanceData[20], (Integer) instanceData[21], (Long) instanceData[22], (Long) instanceData[23],
+        (Long) instanceData[24], completedDate != null ? completedDate : (Long) instanceData[25],
+        completedCharacterID != null ? completedCharacterID : (Long) instanceData[26], successfulRuns != null ? successfulRuns : (Integer) instanceData[27]);
     job.setup(syncAccount, time);
 
     return job;
   }
 
-  public void compareWithTestData(IndustryJob job, Object[] instanceData) {
+  public void compareWithTestData(
+                                  IndustryJob job,
+                                  Object[] instanceData) {
     Assert.assertEquals(job.getJobID(), Long.parseLong(instanceData[0].toString()));
     Assert.assertEquals(job.getInstallerID(), Long.parseLong(instanceData[1].toString()));
     Assert.assertEquals(job.getInstallerName(), instanceData[2].toString());
     Assert.assertEquals(job.getFacilityID(), Long.parseLong(instanceData[3].toString()));
-    Assert.assertEquals(job.getSolarSystemID(), Long.parseLong(instanceData[4].toString()));
+    Assert.assertEquals(job.getSolarSystemID(), Integer.parseInt(instanceData[4].toString()));
     Assert.assertEquals(job.getSolarSystemName(), instanceData[5].toString());
     Assert.assertEquals(job.getStationID(), Long.parseLong(instanceData[6].toString()));
-    Assert.assertEquals(job.getActivityID(), Long.parseLong(instanceData[7].toString()));
+    Assert.assertEquals(job.getActivityID(), Integer.parseInt(instanceData[7].toString()));
     Assert.assertEquals(job.getBlueprintID(), Long.parseLong(instanceData[8].toString()));
-    Assert.assertEquals(job.getBlueprintTypeID(), Long.parseLong(instanceData[9].toString()));
+    Assert.assertEquals(job.getBlueprintTypeID(), Integer.parseInt(instanceData[9].toString()));
     Assert.assertEquals(job.getBlueprintTypeName(), instanceData[10].toString());
     Assert.assertEquals(job.getBlueprintLocationID(), Long.parseLong(instanceData[11].toString()));
     Assert.assertEquals(job.getOutputLocationID(), Long.parseLong(instanceData[12].toString()));
@@ -134,10 +142,10 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
     Assert.assertEquals(job.getTeamID(), Long.parseLong(instanceData[15].toString()));
     Assert.assertEquals(job.getLicensedRuns(), Integer.parseInt(instanceData[16].toString()));
     Assert.assertEquals(job.getProbability(), Double.parseDouble(instanceData[17].toString()), 0.01);
-    Assert.assertEquals(job.getProductTypeID(), Long.parseLong(instanceData[18].toString()));
+    Assert.assertEquals(job.getProductTypeID(), Integer.parseInt(instanceData[18].toString()));
     Assert.assertEquals(job.getProductTypeName(), instanceData[19].toString());
     Assert.assertEquals(job.getStatus(), Integer.parseInt(instanceData[20].toString()));
-    Assert.assertEquals(job.getTimeInSeconds(), Long.parseLong(instanceData[21].toString()));
+    Assert.assertEquals(job.getTimeInSeconds(), Integer.parseInt(instanceData[21].toString()));
     Assert.assertEquals(job.getStartDate(), Long.parseLong(instanceData[22].toString()));
     Assert.assertEquals(job.getEndDate(), Long.parseLong(instanceData[23].toString()));
     Assert.assertEquals(job.getPauseDate(), Long.parseLong(instanceData[24].toString()));
@@ -174,8 +182,8 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getSolarSystemID() {
-          return (Long) instanceData[4];
+        public int getSolarSystemID() {
+          return (Integer) instanceData[4];
         }
 
         @Override
@@ -189,8 +197,8 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getActivityID() {
-          return (Long) instanceData[7];
+        public int getActivityID() {
+          return (Integer) instanceData[7];
         }
 
         @Override
@@ -199,8 +207,8 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getBlueprintTypeID() {
-          return (Long) instanceData[9];
+        public int getBlueprintTypeID() {
+          return (Integer) instanceData[9];
         }
 
         @Override
@@ -244,8 +252,8 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getProductTypeID() {
-          return (Long) instanceData[18];
+        public int getProductTypeID() {
+          return (Integer) instanceData[18];
         }
 
         @Override
@@ -259,8 +267,8 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getTimeInSeconds() {
-          return (Long) instanceData[21];
+        public int getTimeInSeconds() {
+          return (Integer) instanceData[21];
         }
 
         @Override

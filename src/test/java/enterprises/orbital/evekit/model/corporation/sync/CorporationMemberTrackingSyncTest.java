@@ -38,10 +38,10 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
 
   // 0 long characterID;
   // 1 String base;
-  // 2 int baseID;
+  // 2 long baseID;
   // 3 long grantableRoles;
   // 4 String location;
-  // 5 int locationID;
+  // 5 long locationID;
   // 6 long logoffDateTime;
   // 7 long logonDateTime;
   // 8 String name;
@@ -59,10 +59,10 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
     for (int i = 0; i < size; i++) {
       testData[i][0] = TestBase.getUniqueRandomLong();
       testData[i][1] = TestBase.getRandomText(100);
-      testData[i][2] = TestBase.getRandomInt();
+      testData[i][2] = TestBase.getRandomLong();
       testData[i][3] = TestBase.getRandomLong();
       testData[i][4] = TestBase.getRandomText(100);
-      testData[i][5] = TestBase.getRandomInt();
+      testData[i][5] = TestBase.getRandomLong();
       testData[i][6] = TestBase.getRandomLong();
       testData[i][7] = TestBase.getRandomLong();
       testData[i][8] = TestBase.getRandomText(100);
@@ -108,8 +108,8 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getBaseID() {
-          return (Integer) instanceData[2];
+        public long getBaseID() {
+          return (Long) instanceData[2];
         }
 
         @Override
@@ -128,8 +128,8 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getLocationID() {
-          return (Integer) instanceData[5];
+        public long getLocationID() {
+          return (Long) instanceData[5];
         }
 
         @Override
@@ -229,8 +229,8 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
     // Populate existing tracks
     for (int i = 0; i < testData.length; i++) {
       MemberTracking next = new MemberTracking(
-          (Long) testData[i][0] + 2, (String) testData[i][1] + "A", (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (String) testData[i][4] + "A",
-          (Integer) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
+          (Long) testData[i][0] + 2, (String) testData[i][1] + "A", (Long) testData[i][2] + 2, (Long) testData[i][3] + 2, (String) testData[i][4] + "A",
+          (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
           (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2, (String) testData[i][13] + "A");
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
@@ -290,8 +290,8 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
     // Populate existing tracks
     for (int i = 0; i < testData.length; i++) {
       MemberTracking next = new MemberTracking(
-          (Long) testData[i][0] + 2, (String) testData[i][1] + "A", (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (String) testData[i][4] + "A",
-          (Integer) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
+          (Long) testData[i][0] + 2, (String) testData[i][1] + "A", (Long) testData[i][2] + 2, (Long) testData[i][3] + 2, (String) testData[i][4] + "A",
+          (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
           (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2, (String) testData[i][13] + "A");
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
@@ -314,10 +314,10 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
       MemberTracking next = MemberTracking.get(syncAccount, testTime, (Long) testData[i][0] + 2);
       Assert.assertEquals((Long) testData[i][0] + 2, next.getCharacterID());
       Assert.assertEquals((String) testData[i][1] + "A", next.getBase());
-      Assert.assertEquals((Integer) testData[i][2] + 2, next.getBaseID());
+      Assert.assertEquals((Long) testData[i][2] + 2, next.getBaseID());
       Assert.assertEquals((Long) testData[i][3] + 2, next.getGrantableRoles());
       Assert.assertEquals((String) testData[i][4] + "A", next.getLocation());
-      Assert.assertEquals((Integer) testData[i][5] + 2, next.getLocationID());
+      Assert.assertEquals((Long) testData[i][5] + 2, next.getLocationID());
       Assert.assertEquals((Long) testData[i][6] + 2, next.getLogoffDateTime());
       Assert.assertEquals((Long) testData[i][7] + 2, next.getLogonDateTime());
       Assert.assertEquals((String) testData[i][8] + "A", next.getName());

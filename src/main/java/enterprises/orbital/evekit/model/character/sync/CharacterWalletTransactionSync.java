@@ -81,7 +81,8 @@ public class CharacterWalletTransactionSync extends AbstractCharacterSync {
 
   @Override
   protected Object getServerData(
-                                 ICharacterAPI charRequest) throws IOException {
+                                 ICharacterAPI charRequest)
+    throws IOException {
     Collection<IWalletTransaction> allRecords = new ArrayList<IWalletTransaction>();
 
     // See CharacterWalletJournalSync for details on the processing method below.
@@ -170,16 +171,17 @@ public class CharacterWalletTransactionSync extends AbstractCharacterSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICharacterAPI charRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IWalletTransaction> allRecords = (Collection<IWalletTransaction>) data;
 
     for (IWalletTransaction next : allRecords) {
-      // Populate record
+      // Populate record - note that characterID and characterName are not present on character wallet transactions
       WalletTransaction newRecord = new WalletTransaction(
           1000, next.getTransactionID(), ModelUtil.safeConvertDate(next.getTransactionDateTime()), (int) next.getQuantity(), next.getTypeName(),
-          (int) next.getTypeID(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(),
-          next.getStationName(), next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID());
+          next.getTypeID(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(),
+          next.getStationName(), next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID(), next.getClientTypeID(), 0, null);
       updates.add(newRecord);
     }
 

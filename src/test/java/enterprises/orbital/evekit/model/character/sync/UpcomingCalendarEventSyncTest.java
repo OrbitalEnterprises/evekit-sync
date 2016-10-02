@@ -46,7 +46,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
     for (int i = 0; i < size; i++) {
       testData[i][0] = TestBase.getRandomInt();
       testData[i][1] = TestBase.getRandomLong();
-      testData[i][2] = TestBase.getUniqueRandomInteger();
+      testData[i][2] = TestBase.getUniqueRandomLong();
       testData[i][3] = TestBase.getRandomText(500);
       testData[i][4] = TestBase.getRandomText(50);
       testData[i][5] = TestBase.getRandomLong();
@@ -116,8 +116,8 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getEventID() {
-          return (Integer) instanceData[2];
+        public long getEventID() {
+          return (Long) instanceData[2];
         }
 
         @Override
@@ -151,7 +151,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
 
     // Verify data was populated correctly
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = UpcomingCalendarEvent.get(syncAccount, testTime, eventID);
       Assert.assertNotNull(next);
       Assert.assertEquals((int) ((Integer) testData[i][0]), next.getDuration());
@@ -180,7 +180,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
 
     // Populate existing events
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = new UpcomingCalendarEvent(
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8]);
@@ -195,7 +195,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
 
     // Verify events are changed, the sync always updates existing data.
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = UpcomingCalendarEvent.get(syncAccount, testTime, eventID);
       Assert.assertNotNull(next);
       Assert.assertEquals((int) ((Integer) testData[i][0]), next.getDuration());
@@ -224,7 +224,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
 
     // Populate existing events
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = new UpcomingCalendarEvent(
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8]);
@@ -246,7 +246,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
 
     // Verify events unchanged
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = UpcomingCalendarEvent.get(syncAccount, testTime, eventID);
       Assert.assertNotNull(next);
       Assert.assertEquals((int) ((Integer) testData[i][0]), next.getDuration());
@@ -293,7 +293,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
     // Verify deleted events are no longer present
     Assert.assertEquals(testData.length, UpcomingCalendarEvent.getAllUpcomingCalendarEvents(syncAccount, testTime).size());
     for (int i = 0; i < testData.length; i++) {
-      int eventID = (Integer) testData[i][2];
+      long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = UpcomingCalendarEvent.get(syncAccount, testTime, eventID);
       Assert.assertNotNull(next);
       Assert.assertEquals((int) ((Integer) testData[i][0]), next.getDuration());
