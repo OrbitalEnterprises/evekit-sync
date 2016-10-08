@@ -426,6 +426,13 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
         return null;
       }
 
+      @Override
+      public Collection<IAsset> requestAssets(
+                                              boolean flat)
+        throws IOException {
+        return null;
+      }
+
     };
   }
 

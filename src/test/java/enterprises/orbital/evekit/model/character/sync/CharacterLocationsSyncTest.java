@@ -453,6 +453,13 @@ public class CharacterLocationsSyncTest extends SyncTestBase {
         return result;
       }
 
+      @Override
+      public Collection<IAsset> requestAssets(
+                                              boolean flat)
+        throws IOException {
+        return null;
+      }
+
     };
 
   }
