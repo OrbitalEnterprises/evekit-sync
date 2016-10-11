@@ -53,7 +53,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     Comparator<Object[]> testDataCompare = new Comparator<Object[]>() {
 
       @Override
-      public int compare(Object[] arg0, Object[] arg1) {
+      public int compare(
+                         Object[] arg0,
+                         Object[] arg1) {
         long v0 = (Long) arg0[1];
         long v1 = (Long) arg1[1];
 
@@ -151,7 +153,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IWalletJournalEntry makeEntry(final Object[] instanceData, final String tweak) {
+  public IWalletJournalEntry makeEntry(
+                                       final Object[] instanceData,
+                                       final String tweak) {
     return new IWalletJournalEntry() {
 
       @Override
@@ -226,7 +230,12 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     };
   }
 
-  public Collection<IWalletJournalEntry> assembleEntries(Object[][] source, int count, Long startingRefID, boolean forward, String tweak) {
+  public Collection<IWalletJournalEntry> assembleEntries(
+                                                         Object[][] source,
+                                                         int count,
+                                                         Long startingRefID,
+                                                         boolean forward,
+                                                         String tweak) {
     List<IWalletJournalEntry> entries = new ArrayList<IWalletJournalEntry>();
     if (!forward) {
       for (int i = 0; i < source.length && count > 0; i++) {
@@ -249,7 +258,11 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     return entries;
   }
 
-  public WalletJournal makeJournalObject(long time, Object[] instanceData, String tweak) throws Exception {
+  public WalletJournal makeJournalObject(
+                                         long time,
+                                         Object[] instanceData,
+                                         String tweak)
+    throws Exception {
     int accountKey = (Integer) instanceData[0];
     long refID = (Long) instanceData[1];
     long date = (Long) instanceData[2];
@@ -261,7 +274,10 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     return entry;
   }
 
-  public void setupOkMock(final String tweak, final boolean useLarge) throws Exception {
+  public void setupOkMock(
+                          final String tweak,
+                          final boolean useLarge)
+    throws Exception {
     mockServer = EasyMock.createMock(ICorporationAPI.class);
 
     Collection<IAccountBalance> balances = new ArrayList<IAccountBalance>();
@@ -342,7 +358,10 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     EasyMock.expectLastCall().anyTimes();
   }
 
-  public void compareAgainstTestData(WalletJournal entry, Object[] instanceData, String tweak) {
+  public void compareAgainstTestData(
+                                     WalletJournal entry,
+                                     Object[] instanceData,
+                                     String tweak) {
     Assert.assertEquals(entry.getAccountKey(), (int) ((Integer) instanceData[0]));
     Assert.assertEquals(entry.getRefID(), (long) ((Long) instanceData[1]));
     Assert.assertEquals(entry.getDate(), (long) ((Long) instanceData[2]));
@@ -384,8 +403,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // Verify entries were added correctly.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < testData[acct].length; i++) {
+        int accountKey = (Integer) testData[acct][i][0];
         long refID = (Long) testData[acct][i][1];
-        WalletJournal entry = WalletJournal.get(syncAccount, testTime, refID);
+        WalletJournal entry = WalletJournal.get(syncAccount, testTime, accountKey, refID);
         compareAgainstTestData(entry, testData[acct][i], "");
       }
     }
@@ -415,8 +435,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // provide.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < CorporationWalletJournalSync.MAX_RECORD_DOWNLOAD; i++) {
+        int accountKey = (Integer) largeTestData[acct][i][0];
         long refID = (Long) largeTestData[acct][i][1];
-        WalletJournal entry = WalletJournal.get(syncAccount, testTime, refID);
+        WalletJournal entry = WalletJournal.get(syncAccount, testTime, accountKey, refID);
         compareAgainstTestData(entry, largeTestData[acct][i], "");
       }
     }
@@ -459,8 +480,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // Verify previously added entries are unmodified.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < testData[acct].length; i++) {
+        int accountKey = (Integer) testData[acct][i][0];
         long refID = (Long) testData[acct][i][1];
-        WalletJournal entry = WalletJournal.get(syncAccount, testTime, refID);
+        WalletJournal entry = WalletJournal.get(syncAccount, testTime, accountKey, refID);
         compareAgainstTestData(entry, testData[acct][i], "foo");
       }
     }
@@ -501,8 +523,9 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // Verify previously added entries are unmodified.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < testData[acct].length; i++) {
+        int accountKey = (Integer) testData[acct][i][0];
         long refID = (Long) testData[acct][i][1];
-        WalletJournal entry = WalletJournal.get(syncAccount, testTime, refID);
+        WalletJournal entry = WalletJournal.get(syncAccount, testTime, accountKey, refID);
         compareAgainstTestData(entry, testData[acct][i], "foo");
       }
     }

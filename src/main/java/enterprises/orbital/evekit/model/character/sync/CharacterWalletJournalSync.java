@@ -67,7 +67,7 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
     assert item instanceof WalletJournal;
     WalletJournal api = (WalletJournal) item;
 
-    if (WalletJournal.get(accountKey, time, api.getRefID()) != null) {
+    if (WalletJournal.get(accountKey, time, api.getAccountKey(), api.getRefID()) != null) {
       // Item already exists. We don't need to check if it's changed because journal entries are immutable.
       return true;
     }
@@ -81,7 +81,8 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
 
   @Override
   protected Object getServerData(
-                                 ICharacterAPI charRequest) throws IOException {
+                                 ICharacterAPI charRequest)
+    throws IOException {
     Collection<IWalletJournalEntry> allRecords = new ArrayList<IWalletJournalEntry>();
     // The EVE api docs are a little sketchy here. This is how things seem to work right now. First, the journal API provides at most one month of data. So no
     // matter what, you can't scan backwards further than that. Second, the journal API limits the maximum number of entries that will be returned until the
@@ -186,7 +187,8 @@ public class CharacterWalletJournalSync extends AbstractCharacterSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICharacterAPI charRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IWalletJournalEntry> allRecords = (Collection<IWalletJournalEntry>) data;
 

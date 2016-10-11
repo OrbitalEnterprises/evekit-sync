@@ -71,7 +71,7 @@ public class CorporationWalletJournalSync extends AbstractCorporationSync {
     assert item instanceof WalletJournal;
     WalletJournal api = (WalletJournal) item;
 
-    if (WalletJournal.get(accountKey, time, api.getRefID()) != null) {
+    if (WalletJournal.get(accountKey, time, api.getAccountKey(), api.getRefID()) != null) {
       // This item already exists. We don't need to check if it's changed because journal entries are immutable.
       return true;
     }
@@ -85,7 +85,8 @@ public class CorporationWalletJournalSync extends AbstractCorporationSync {
 
   @Override
   protected Object getServerData(
-                                 ICorporationAPI corpRequest) throws IOException {
+                                 ICorporationAPI corpRequest)
+    throws IOException {
     // Retrieve accounts to query.
     Collection<IAccountBalance> accounts = corpRequest.requestAccountBalances();
     if (corpRequest.isError()) return null;
@@ -200,7 +201,8 @@ public class CorporationWalletJournalSync extends AbstractCorporationSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICorporationAPI corpRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Map<Integer, Collection<IWalletJournalEntry>> recordMap = (Map<Integer, Collection<IWalletJournalEntry>>) data;
 

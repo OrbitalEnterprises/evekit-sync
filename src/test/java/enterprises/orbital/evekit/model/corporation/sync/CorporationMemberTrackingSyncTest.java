@@ -176,7 +176,7 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
 
     }
 
-    EasyMock.expect(mockServer.requestMemberTracking()).andReturn(tracks);
+    EasyMock.expect(mockServer.requestMemberTracking(true)).andReturn(tracks);
     EasyMock.expect(mockServer.isError()).andReturn(false);
     EasyMock.expect(mockServer.getCachedUntil()).andReturn(new Date(testDate));
   }

@@ -353,7 +353,9 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<IMemberTracking> requestMemberTracking() throws IOException {
+      public Collection<IMemberTracking> requestMemberTracking(
+                                                               boolean extended)
+        throws IOException {
         return null;
       }
 

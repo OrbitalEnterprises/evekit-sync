@@ -89,8 +89,9 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
 
   @Override
   protected Object getServerData(
-                                 ICorporationAPI corpRequest) throws IOException {
-    return corpRequest.requestMemberTracking();
+                                 ICorporationAPI corpRequest)
+    throws IOException {
+    return corpRequest.requestMemberTracking(true);
   }
 
   @Override
@@ -99,7 +100,8 @@ public class CorporationMemberTrackingSync extends AbstractCorporationSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICorporationAPI corpRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IMemberTracking> tracks = (Collection<IMemberTracking>) data;
 
