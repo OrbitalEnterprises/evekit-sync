@@ -27,30 +27,42 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
   protected static final Logger log = Logger.getLogger(CharacterCalendarEventAttendeeSync.class.getName());
 
   @Override
-  public boolean isRefreshed(CapsuleerSyncTracker tracker) {
+  public boolean isRefreshed(
+                             CapsuleerSyncTracker tracker) {
     return tracker.getCalendarEventAttendeesStatus() != SyncTracker.SyncState.NOT_PROCESSED;
   }
 
   @Override
-  public long getExpiryTime(Capsuleer container) {
+  public long getExpiryTime(
+                            Capsuleer container) {
     return container.getCalendarEventAttendeesExpiry();
   }
 
   @Override
-  public void updateStatus(CapsuleerSyncTracker tracker, SyncState status, String detail) {
+  public void updateStatus(
+                           CapsuleerSyncTracker tracker,
+                           SyncState status,
+                           String detail) {
     tracker.setCalendarEventAttendeesStatus(status);
     tracker.setCalendarEventAttendeesDetail(detail);
     CapsuleerSyncTracker.updateTracker(tracker);
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(
+                           Capsuleer container,
+                           long expiry) {
     container.setCalendarEventAttendeesExpiry(expiry);
     CachedData.updateData(container);
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(
+                        long time,
+                        CapsuleerSyncTracker tracker,
+                        Capsuleer container,
+                        SynchronizedEveAccount accountKey,
+                        CachedData item) {
     assert item instanceof CalendarEventAttendee;
 
     CalendarEventAttendee api = (CalendarEventAttendee) item;
@@ -79,7 +91,8 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
   }
 
   @Override
-  public boolean prereqSatisfied(CapsuleerSyncTracker tracker) {
+  public boolean prereqSatisfied(
+                                 CapsuleerSyncTracker tracker) {
     // We require that UpcomingCalendarEvents and CharacterSheet be updated first
     return tracker.getUpcomingCalendarEventsStatus() != SyncTracker.SyncState.NOT_PROCESSED
         && tracker.getCharacterSheetStatus() != SyncTracker.SyncState.NOT_PROCESSED;
@@ -87,19 +100,30 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
 
   // We can't use the template for synching calendar events so these methods are unsupported.
   @Override
-  protected Object getServerData(ICharacterAPI charRequest) throws IOException {
+  protected Object getServerData(
+                                 ICharacterAPI charRequest)
+    throws IOException {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  protected long processServerData(long time, SynchronizedEveAccount syncAccount, ICharacterAPI charRequest, Object data, List<CachedData> updates)
+  protected long processServerData(
+                                   long time,
+                                   SynchronizedEveAccount syncAccount,
+                                   ICharacterAPI charRequest,
+                                   Object data,
+                                   List<CachedData> updates)
     throws IOException {
     throw new UnsupportedOperationException();
   }
 
   private static final CharacterCalendarEventAttendeeSync syncher = new CharacterCalendarEventAttendeeSync();
 
-  public static SyncStatus syncCalendarEventAttendees(long time, SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil, ICharacterAPI charRequest) {
+  public static SyncStatus syncCalendarEventAttendees(
+                                                      long time,
+                                                      SynchronizedEveAccount syncAccount,
+                                                      SynchronizerUtil syncUtil,
+                                                      ICharacterAPI charRequest) {
 
     try {
       // Run pre-check.
@@ -122,7 +146,7 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
       Capsuleer cap = Capsuleer.getCapsuleer(syncAccount);
       CharacterSheet sheet = CharacterSheet.get(syncAccount, time);
       List<UpcomingCalendarEvent> events = UpcomingCalendarEvent.getAllUpcomingCalendarEvents(syncAccount, time);
-      List<Integer> eventsToQuery = new ArrayList<Integer>();
+      List<Long> eventsToQuery = new ArrayList<Long>();
 
       for (UpcomingCalendarEvent nextEvent : events) {
         if (nextEvent.getOwnerID() == cap.getCharacterID() || nextEvent.getOwnerID() == sheet.getCorporationID()
@@ -138,7 +162,7 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
         Set<Long> attendeeSet = new HashSet<Long>();
 
         // Process events one at a time
-        for (int nextEventID : eventsToQuery) {
+        for (long nextEventID : eventsToQuery) {
           // Retrieve attendee list from server
           Collection<ICalendarEventAttendee> attendees = charRequest.requestCalendarEventAttendees(nextEventID);
 
@@ -199,11 +223,15 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
 
   }
 
-  public static SyncStatus exclude(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus exclude(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CalendarEventAttendees", SyncTracker.SyncState.SYNC_ERROR);
   }
 
-  public static SyncStatus notAllowed(SynchronizedEveAccount syncAccount, SynchronizerUtil syncUtil) {
+  public static SyncStatus notAllowed(
+                                      SynchronizedEveAccount syncAccount,
+                                      SynchronizerUtil syncUtil) {
     return syncher.excludeState(syncAccount, syncUtil, "CalendarEventAttendees", SyncTracker.SyncState.NOT_ALLOWED);
   }
 

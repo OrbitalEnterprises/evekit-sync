@@ -27,6 +27,7 @@ import enterprises.orbital.evekit.model.corporation.sync.CorporationFacilitiesSy
 import enterprises.orbital.evekit.model.corporation.sync.CorporationIndustryJobsHistorySync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationIndustryJobsSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationKillLogSync;
+import enterprises.orbital.evekit.model.corporation.sync.CorporationLocationsSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationMarketOrderSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationMedalsSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationMemberMedalsSync;
@@ -72,7 +73,8 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
    */
   @Override
   public void synchronize(
-                          SynchronizedEveAccount syncAccount) throws IOException, URISyntaxException {
+                          SynchronizedEveAccount syncAccount)
+    throws IOException, URISyntaxException {
     log.fine("Starting sync: " + syncAccount);
     // Steps:
     // 1) Verify the API key is not expired. Synchronization is skipped if the key is expired.
@@ -570,6 +572,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
                              ICorporationAPI corpRequest,
                              IAccountAPI acctRequest) {
         return CorporationKillLogSync.syncCorporationKillLog(syncTime, syncAccount, syncUtil, corpRequest);
+
+      }
+    });
+    supportedFeatures.put(SynchronizationState.SYNC_CORP_LOCATIONS, new CorpStateHandler() {
+      @Override
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
+        return CorporationLocationsSync.exclude(syncAccount, syncUtil);
+
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
+        return CorporationLocationsSync.notAllowed(syncAccount, syncUtil);
+
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             SynchronizedEveAccount syncAccount,
+                             SynchronizerUtil syncUtil,
+                             ICorporationAPI corpRequest,
+                             IAccountAPI acctRequest) {
+        return CorporationLocationsSync.syncCorporationLocations(syncTime, syncAccount, syncUtil, corpRequest);
 
       }
     });

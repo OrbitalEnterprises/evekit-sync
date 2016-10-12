@@ -118,8 +118,8 @@ public class CorporationOutpostServiceDetailSyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getSolarSystemID() {
-          return 0L;
+        public int getSolarSystemID() {
+          return 0;
         }
 
         @Override

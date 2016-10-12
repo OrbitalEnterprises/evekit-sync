@@ -6,12 +6,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.easymock.EasyMock;
+import org.hsqldb.rights.User;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,8 +24,8 @@ import enterprises.orbital.evekit.model.SyncTracker.SyncState;
 import enterprises.orbital.evekit.model.SynchronizerUtil;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
 import enterprises.orbital.evekit.model.character.Capsuleer;
-import enterprises.orbital.evekit.model.character.CharacterNotification;
-import enterprises.orbital.evekit.model.character.CharacterNotificationBody;
+import enterprises.orbital.evekit.model.common.Asset;
+import enterprises.orbital.evekit.model.common.Location;
 import enterprises.orbital.evexmlapi.chr.ICalendarEventAttendee;
 import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
 import enterprises.orbital.evexmlapi.chr.ICharacterMedal;
@@ -66,11 +64,12 @@ import enterprises.orbital.evexmlapi.shared.IStandingSet;
 import enterprises.orbital.evexmlapi.shared.IWalletJournalEntry;
 import enterprises.orbital.evexmlapi.shared.IWalletTransaction;
 
-public class CharacterNotificationTextSyncTest extends SyncTestBase {
+public class CharacterLocationsSyncTest extends SyncTestBase {
 
   // Local mocks and other objects
   long                   testDate;
   long                   prevDate;
+  User                   testUser;
   EveKitUserAccount      userAccount;
   SynchronizedEveAccount syncAccount;
   Capsuleer              container;
@@ -78,29 +77,44 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
   SynchronizerUtil       syncUtil;
   ICharacterAPI          mockServer;
 
-  static Object[][]      testData;
+  static Object[][]      testDataAssets;
+  static Object[][]      testDataLocations;
 
   static {
-    // Generate random test data
-    // 0 notificationID
-    // 1 typeID
-    // 2 senderID
-    // 3 sentDate
-    // 4 msgRead
-    // 5 text
-    // 6 textRetrieved
-    // 7 missing
-    int size = 20 + TestBase.getRandomInt(20);
-    testData = new Object[size][8];
+    // Generate two bits of test data:
+    // 1) A set of assets for which locations will be retrieved
+    // 2) Corresponding locations for each generated asset
+    // Generate more than 1000 assets to test paging through the locations API
+    int size = 1000 + TestBase.getRandomInt(1000);
+    testDataAssets = new Object[size][8];
+    testDataLocations = new Object[size][5];
     for (int i = 0; i < size; i++) {
-      testData[i][0] = TestBase.getUniqueRandomLong();
-      testData[i][1] = TestBase.getRandomInt();
-      testData[i][2] = TestBase.getRandomLong();
-      testData[i][3] = TestBase.getRandomLong();
-      testData[i][4] = TestBase.getRandomBoolean();
-      testData[i][5] = TestBase.getRandomText(500);
-      testData[i][6] = true;
-      testData[i][7] = TestBase.getRandomBoolean();
+      // 0 long itemID;
+      // 1 long locationID;
+      // 2 int typeID;
+      // 3 long quantity;
+      // 4 int flag;
+      // 5 boolean singleton;
+      // 6 long rawQuantity;
+      // 7 long container;
+      testDataAssets[i][0] = TestBase.getUniqueRandomLong();
+      testDataAssets[i][1] = TestBase.getRandomLong();
+      testDataAssets[i][2] = TestBase.getRandomInt();
+      testDataAssets[i][3] = TestBase.getRandomLong();
+      testDataAssets[i][4] = TestBase.getRandomInt();
+      testDataAssets[i][5] = TestBase.getRandomBoolean();
+      testDataAssets[i][6] = TestBase.getRandomLong();
+      testDataAssets[i][7] = TestBase.getRandomLong();
+      // 0 long itemID;
+      // 1 String itemName;
+      // 2 double x;
+      // 3 double y;
+      // 4 double z;
+      testDataLocations[i][0] = testDataAssets[i][0];
+      testDataLocations[i][1] = TestBase.getRandomText(50);
+      testDataLocations[i][2] = TestBase.getRandomDouble(50000);
+      testDataLocations[i][3] = TestBase.getRandomDouble(50000);
+      testDataLocations[i][4] = TestBase.getRandomDouble(50000);
     }
   }
 
@@ -126,83 +140,40 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public CharacterNotification makeNotificationObject(
-                                                      long time,
-                                                      final Object[] instanceData,
-                                                      final String tweak,
-                                                      boolean retrieved)
-    throws Exception {
-    long notificationID = (Long) instanceData[0];
-    CharacterNotification note = new CharacterNotification(
-        notificationID, (Integer) instanceData[1], (Long) instanceData[2], (Long) instanceData[3], (Boolean) instanceData[4]);
-    note.setup(syncAccount, time);
-    return note;
-  }
-
-  public CharacterNotificationBody makeNotificationBodyObject(
-                                                              long time,
-                                                              final Object[] instanceData,
-                                                              final String tweak,
-                                                              boolean retrieved)
-    throws Exception {
-    long notificationID = (Long) instanceData[0];
-    CharacterNotificationBody note = new CharacterNotificationBody(notificationID, retrieved, (String) instanceData[5] + tweak, (Boolean) instanceData[7]);
-    note.setup(syncAccount, time);
-    return note;
-  }
-
-  public INotificationText makeNotificationText(
-                                                final Object[] instanceData,
-                                                final String tweak) {
-    return new INotificationText() {
-
-      @Override
-      public boolean isMissing() {
-        return (Boolean) instanceData[7];
-      }
-
-      @Override
-      public String getText() {
-        return (String) instanceData[5] + tweak;
-      }
-
-      @Override
-      public long getNotificationID() {
-        return (Long) instanceData[0];
-      }
-    };
-  }
-
-  public void compareNoteWithTestData(
-                                      CharacterNotification note,
-                                      Object[] instanceData,
-                                      String tweak) {
-    Assert.assertEquals(note.getNotificationID(), (long) ((Long) instanceData[0]));
-    Assert.assertEquals(note.getTypeID(), (int) ((Integer) instanceData[1]));
-    Assert.assertEquals(note.getSenderID(), (long) ((Long) instanceData[2]));
-    Assert.assertEquals(note.getSentDate(), (long) ((Long) instanceData[3]));
-    Assert.assertEquals(note.isMsgRead(), (boolean) ((Boolean) instanceData[4]));
-  }
-
-  public void compareBodyWithTestData(
-                                      CharacterNotificationBody note,
-                                      Object[] instanceData,
-                                      String tweak) {
-    Assert.assertEquals(note.getNotificationID(), (long) ((Long) instanceData[0]));
-    Assert.assertEquals(note.getText(), (String) instanceData[5] + tweak);
-    Assert.assertEquals(note.isRetrieved(), (boolean) ((Boolean) instanceData[6]));
-    Assert.assertEquals(note.isMissing(), (boolean) ((Boolean) instanceData[7]));
-  }
-
   public void setupOkMock(
-                          String tweak)
+                          final Date cachedUntil)
     throws Exception {
+    final Map<Long, ILocation> locations = new HashMap<>();
+    for (int i = 0; i < testDataLocations.length; i++) {
+      final Object[] instanceData = testDataLocations[i];
+      long itemID = (Long) testDataLocations[i][0];
+      locations.put(itemID, new ILocation() {
 
-    mockServer = EasyMock.createMock(ICharacterAPI.class);
-    final Map<Long, INotificationText> bodies = new HashMap<Long, INotificationText>();
-    for (int i = 0; i < testData.length; i++) {
-      INotificationText next = makeNotificationText(testData[i], tweak);
-      bodies.put(next.getNotificationID(), next);
+        @Override
+        public long getItemID() {
+          return (Long) instanceData[0];
+        }
+
+        @Override
+        public String getItemName() {
+          return (String) instanceData[1];
+        }
+
+        @Override
+        public double getX() {
+          return (Double) instanceData[2];
+        }
+
+        @Override
+        public double getY() {
+          return (Double) instanceData[3];
+        }
+
+        @Override
+        public double getZ() {
+          return (Double) instanceData[4];
+        }
+      });
     }
 
     // Make a real mock class in this case since EasyMock can't handle var-args functions.
@@ -215,25 +186,13 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       }
 
       @Override
-      public Collection<INotificationText> requestNotificationTexts(
-                                                                    long... notificationID)
-        throws IOException {
-        List<INotificationText> result = new ArrayList<INotificationText>();
-        for (int i = 0; i < notificationID.length; i++) {
-          Assert.assertTrue(bodies.containsKey(notificationID[i]));
-          result.add(bodies.get(notificationID[i]));
-        }
-        return result;
-      }
-
-      // The rest of the methods are ignored.
-      @Override
       public Collection<IMailBody> requestMailBodies(
                                                      long... messageID)
         throws IOException {
         return null;
       }
 
+      // The rest of the methods are ignored.
       @Override
       public int getEveAPIVersion() {
         return 0;
@@ -246,7 +205,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
 
       @Override
       public Date getCachedUntil() {
-        return new Date(0);
+        return cachedUntil;
       }
 
       @Override
@@ -345,6 +304,13 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
 
       @Override
       public Collection<INotification> requestNotifications() throws IOException {
+        return null;
+      }
+
+      @Override
+      public Collection<INotificationText> requestNotificationTexts(
+                                                                    long... notificationID)
+        throws IOException {
         return null;
       }
 
@@ -479,7 +445,12 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
       public Collection<ILocation> requestLocations(
                                                     long... itemID)
         throws IOException {
-        return null;
+        List<ILocation> result = new ArrayList<ILocation>();
+        for (int i = 0; i < itemID.length; i++) {
+          Assert.assertTrue(locations.containsKey(itemID[i]));
+          result.add(locations.get(itemID[i]));
+        }
+        return result;
       }
 
       @Override
@@ -493,136 +464,199 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
 
   }
 
-  // Test update with new notifications
-  @Test
-  public void testCharacterNotificationTextSyncUpdate() throws Exception {
-    setupOkMock("");
-    long testTime = 1234L;
-
-    // Populate unretrieved notifications
-    for (int i = 0; i < testData.length; i++) {
-      CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "", false);
-      note = CachedData.updateData(note);
-    }
-
-    // This sync requires character notifications to already be processed.
-    tracker.setNotificationsStatus(SyncState.UPDATED);
-    tracker.setNotificationsDetail(null);
-    CapsuleerSyncTracker.updateTracker(tracker);
-    container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
-
-    // Perform the sync
-    SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
-    Assert.assertEquals(SyncStatus.DONE, syncOutcome);
-
-    // Verify notification bodies were updated correctly.
-    for (int i = 0; i < testData.length; i++) {
-      long notificationID = (Long) testData[i][0];
-      CharacterNotificationBody note = CharacterNotificationBody.get(syncAccount, testTime, notificationID);
-      compareBodyWithTestData(note, testData[i], "");
-    }
-
-    // Verify tracker and container were updated properly.
-    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getNotificationTextsExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsDetail());
+  public Asset makeAsset(
+                         final long time,
+                         final Object[] instanceData)
+    throws Exception {
+    long itemID = (Long) instanceData[0];
+    Asset newAsset = new Asset(
+        itemID, (Long) instanceData[1], (Integer) instanceData[2], (Long) instanceData[3], (Integer) instanceData[4], (Boolean) instanceData[5],
+        (Long) instanceData[6], (Long) instanceData[7]);
+    newAsset.setup(syncAccount, time);
+    return newAsset;
   }
 
-  // Test update with notification bodies already retrieved
   @Test
-  public void testCharacterNotificationTextSyncUpdateExisting() throws Exception {
+  public void testLocationsSyncUpdate() throws Exception {
+    setupOkMock(new Date(testDate));
+    long testTime = 1234L;
+
+    // Populate assets
+    for (int i = 0; i < testDataAssets.length; i++) {
+      Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
+      CachedData.updateData(nextAsset);
+    }
+
+    // Perform the sync
+    SyncStatus syncOutcome = CharacterLocationsSync.syncCharacterLocations(testTime, syncAccount, syncUtil, mockServer);
+    Assert.assertEquals(SyncStatus.DONE, syncOutcome);
+
+    // Verify new data populated.
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = Location.get(syncAccount, testTime, itemID);
+      Assert.assertNotNull(next);
+      Assert.assertEquals(testDataLocations[i][1], next.getItemName());
+      Assert.assertEquals(testDataLocations[i][2], next.getX());
+      Assert.assertEquals(testDataLocations[i][3], next.getY());
+      Assert.assertEquals(testDataLocations[i][4], next.getZ());
+    }
+
+    // Verify tracker and container were updated properly
+    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getLocationsExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsDetail());
+  }
+
+  @Test
+  public void testLocationsSyncUpdateExisting() throws Exception {
     // Prepare mock
-    setupOkMock("");
+    setupOkMock(new Date(testDate));
     long testTime = 1234L;
 
-    // Populate notifications that have already been retrieved
-    for (int i = 0; i < testData.length; i++) {
-      CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "foo", true);
-      note = CachedData.updateData(note);
+    // Populate assets
+    for (int i = 0; i < testDataAssets.length; i++) {
+      Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
+      CachedData.updateData(nextAsset);
     }
 
-    // This sync requires character notifications to already be processed.
-    tracker.setNotificationsStatus(SyncState.UPDATED);
-    tracker.setNotificationsDetail(null);
-    CapsuleerSyncTracker.updateTracker(tracker);
-    container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    // Populate existing locations
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = new Location(
+          itemID, (String) testDataLocations[i][1] + "foo", (Double) testDataLocations[i][2] + 7, (Double) testDataLocations[i][3] + 7,
+          (Double) testDataLocations[i][4] + 7);
+      next.setup(syncAccount, testTime);
+      CachedData.updateData(next);
+    }
 
     // Perform the sync
-    SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
+    SyncStatus syncOutcome = CharacterLocationsSync.syncCharacterLocations(testTime, syncAccount, syncUtil, mockServer);
     Assert.assertEquals(SyncStatus.DONE, syncOutcome);
 
-    // Verify notifications are unchanged.
-    for (int i = 0; i < testData.length; i++) {
-      long notificationID = (Long) testData[i][0];
-      CharacterNotificationBody note = CharacterNotificationBody.get(syncAccount, testTime, notificationID);
-      compareBodyWithTestData(note, testData[i], "foo");
+    // Verify changed, the sync always updates existing data.
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = Location.get(syncAccount, testTime, itemID);
+      Assert.assertNotNull(next);
+      Assert.assertEquals(testDataLocations[i][1], next.getItemName());
+      Assert.assertEquals(testDataLocations[i][2], next.getX());
+      Assert.assertEquals(testDataLocations[i][3], next.getY());
+      Assert.assertEquals(testDataLocations[i][4], next.getZ());
     }
 
-    // Verify tracker and container were updated properly. Note that this sync uses the expiry time from UpcomingCalendarEvents.
-    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getNotificationTextsExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsDetail());
-  }
-
-  // Test fails when prereqs not met
-  @Test
-  public void testCharacterNotificationTextSyncUpdateNoPreqs() throws Exception {
-    setupOkMock("");
-    long testTime = 1234L;
-
-    // Perform the sync
-    SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
-    Assert.assertEquals(SyncStatus.ERROR, syncOutcome);
+    // Verify tracker and container were updated properly
+    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getLocationsExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsDetail());
   }
 
   // Test skips update when already updated
   @Test
-  public void testCharacterNotificationTextSyncUpdateSkip() throws Exception {
+  public void testLocationsSyncUpdateSkip() throws Exception {
     // Prepare mock
-    setupOkMock("");
+    setupOkMock(new Date(testDate));
     long testTime = 1234L;
 
-    // Populate unretrieved notifications
-    for (int i = 0; i < testData.length; i++) {
-      CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "foo", false);
-      note = CachedData.updateData(note);
+    // Populate assets
+    for (int i = 0; i < testDataAssets.length; i++) {
+      Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
+      CachedData.updateData(nextAsset);
     }
 
-    // This sync requires character notifications to already be processed.
-    tracker.setNotificationsStatus(SyncState.UPDATED);
-    tracker.setNotificationsDetail(null);
-    CapsuleerSyncTracker.updateTracker(tracker);
-    container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    // Populate existing locations
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = new Location(
+          itemID, (String) testDataLocations[i][1] + "foo", (Double) testDataLocations[i][2] + 7, (Double) testDataLocations[i][3] + 7,
+          (Double) testDataLocations[i][4] + 7);
+      next.setup(syncAccount, testTime);
+      CachedData.updateData(next);
+    }
 
     // Set the tracker as already updated and populate the container
-    tracker.setNotificationTextsStatus(SyncState.UPDATED);
-    tracker.setNotificationTextsDetail(null);
+    tracker.setLocationsStatus(SyncState.UPDATED);
+    tracker.setLocationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
-    container.setNotificationTextsExpiry(prevDate);
+    container.setLocationsExpiry(prevDate);
     container = CachedData.updateData(container);
 
     // Perform the sync
-    SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
+    SyncStatus syncOutcome = CharacterLocationsSync.syncCharacterLocations(testTime, syncAccount, syncUtil, mockServer);
     Assert.assertEquals(SyncStatus.DONE, syncOutcome);
+    // Skip the verify here since the calls should never be made
 
-    // Verify no texts were retrieved
-    Set<Long> unretrieved = new HashSet<Long>();
-    for (long l : CharacterNotificationBody.getUnretrievedNotificationIDs(syncAccount, testTime)) {
-      unretrieved.add(l);
-    }
-    Assert.assertEquals(unretrieved.size(), testData.length);
-    for (int i = 0; i < testData.length; i++) {
-      long notificationID = (Long) testData[i][0];
-      Assert.assertTrue(unretrieved.contains(notificationID));
+    // Verify data unchanged
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = Location.get(syncAccount, testTime, itemID);
+      Assert.assertNotNull(next);
+      Assert.assertEquals((String) testDataLocations[i][1] + "foo", next.getItemName());
+      Assert.assertEquals((Double) testDataLocations[i][2] + 7, next.getX(), 0.0001);
+      Assert.assertEquals((Double) testDataLocations[i][3] + 7, next.getY(), 0.0001);
+      Assert.assertEquals((Double) testDataLocations[i][4] + 7, next.getZ(), 0.0001);
     }
 
     // Verify tracker and container unchanged
-    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getNotificationTextsExpiry());
-    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsStatus());
-    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getNotificationTextsDetail());
+    Assert.assertEquals(prevDate, Capsuleer.getCapsuleer(syncAccount).getLocationsExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsDetail());
   }
 
+  // Test update with locations which should be deleted
+  @Test
+  public void testLocationsSyncUpdateDelete() throws Exception {
+    // Prepare mock
+    setupOkMock(new Date(testDate));
+    long testTime = 1234L;
+
+    // Populate assets
+    for (int i = 0; i < testDataAssets.length; i++) {
+      Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
+      CachedData.updateData(nextAsset);
+    }
+
+    // Populate existing locations which should be deleted
+    List<Location> toDelete = new ArrayList<Location>();
+    for (int i = 0; i < 5; i++) {
+      long itemID = TestBase.getUniqueRandomLong();
+      Location next = new Location(
+          itemID, TestBase.getRandomText(50), TestBase.getRandomDouble(50000), TestBase.getRandomDouble(50000), TestBase.getRandomDouble(50000));
+      next.setup(syncAccount, testTime);
+      next = CachedData.updateData(next);
+      toDelete.add(next);
+    }
+
+    // Perform the sync
+    SyncStatus syncOutcome = CharacterLocationsSync.syncCharacterLocations(testTime, syncAccount, syncUtil, mockServer);
+    Assert.assertEquals(SyncStatus.DONE, syncOutcome);
+
+    // Verify deleted locations no longer exist
+    int locationCount = 0;
+    long contid = -1;
+    List<Location> retrieve = Location.getAllLocations(syncAccount, testTime, -1, contid);
+    while (retrieve.size() > 0) {
+      locationCount += retrieve.size();
+      contid = retrieve.get(retrieve.size() - 1).getItemID();
+      retrieve = Location.getAllLocations(syncAccount, testTime, -1, contid);
+    }
+    Assert.assertEquals(testDataLocations.length, locationCount);
+    for (int i = 0; i < testDataLocations.length; i++) {
+      long itemID = (Long) testDataLocations[i][0];
+      Location next = Location.get(syncAccount, testTime, itemID);
+      Assert.assertNotNull(next);
+      Assert.assertEquals(testDataLocations[i][1], next.getItemName());
+      Assert.assertEquals(testDataLocations[i][2], next.getX());
+      Assert.assertEquals(testDataLocations[i][3], next.getY());
+      Assert.assertEquals(testDataLocations[i][4], next.getZ());
+    }
+    for (Location i : toDelete) {
+      Assert.assertNull(Location.get(syncAccount, testTime, i.getItemID()));
+    }
+
+    // Verify tracker and container were updated properly
+    Assert.assertEquals(testDate, Capsuleer.getCapsuleer(syncAccount).getLocationsExpiry());
+    Assert.assertEquals(SyncState.UPDATED, CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsStatus());
+    Assert.assertNull(CapsuleerSyncTracker.getUnfinishedTracker(syncAccount).getLocationsDetail());
+  }
 }

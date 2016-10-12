@@ -39,7 +39,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
   ICorporationAPI             mockServer;
 
   // 0 long itemID;
-  // 1 int locationID;
+  // 1 long locationID;
   // 2 int moonID;
   // 3 long onlineDate;
   // 4 int state;
@@ -54,7 +54,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
     testData = new Object[size][8];
     for (int i = 0; i < size; i++) {
       testData[i][0] = TestBase.getUniqueRandomLong();
-      testData[i][1] = TestBase.getRandomInt();
+      testData[i][1] = TestBase.getRandomLong();
       testData[i][2] = TestBase.getRandomInt();
       testData[i][3] = TestBase.getRandomLong();
       testData[i][4] = TestBase.getRandomInt();
@@ -98,8 +98,8 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getLocationID() {
-          return (Integer) instanceData[1];
+        public long getLocationID() {
+          return (Long) instanceData[1];
         }
 
         @Override
@@ -184,7 +184,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
     int totalFuelCount = 0;
     for (int i = 0; i < testData.length; i++) {
       Starbase next = new Starbase(
-          (Long) testData[i][0] + 2, (Integer) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
+          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
@@ -241,7 +241,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
     int totalFuelCount = 0;
     for (int i = 0; i < testData.length; i++) {
       Starbase next = new Starbase(
-          (Long) testData[i][0] + 2, (Integer) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
+          (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
@@ -274,7 +274,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
     for (int i = 0; i < testData.length; i++) {
       Starbase next = Starbase.get(syncAccount, testTime, (Long) testData[i][0] + 2);
       Assert.assertEquals((Long) testData[i][0] + 2, next.getItemID());
-      Assert.assertEquals((Integer) testData[i][1] + 2, next.getLocationID());
+      Assert.assertEquals((Long) testData[i][1] + 2, next.getLocationID());
       Assert.assertEquals((Integer) testData[i][2] + 2, next.getMoonID());
       Assert.assertEquals((Long) testData[i][3] + 2, next.getOnlineTimestamp());
       Assert.assertEquals((Integer) testData[i][4] + 2, next.getState());

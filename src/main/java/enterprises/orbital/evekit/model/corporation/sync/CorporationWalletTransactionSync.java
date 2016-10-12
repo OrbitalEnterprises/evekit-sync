@@ -85,7 +85,8 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
 
   @Override
   protected Object getServerData(
-                                 ICorporationAPI corpRequest) throws IOException {
+                                 ICorporationAPI corpRequest)
+    throws IOException {
     Collection<IAccountBalance> accounts = corpRequest.requestAccountBalances();
     if (corpRequest.isError()) return null;
     Map<Integer, Collection<IWalletTransaction>> recordMap = new HashMap<Integer, Collection<IWalletTransaction>>();
@@ -182,7 +183,8 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICorporationAPI corpRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Map<Integer, Collection<IWalletTransaction>> recordMap = (Map<Integer, Collection<IWalletTransaction>>) data;
 
@@ -195,8 +197,9 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
         // Populate record
         WalletTransaction newRecord = new WalletTransaction(
             accountKey, next.getTransactionID(), ModelUtil.safeConvertDate(next.getTransactionDateTime()), (int) next.getQuantity(), next.getTypeName(),
-            (int) next.getTypeID(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(),
-            next.getStationName(), next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID());
+            next.getTypeID(), next.getPrice().setScale(2, RoundingMode.HALF_UP), next.getClientID(), next.getClientName(), (int) next.getStationID(),
+            next.getStationName(), next.getTransactionType(), next.getTransactionFor(), next.getJournalTransactionID(), next.getClientTypeID(),
+            next.getCharacterID(), next.getCharacterName());
         updates.add(newRecord);
       }
     }

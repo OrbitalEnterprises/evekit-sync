@@ -51,8 +51,8 @@ public class CharacterContractsSyncTest extends SyncTestBase {
       testData[i][2] = TestBase.getRandomLong();
       testData[i][3] = TestBase.getRandomLong();
       testData[i][4] = TestBase.getRandomLong();
-      testData[i][5] = TestBase.getRandomInt();
-      testData[i][6] = TestBase.getRandomInt();
+      testData[i][5] = TestBase.getRandomLong();
+      testData[i][6] = TestBase.getRandomLong();
       testData[i][7] = TestBase.getRandomText(50);
       testData[i][8] = TestBase.getRandomText(50);
       testData[i][9] = TestBase.getRandomText(50);
@@ -67,7 +67,7 @@ public class CharacterContractsSyncTest extends SyncTestBase {
       testData[i][18] = TestBase.getRandomDouble(20000);
       testData[i][19] = TestBase.getRandomDouble(300000);
       testData[i][20] = TestBase.getRandomDouble(500000);
-      testData[i][21] = TestBase.getRandomLong();
+      testData[i][21] = TestBase.getRandomDouble(500000);
     }
   }
 
@@ -126,13 +126,13 @@ public class CharacterContractsSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getStartStationID() {
-          return (Integer) instanceData[5];
+        public long getStartStationID() {
+          return (Long) instanceData[5];
         }
 
         @Override
-        public int getEndStationID() {
-          return (Integer) instanceData[6];
+        public long getEndStationID() {
+          return (Long) instanceData[6];
         }
 
         @Override
@@ -206,8 +206,8 @@ public class CharacterContractsSyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getVolume() {
-          return (Long) instanceData[21];
+        public double getVolume() {
+          return (Double) instanceData[21];
         }
       });
     }
@@ -217,7 +217,10 @@ public class CharacterContractsSyncTest extends SyncTestBase {
     EasyMock.expect(mockServer.getCachedUntil()).andReturn(new Date(testDate));
   }
 
-  public void compareWithTestData(Object[] testData, Contract result, String fudge) {
+  public void compareWithTestData(
+                                  Object[] testData,
+                                  Contract result,
+                                  String fudge) {
     Assert.assertEquals(testData[0], result.getContractID());
     Assert.assertEquals(testData[1], result.getIssuerID());
     Assert.assertEquals(testData[2], result.getIssuerCorpID());
@@ -242,15 +245,19 @@ public class CharacterContractsSyncTest extends SyncTestBase {
     Assert.assertEquals(testData[21], result.getVolume());
   }
 
-  public Contract makeContract(long time, Object[] testData, String fudge) throws IOException {
+  public Contract makeContract(
+                               long time,
+                               Object[] testData,
+                               String fudge)
+    throws IOException {
     long contractID = (Long) testData[0];
     Contract next = new Contract(
-        contractID, (Long) testData[1], (Long) testData[2], (Long) testData[3], (Long) testData[4], (Integer) testData[5], (Integer) testData[6],
+        contractID, (Long) testData[1], (Long) testData[2], (Long) testData[3], (Long) testData[4], (Long) testData[5], (Long) testData[6],
         (String) testData[7], (String) testData[8], ((String) testData[9]) + (fudge != null ? fudge : ""), (Boolean) testData[10], (String) testData[11],
         (Long) testData[12], (Long) testData[13], (Long) testData[14], (Integer) testData[15], (Long) testData[16],
         (new BigDecimal((Double) testData[17])).setScale(2, RoundingMode.HALF_UP), (new BigDecimal((Double) testData[18])).setScale(2, RoundingMode.HALF_UP),
         (new BigDecimal((Double) testData[19])).setScale(2, RoundingMode.HALF_UP), (new BigDecimal((Double) testData[20])).setScale(2, RoundingMode.HALF_UP),
-        (Long) testData[21]);
+        (Double) testData[21]);
     next.setup(syncAccount, time);
     return next;
   }

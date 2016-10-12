@@ -1,2 +1,2 @@
 # evekit-sync
-(ALPHA) Rebooted EveKit Model Sync code
+EveKit Model Sync library

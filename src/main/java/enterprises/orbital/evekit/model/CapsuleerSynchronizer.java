@@ -28,6 +28,7 @@ import enterprises.orbital.evekit.model.character.sync.CharacterFacWarStatsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterIndustryJobsHistorySync;
 import enterprises.orbital.evekit.model.character.sync.CharacterIndustryJobsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterKillLogSync;
+import enterprises.orbital.evekit.model.character.sync.CharacterLocationsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterMailMessageBodiesSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterMailMessageSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterMailingListSync;
@@ -656,6 +657,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
                              ICharacterAPI charRequest,
                              IAccountAPI acctRequest) {
         return CharacterKillLogSync.syncCharacterKillLog(syncTime, syncAccount, syncUtil, charRequest);
+      }
+    });
+    supportedFeatures.put(SynchronizationState.SYNC_CHAR_LOCATIONS, new CharStateHandler() {
+      @Override
+      public SyncStatus exclude(
+                                SynchronizedEveAccount syncAccount,
+                                SynchronizerUtil syncUtil) {
+        return CharacterLocationsSync.exclude(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   SynchronizedEveAccount syncAccount,
+                                   SynchronizerUtil syncUtil) {
+        return CharacterLocationsSync.notAllowed(syncAccount, syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             SynchronizedEveAccount syncAccount,
+                             SynchronizerUtil syncUtil,
+                             ICharacterAPI charRequest,
+                             IAccountAPI acctRequest) {
+        return CharacterLocationsSync.syncCharacterLocations(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILMESSAGES, new CharStateHandler() {

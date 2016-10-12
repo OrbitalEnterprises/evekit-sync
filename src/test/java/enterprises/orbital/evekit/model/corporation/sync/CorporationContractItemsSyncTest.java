@@ -58,7 +58,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
         testItems[j][1] = TestBase.getUniqueRandomLong();
         testItems[j][2] = TestBase.getRandomInt(100000);
         testItems[j][3] = Math.abs(TestBase.getRandomLong());
-        testItems[j][4] = TestBase.getRandomInt(5);
+        testItems[j][4] = (long) TestBase.getRandomInt(5);
         testItems[j][5] = TestBase.getRandomBoolean();
         testItems[j][6] = TestBase.getRandomBoolean();
       }
@@ -88,7 +88,9 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public void setupOkMock(boolean skipOdd) throws Exception {
+  public void setupOkMock(
+                          boolean skipOdd)
+    throws Exception {
     mockServer = EasyMock.createMock(ICorporationAPI.class);
     for (int i = 0; i < testContracts.length; i++) {
       final long contractID = (Long) testContracts[i];
@@ -114,8 +116,8 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
           }
 
           @Override
-          public int getRawQuantity() {
-            return (Integer) instanceData[4];
+          public long getRawQuantity() {
+            return (Long) instanceData[4];
           }
 
           @Override
@@ -144,7 +146,11 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     EasyMock.expectLastCall().anyTimes();
   }
 
-  public void compareWithTestData(long contractID, Object[] testData, ContractItem result, long fudge) {
+  public void compareWithTestData(
+                                  long contractID,
+                                  Object[] testData,
+                                  ContractItem result,
+                                  long fudge) {
     Assert.assertEquals(contractID, result.getContractID());
     Assert.assertEquals(testData[1], result.getRecordID());
     Assert.assertEquals(testData[2], result.getTypeID());
@@ -154,11 +160,15 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     Assert.assertEquals(testData[6], result.isIncluded());
   }
 
-  public ContractItem makeContractItem(long time, Object[] testData, long fudge) throws IOException {
+  public ContractItem makeContractItem(
+                                       long time,
+                                       Object[] testData,
+                                       long fudge)
+    throws IOException {
     long contractID = (Long) testData[0];
     long recordID = (Long) testData[1];
     ContractItem next = new ContractItem(
-        contractID, recordID, (Integer) testData[2], ((Long) testData[3]) + fudge, (Integer) testData[4], (Boolean) testData[5], (Boolean) testData[6]);
+        contractID, recordID, (Integer) testData[2], ((Long) testData[3]) + fudge, (Long) testData[4], (Boolean) testData[5], (Boolean) testData[6]);
     next.setup(syncAccount, time);
     return next;
   }

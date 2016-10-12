@@ -120,7 +120,7 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
     testData[0][27] = TestBase.getRandomLong();
     testData[0][28] = TestBase.getRandomLong();
     testData[0][29] = TestBase.getRandomInt();
-    testData[0][30] = TestBase.getRandomInt();
+    testData[0][30] = TestBase.getRandomLong();
     testData[0][31] = TestBase.getRandomInt();
     testData[0][32] = TestBase.getRandomLong();
     testData[0][33] = TestBase.getRandomLong();
@@ -208,7 +208,7 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
     Assert.assertEquals(sheet.getLastRespecDate(), unchanged ? (long) ((Long) testData[0][27]) : 0);
     Assert.assertEquals(sheet.getLastTimedRespec(), unchanged ? (long) ((Long) testData[0][28]) : 0);
     Assert.assertEquals(sheet.getFreeRespecs(), unchanged ? (int) ((Integer) testData[0][29]) : 0);
-    Assert.assertEquals(sheet.getFreeSkillPoints(), (int) ((Integer) testData[0][30]));
+    Assert.assertEquals(sheet.getFreeSkillPoints(), (long) ((Long) testData[0][30]));
     Assert.assertEquals(sheet.getRemoteStationDate(), unchanged ? (long) ((Long) testData[0][32]) : 0);
   }
 
@@ -221,7 +221,7 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
         (Integer) instanceData[39], (String) instanceData[4], (Integer) instanceData[40], (String) instanceData[5], (String) instanceData[6],
         (String) instanceData[7], (Long) instanceData[8], (String) testData[0][23], (Long) testData[0][24], (Integer) instanceData[11],
         (Integer) instanceData[12], (Integer) instanceData[13], (Integer) instanceData[14], (Integer) instanceData[15], (Long) testData[0][25],
-        (Long) testData[0][27], (Long) testData[0][28], (Integer) testData[0][29], (Integer) testData[0][30], (Long) testData[0][32]);
+        (Long) testData[0][27], (Long) testData[0][28], (Integer) testData[0][29], (Long) testData[0][30], (Long) testData[0][32]);
     sheet.setup(syncAccount, time);
     return sheet;
   }
@@ -293,8 +293,8 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
       }
 
       @Override
-      public int getFreeSkillPoints() {
-        return (Integer) instanceData[30];
+      public long getFreeSkillPoints() {
+        return (Long) instanceData[30];
       }
 
     };

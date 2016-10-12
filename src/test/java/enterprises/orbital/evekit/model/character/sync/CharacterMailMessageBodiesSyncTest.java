@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.easymock.EasyMock;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -229,7 +228,6 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
                           String tweak)
     throws Exception {
 
-    mockServer = EasyMock.createMock(ICharacterAPI.class);
     final Map<Long, IMailBody> bodies = new HashMap<Long, IMailBody>();
     for (int i = 0; i < testData.length; i++) {
       IMailBody next = makeMessageBody(testData[i], tweak);
@@ -300,7 +298,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
 
       @Override
       public Collection<ICalendarEventAttendee> requestCalendarEventAttendees(
-                                                                              int... eventID)
+                                                                              long... eventID)
         throws IOException {
         return null;
       }
@@ -509,6 +507,13 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
       @Override
       public Collection<ILocation> requestLocations(
                                                     long... itemID)
+        throws IOException {
+        return null;
+      }
+
+      @Override
+      public Collection<IAsset> requestAssets(
+                                              boolean flat)
         throws IOException {
         return null;
       }

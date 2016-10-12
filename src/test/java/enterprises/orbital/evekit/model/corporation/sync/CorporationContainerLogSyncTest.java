@@ -49,13 +49,13 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
       testData[i][3] = TestBase.getRandomText(50);
       testData[i][4] = TestBase.getRandomInt() & 0xFF;
       testData[i][5] = TestBase.getRandomLong();
-      testData[i][6] = TestBase.getRandomLong();
-      testData[i][7] = TestBase.getRandomInt();
+      testData[i][6] = TestBase.getRandomInt();
+      testData[i][7] = TestBase.getRandomLong();
       testData[i][8] = TestBase.getRandomText(50);
       testData[i][9] = TestBase.getRandomText(50);
       testData[i][10] = TestBase.getRandomText(50);
-      testData[i][11] = TestBase.getRandomInt();
-      testData[i][12] = TestBase.getRandomLong();
+      testData[i][11] = TestBase.getRandomLong();
+      testData[i][12] = TestBase.getRandomInt();
     }
   }
 
@@ -114,13 +114,13 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
         }
 
         @Override
-        public long getItemTypeID() {
-          return (Long) instanceData[6];
+        public int getItemTypeID() {
+          return (Integer) instanceData[6];
         }
 
         @Override
-        public int getLocationID() {
-          return (Integer) instanceData[7];
+        public long getLocationID() {
+          return (Long) instanceData[7];
         }
 
         @Override
@@ -144,13 +144,13 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
         }
 
         @Override
-        public int getQuantity() {
-          return (Integer) instanceData[11];
+        public long getQuantity() {
+          return (Long) instanceData[11];
         }
 
         @Override
-        public long getTypeID() {
-          return (Long) instanceData[12];
+        public int getTypeID() {
+          return (Integer) instanceData[12];
         }
 
       });
@@ -210,8 +210,8 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
     for (int i = 0; i < testData.length; i++) {
       ContainerLog next = new ContainerLog(
           (Long) testData[i][0], (String) testData[i][1] + "A", (Long) testData[i][2] + 2, (String) testData[i][3] + "A", (Integer) testData[i][4] + 2,
-          (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Integer) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
-          (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2);
+          (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
+          (String) testData[i][10] + "A", (Long) testData[i][11] + 2, (Integer) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
     }
@@ -257,8 +257,8 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
     for (int i = 0; i < testData.length; i++) {
       ContainerLog next = new ContainerLog(
           (Long) testData[i][0], (String) testData[i][1] + "A", (Long) testData[i][2] + 2, (String) testData[i][3] + "A", (Integer) testData[i][4] + 2,
-          (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Integer) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
-          (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2);
+          (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
+          (String) testData[i][10] + "A", (Long) testData[i][11] + 2, (Integer) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
     }
@@ -284,13 +284,13 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
       Assert.assertEquals((String) testData[i][3] + "A", next.getActorName());
       Assert.assertEquals((Integer) testData[i][4] + 2, next.getFlag());
       Assert.assertEquals((Long) testData[i][5] + 2, next.getItemID());
-      Assert.assertEquals((Long) testData[i][6] + 2, next.getItemTypeID());
-      Assert.assertEquals((Integer) testData[i][7] + 2, next.getLocationID());
+      Assert.assertEquals((Integer) testData[i][6] + 2, next.getItemTypeID());
+      Assert.assertEquals((Long) testData[i][7] + 2, next.getLocationID());
       Assert.assertEquals((String) testData[i][8] + "A", next.getNewConfiguration());
       Assert.assertEquals((String) testData[i][9] + "A", next.getOldConfiguration());
       Assert.assertEquals((String) testData[i][10] + "A", next.getPasswordType());
-      Assert.assertEquals((Integer) testData[i][11] + 2, next.getQuantity());
-      Assert.assertEquals((Long) testData[i][12] + 2, next.getTypeID());
+      Assert.assertEquals((Long) testData[i][11] + 2, next.getQuantity());
+      Assert.assertEquals((Integer) testData[i][12] + 2, next.getTypeID());
     }
 
     // Verify tracker and container unchanged

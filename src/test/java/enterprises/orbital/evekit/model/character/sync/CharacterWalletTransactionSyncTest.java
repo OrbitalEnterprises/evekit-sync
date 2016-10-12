@@ -50,7 +50,9 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     Comparator<Object[]> testDataCompare = new Comparator<Object[]>() {
 
       @Override
-      public int compare(Object[] arg0, Object[] arg1) {
+      public int compare(
+                         Object[] arg0,
+                         Object[] arg1) {
         long v0 = (Long) arg0[1];
         long v1 = (Long) arg1[1];
 
@@ -65,7 +67,7 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     {
       // "Normal" data
       int size = 20 + TestBase.getRandomInt(20);
-      testData = new Object[size][14];
+      testData = new Object[size][15];
       for (int i = 0; i < size; i++) {
         testData[i][0] = 1000; // fixed for character accounts
         testData[i][1] = TestBase.getUniqueRandomLong();
@@ -81,6 +83,7 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
         testData[i][11] = TestBase.getRandomText(50);
         testData[i][12] = TestBase.getRandomText(50);
         testData[i][13] = TestBase.getRandomLong();
+        testData[i][14] = TestBase.getRandomInt();
       }
 
       // Sort test data in decreasing order by transactionID (testData[i][1])
@@ -90,7 +93,7 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     {
       // "Large" data
       int size = CharacterWalletJournalSync.MAX_RECORD_DOWNLOAD + TestBase.getRandomInt(200);
-      largeTestData = new Object[size][14];
+      largeTestData = new Object[size][15];
       for (int i = 0; i < size; i++) {
         largeTestData[i][0] = 1000; // fixed for character accounts
         largeTestData[i][1] = TestBase.getUniqueRandomLong();
@@ -106,6 +109,7 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
         largeTestData[i][11] = TestBase.getRandomText(50);
         largeTestData[i][12] = TestBase.getRandomText(50);
         largeTestData[i][13] = TestBase.getRandomLong();
+        largeTestData[i][14] = TestBase.getRandomInt();
       }
 
       // Sort test data in decreasing order by transactionID (largeTestData[i][1])
@@ -136,7 +140,9 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IWalletTransaction makeTransaction(final Object[] instanceData, final String tweak) {
+  public IWalletTransaction makeTransaction(
+                                            final Object[] instanceData,
+                                            final String tweak) {
     return new IWalletTransaction() {
 
       @Override
@@ -145,7 +151,7 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
       }
 
       @Override
-      public long getTypeID() {
+      public int getTypeID() {
         return (Integer) instanceData[5];
       }
 
@@ -215,10 +221,20 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
         // unused for character wallet transactions
         return 0;
       }
+
+      @Override
+      public int getClientTypeID() {
+        return (Integer) instanceData[14];
+      }
     };
   }
 
-  public Collection<IWalletTransaction> assembleEntries(Object[][] source, int count, Long startingTransactionID, boolean forward, String tweak) {
+  public Collection<IWalletTransaction> assembleEntries(
+                                                        Object[][] source,
+                                                        int count,
+                                                        Long startingTransactionID,
+                                                        boolean forward,
+                                                        String tweak) {
     List<IWalletTransaction> entries = new ArrayList<IWalletTransaction>();
     if (!forward) {
       for (int i = 0; i < source.length && count > 0; i++) {
@@ -241,19 +257,26 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     return entries;
   }
 
-  public WalletTransaction makeTransactionObject(long time, Object[] instanceData, String tweak) throws Exception {
+  public WalletTransaction makeTransactionObject(
+                                                 long time,
+                                                 Object[] instanceData,
+                                                 String tweak)
+    throws Exception {
     int accountKey = (Integer) instanceData[0];
     long transactionID = (Long) instanceData[1];
     long date = (Long) instanceData[2];
     WalletTransaction entry = new WalletTransaction(
         accountKey, transactionID, date, (Integer) instanceData[3], (String) instanceData[4] + tweak, (Integer) instanceData[5], (BigDecimal) instanceData[6],
         (Long) instanceData[7], (String) instanceData[8] + tweak, (Integer) instanceData[9], (String) instanceData[10] + tweak,
-        (String) instanceData[11] + tweak, (String) instanceData[12] + tweak, (Long) instanceData[13]);
+        (String) instanceData[11] + tweak, (String) instanceData[12] + tweak, (Long) instanceData[13], (Integer) instanceData[14], 0, null);
     entry.setup(syncAccount, time);
     return entry;
   }
 
-  public void setupOkMock(final String tweak, final boolean useLarge) throws Exception {
+  public void setupOkMock(
+                          final String tweak,
+                          final boolean useLarge)
+    throws Exception {
     mockServer = EasyMock.createMock(ICharacterAPI.class);
 
     IAnswer<Collection<IWalletTransaction>> forwardMockAnswerer = new IAnswer<Collection<IWalletTransaction>>() {
@@ -292,7 +315,10 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     EasyMock.expectLastCall().anyTimes();
   }
 
-  public void compareAgainstTestData(WalletTransaction entry, Object[] instanceData, String tweak) {
+  public void compareAgainstTestData(
+                                     WalletTransaction entry,
+                                     Object[] instanceData,
+                                     String tweak) {
     Assert.assertEquals(entry.getAccountKey(), (int) ((Integer) instanceData[0]));
     Assert.assertEquals(entry.getTransactionID(), (long) ((Long) instanceData[1]));
     Assert.assertEquals(entry.getDate(), (long) ((Long) instanceData[2]));
@@ -307,6 +333,9 @@ public class CharacterWalletTransactionSyncTest extends SyncTestBase {
     Assert.assertEquals(entry.getTransactionType(), (String) instanceData[11] + tweak);
     Assert.assertEquals(entry.getTransactionFor(), (String) instanceData[12] + tweak);
     Assert.assertEquals(entry.getJournalTransactionID(), (long) ((Long) instanceData[13]));
+    Assert.assertEquals(entry.getClientTypeID(), (int) ((Integer) instanceData[14]));
+    Assert.assertEquals(entry.getCharacterID(), 0L);
+    Assert.assertNull(entry.getCharacterName());
   }
 
   // Test update with all new wallet transactions, normal sized data
