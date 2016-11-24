@@ -224,7 +224,7 @@ public class RefDataSynchronizer {
 
   // Initialize support features
   static {
-    supportedFeatures.put(SynchronizationState.SYNC_REF_SERVER_SERVERSTATUS, new RefStateHandler() {
+    supportedFeatures.put(SynchronizationState.SYNC_REF_SERVERSTATUS, new RefStateHandler() {
 
       @Override
       public SyncStatus exclude(

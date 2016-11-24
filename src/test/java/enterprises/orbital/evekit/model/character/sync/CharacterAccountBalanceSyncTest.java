@@ -35,7 +35,6 @@ public class CharacterAccountBalanceSyncTest extends SyncTestBase {
   SynchronizerUtil       syncUtil;
   ICharacterAPI          mockServer;
 
-  // Mock up server interface
   @Override
   @Before
   public void setup() throws Exception {
@@ -56,6 +55,7 @@ public class CharacterAccountBalanceSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
+  // Mock up server interface
   public void setupOkMock() throws Exception {
     mockServer = EasyMock.createMock(ICharacterAPI.class);
     IAccountBalance mockBalance = new IAccountBalance() {

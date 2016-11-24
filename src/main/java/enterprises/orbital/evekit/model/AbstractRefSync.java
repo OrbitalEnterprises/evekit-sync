@@ -10,7 +10,14 @@ import enterprises.orbital.evekit.model.RefSynchronizerUtil.SyncStatus;
 import enterprises.orbital.evexmlapi.IResponse;
 
 public abstract class AbstractRefSync implements RefSynchronizationHandler {
-  private static final Logger log = Logger.getLogger(AbstractRefSync.class.getName());
+  private static final Logger              log          = Logger.getLogger(AbstractRefSync.class.getName());
+
+  protected static final AttributeSelector ANY_SELECTOR = new AttributeSelector("{ any: true }");
+
+  protected static AttributeSelector makeAtSelector(
+                                                    long time) {
+    return new AttributeSelector("{values: [" + time + "]}");
+  }
 
   public static boolean StringChanged(
                                       String a,
@@ -82,11 +89,11 @@ public abstract class AbstractRefSync implements RefSynchronizationHandler {
                                             List<RefCachedData> updates)
     throws IOException;
 
-  protected SyncStatus syncData(
-                                long time,
-                                RefSynchronizerUtil syncUtil,
-                                IResponse serverRequest,
-                                String description) {
+  public SyncStatus syncData(
+                             long time,
+                             RefSynchronizerUtil syncUtil,
+                             IResponse serverRequest,
+                             String description) {
 
     try {
       // Run pre-check.
@@ -133,8 +140,6 @@ public abstract class AbstractRefSync implements RefSynchronizationHandler {
   /**
    * Exclude synchronization of the current state. We exclude a state by recording it as failed with a message indicating that this state was excluded.
    * 
-   * @param syncAccount
-   *          the synchronized account to be excluded.
    * @param syncUtil
    *          the utility to use for synchronization actions.
    * @param description
