@@ -13,6 +13,18 @@ import java.util.logging.Logger;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.evekit.model.RefSynchronizerUtil.SyncStatus;
+import enterprises.orbital.evekit.model.calls.sync.CallListSync;
+import enterprises.orbital.evekit.model.eve.sync.AllianceSync;
+import enterprises.orbital.evekit.model.eve.sync.ConquerableStationsSync;
+import enterprises.orbital.evekit.model.eve.sync.ErrorsSync;
+import enterprises.orbital.evekit.model.eve.sync.FacWarStatsSync;
+import enterprises.orbital.evekit.model.eve.sync.FacWarTopStatsSync;
+import enterprises.orbital.evekit.model.eve.sync.RefTypeSync;
+import enterprises.orbital.evekit.model.eve.sync.SkillTreeSync;
+import enterprises.orbital.evekit.model.map.sync.FacWarSystemsSync;
+import enterprises.orbital.evekit.model.map.sync.MapJumpSync;
+import enterprises.orbital.evekit.model.map.sync.MapKillSync;
+import enterprises.orbital.evekit.model.map.sync.SovereigntySync;
 import enterprises.orbital.evekit.model.server.sync.ServerStatusSync;
 import enterprises.orbital.evexmlapi.EveXmlApiAdapter;
 import enterprises.orbital.evexmlapi.EveXmlApiConfig;
@@ -244,6 +256,294 @@ public class RefDataSynchronizer {
                              RefSynchronizerUtil syncUtil,
                              IEveXmlApi apiHandle) {
         return ServerStatusSync.sync(syncTime, syncUtil, apiHandle.getServerAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_CALLS_LIST, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return CallListSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return CallListSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return CallListSync.sync(syncTime, syncUtil, apiHandle.getApiAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_ALLIANCES, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return AllianceSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return AllianceSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return AllianceSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_CONQUERABLE, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return ConquerableStationsSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return ConquerableStationsSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return ConquerableStationsSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_ERRORLIST, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return ErrorsSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return ErrorsSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return ErrorsSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_FACWARSTATS, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return FacWarStatsSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return FacWarStatsSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return FacWarStatsSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_FACWARTOPSTATS, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return FacWarTopStatsSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return FacWarTopStatsSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return FacWarTopStatsSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_REFTYPES, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return RefTypeSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return RefTypeSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return RefTypeSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_SKILLTREE, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return SkillTreeSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return SkillTreeSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return SkillTreeSync.sync(syncTime, syncUtil, apiHandle.getEveAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_FACWARSYSTEMS, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return FacWarSystemsSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return FacWarSystemsSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return FacWarSystemsSync.sync(syncTime, syncUtil, apiHandle.getMapAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_MAPJUMPS, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return MapJumpSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return MapJumpSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return MapJumpSync.sync(syncTime, syncUtil, apiHandle.getMapAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_MAPKILLS, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return MapKillSync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return MapKillSync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return MapKillSync.sync(syncTime, syncUtil, apiHandle.getMapAPIService());
+      }
+
+    });
+
+    supportedFeatures.put(SynchronizationState.SYNC_REF_SOVEREIGNTY, new RefStateHandler() {
+
+      @Override
+      public SyncStatus exclude(
+                                RefSynchronizerUtil syncUtil) {
+        return SovereigntySync.exclude(syncUtil);
+      }
+
+      @Override
+      public SyncStatus notAllowed(
+                                   RefSynchronizerUtil syncUtil) {
+        return SovereigntySync.notAllowed(syncUtil);
+      }
+
+      @Override
+      public SyncStatus sync(
+                             long syncTime,
+                             RefSynchronizerUtil syncUtil,
+                             IEveXmlApi apiHandle) {
+        return SovereigntySync.sync(syncTime, syncUtil, apiHandle.getMapAPIService());
       }
 
     });
