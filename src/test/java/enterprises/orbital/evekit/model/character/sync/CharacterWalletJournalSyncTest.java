@@ -67,7 +67,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
     {
       // "Normal" data
       int size = 20 + TestBase.getRandomInt(20);
-      testData = new Object[size][15];
+      testData = new Object[size][17];
       for (int i = 0; i < size; i++) {
         testData[i][0] = 1000; // fixed for character accounts
         testData[i][1] = TestBase.getUniqueRandomLong();
@@ -84,6 +84,8 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
         testData[i][12] = TestBase.getRandomText(50);
         testData[i][13] = TestBase.getRandomLong();
         testData[i][14] = (new BigDecimal(TestBase.getRandomDouble(1000))).setScale(2, RoundingMode.HALF_UP);
+        testData[i][15] = TestBase.getRandomInt();
+        testData[i][16] = TestBase.getRandomInt();
       }
 
       // Sort test data in decreasing order by refID (testData[i][1])
@@ -93,7 +95,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
     {
       // "Large" data
       int size = CharacterWalletJournalSync.MAX_RECORD_DOWNLOAD + TestBase.getRandomInt(200);
-      largeTestData = new Object[size][15];
+      largeTestData = new Object[size][17];
       for (int i = 0; i < size; i++) {
         largeTestData[i][0] = 1000; // fixed for character accounts
         largeTestData[i][1] = TestBase.getUniqueRandomLong();
@@ -110,6 +112,8 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
         largeTestData[i][12] = TestBase.getRandomText(50);
         largeTestData[i][13] = TestBase.getRandomLong();
         largeTestData[i][14] = (new BigDecimal(TestBase.getRandomDouble(1000))).setScale(2, RoundingMode.HALF_UP);
+        largeTestData[i][15] = TestBase.getRandomInt();
+        largeTestData[i][16] = TestBase.getRandomInt();
       }
 
       // Sort test data in decreasing order by refID (largeTestData[i][1])
@@ -214,6 +218,16 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
       public BigDecimal getAmount() {
         return (BigDecimal) instanceData[10];
       }
+
+      @Override
+      public int getOwner1TypeID() {
+        return (Integer) instanceData[15];
+      }
+
+      @Override
+      public int getOwner2TypeID() {
+        return (Integer) instanceData[16];
+      }
     };
   }
 
@@ -256,7 +270,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
     WalletJournal entry = new WalletJournal(
         accountKey, refID, date, (Integer) instanceData[3], (String) instanceData[4] + tweak, (Long) instanceData[5], (String) instanceData[6] + tweak,
         (Long) instanceData[7], (String) instanceData[8] + tweak, (Long) instanceData[9], (BigDecimal) instanceData[10], (BigDecimal) instanceData[11],
-        (String) instanceData[12] + tweak, (Long) instanceData[13], (BigDecimal) instanceData[14]);
+        (String) instanceData[12] + tweak, (Long) instanceData[13], (BigDecimal) instanceData[14], (Integer) instanceData[15], (Integer) instanceData[16]);
     entry.setup(syncAccount, time);
     return entry;
   }
@@ -322,6 +336,8 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
     Assert.assertEquals(entry.getReason(), (String) instanceData[12] + tweak);
     Assert.assertEquals(entry.getTaxReceiverID(), (long) ((Long) instanceData[13]));
     Assert.assertEquals(entry.getTaxAmount(), instanceData[14]);
+    Assert.assertEquals(entry.getOwner1TypeID(), (int) ((Integer) instanceData[15]));
+    Assert.assertEquals(entry.getOwner2TypeID(), (int) ((Integer) instanceData[16]));
   }
 
   // Test update with all new wallet transactions, normal sized data

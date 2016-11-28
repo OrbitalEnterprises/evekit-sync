@@ -112,7 +112,7 @@ public class CharacterUpcomingCalendarEventsSync extends AbstractCharacterSync {
     for (IUpcomingCalendarEvent next : events) {
       UpcomingCalendarEvent newEvent = new UpcomingCalendarEvent(
           next.getDuration(), ModelUtil.safeConvertDate(next.getEventDate()), next.getEventID(), next.getEventText(), next.getEventTitle(), next.getOwnerID(),
-          next.getOwnerName(), next.getResponse(), next.isImportant());
+          next.getOwnerName(), next.getResponse(), next.isImportant(), next.getOwnerTypeID());
       updates.add(newEvent);
       eventSet.add(next.getEventID());
     }

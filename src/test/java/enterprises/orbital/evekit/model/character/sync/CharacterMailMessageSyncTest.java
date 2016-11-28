@@ -46,7 +46,7 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     // 2 senderName
     // 3 sentDate
     // 4 title
-    // 5 corpOrAllianceID
+    // 5 toCorpOrAllianceID
     // 6 msgRead
     // 7 senderTypeID
     // 8 bodyRetrieved
@@ -103,7 +103,9 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
-  public IMailMessage makeMessage(final Object[] instanceData, final String tweak) {
+  public IMailMessage makeMessage(
+                                  final Object[] instanceData,
+                                  final String tweak) {
     return new IMailMessage() {
 
       @Override
@@ -168,7 +170,11 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     };
   }
 
-  public CharacterMailMessage makeMessageObject(final long time, final Object[] instanceData, final String tweak) throws Exception {
+  public CharacterMailMessage makeMessageObject(
+                                                final long time,
+                                                final Object[] instanceData,
+                                                final String tweak)
+    throws Exception {
     long msgID = (Long) instanceData[0];
     CharacterMailMessage msg = new CharacterMailMessage(
         msgID, (Long) instanceData[1], (String) instanceData[2], (Long) instanceData[3], ((String) instanceData[4]) + tweak, (Long) instanceData[5],
@@ -185,7 +191,9 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     return msg;
   }
 
-  public void checkMessage(CharacterMailMessage msg, IMailMessage check) {
+  public void checkMessage(
+                           CharacterMailMessage msg,
+                           IMailMessage check) {
     Assert.assertEquals(msg.getMessageID(), check.getMessageID());
     Assert.assertEquals(msg.getSenderID(), check.getSenderID());
     Assert.assertEquals(msg.getSenderName(), check.getSenderName());
@@ -197,7 +205,7 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     }
     Assert.assertEquals(msg.getSentDate(), check.getSentDate().getTime());
     Assert.assertEquals(msg.getTitle(), check.getTitle());
-    Assert.assertEquals(msg.getCorpOrAllianceID(), check.getToCorpOrAllianceID());
+    Assert.assertEquals(msg.getToCorpOrAllianceID(), check.getToCorpOrAllianceID());
     Set<Long> listIDs = msg.getToListID();
     refIDs = check.getToListID();
     Assert.assertEquals(listIDs.size(), refIDs.length);
@@ -208,7 +216,9 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     Assert.assertEquals(msg.getSenderTypeID(), check.getSenderTypeID());
   }
 
-  public void setupOkMock(String tweak) throws Exception {
+  public void setupOkMock(
+                          String tweak)
+    throws Exception {
     mockServer = EasyMock.createMock(ICharacterAPI.class);
     Collection<IMailMessage> messages = new ArrayList<IMailMessage>();
     for (int i = 0; i < testData.length; i++) {

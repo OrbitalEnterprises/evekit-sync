@@ -123,10 +123,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
@@ -167,10 +167,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
@@ -231,10 +231,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 
@@ -279,10 +279,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate two calendar events
-    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
-    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true);
+    event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
     event = CachedData.updateData(event);
 

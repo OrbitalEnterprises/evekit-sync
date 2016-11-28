@@ -216,7 +216,8 @@ public class CorporationWalletJournalSync extends AbstractCorporationSync {
             accountKey, next.getRefID(), ModelUtil.safeConvertDate(next.getDate()), next.getRefTypeID(), next.getOwnerName1(), next.getOwnerID1(),
             next.getOwnerName2(), next.getOwnerID2(), next.getArgName1(), next.getArgID1(), next.getAmount().setScale(2, RoundingMode.HALF_UP),
             next.getBalance().setScale(2, RoundingMode.HALF_UP), next.getReason(), next.getTaxReceiverID(),
-            next.getTaxAmount() != null ? next.getTaxAmount().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO);
+            next.getTaxAmount() != null ? next.getTaxAmount().setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO, next.getOwner1TypeID(),
+            next.getOwner2TypeID());
 
         updates.add(newRecord);
       }

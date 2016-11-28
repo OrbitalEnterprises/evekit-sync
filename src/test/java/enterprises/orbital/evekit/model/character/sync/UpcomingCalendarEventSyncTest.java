@@ -42,7 +42,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
   static {
     // Generate test data
     int size = 20 + TestBase.getRandomInt(20);
-    testData = new Object[size][9];
+    testData = new Object[size][10];
     for (int i = 0; i < size; i++) {
       testData[i][0] = TestBase.getRandomInt();
       testData[i][1] = TestBase.getRandomLong();
@@ -53,6 +53,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       testData[i][6] = TestBase.getRandomText(50);
       testData[i][7] = TestBase.getRandomText(50);
       testData[i][8] = TestBase.getRandomBoolean();
+      testData[i][9] = TestBase.getRandomInt();
     }
   }
 
@@ -129,6 +130,12 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
         public int getDuration() {
           return (Integer) instanceData[0];
         }
+
+        @Override
+        public int getOwnerTypeID() {
+          return (Integer) instanceData[9];
+        }
+
       });
     }
 
@@ -162,6 +169,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       Assert.assertEquals(testData[i][6], next.getOwnerName());
       Assert.assertEquals(testData[i][7], next.getResponse());
       Assert.assertEquals((boolean) ((Boolean) testData[i][8]), next.isImportant());
+      Assert.assertEquals((int) ((Integer) testData[i][9]), next.getOwnerTypeID());
     }
 
     // Verify tracker and container were updated properly
@@ -183,7 +191,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = new UpcomingCalendarEvent(
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
-          (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8]);
+          (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8], (Integer) testData[i][9]);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
     }
@@ -206,6 +214,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       Assert.assertEquals(testData[i][6], next.getOwnerName());
       Assert.assertEquals(testData[i][7], next.getResponse());
       Assert.assertEquals((boolean) ((Boolean) testData[i][8]), next.isImportant());
+      Assert.assertEquals((int) ((Integer) testData[i][9]), next.getOwnerTypeID());
     }
 
     // Verify tracker and container were updated properly
@@ -227,7 +236,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       long eventID = (Long) testData[i][2];
       UpcomingCalendarEvent next = new UpcomingCalendarEvent(
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
-          (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8]);
+          (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8], (Integer) testData[i][9]);
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
     }
@@ -257,6 +266,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       Assert.assertEquals(testData[i][6], next.getOwnerName());
       Assert.assertEquals((String) testData[i][7] + "foo", next.getResponse());
       Assert.assertEquals((boolean) ((Boolean) testData[i][8]), next.isImportant());
+      Assert.assertEquals((int) ((Integer) testData[i][9]), next.getOwnerTypeID());
     }
 
     // Verify tracker and container unchanged
@@ -279,7 +289,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       int eventID = TestBase.getUniqueRandomInteger();
       UpcomingCalendarEvent next = new UpcomingCalendarEvent(
           TestBase.getRandomInt(), TestBase.getRandomLong(), eventID, TestBase.getRandomText(500), TestBase.getRandomText(50), TestBase.getRandomLong(),
-          TestBase.getRandomText(50), TestBase.getRandomText(50), TestBase.getRandomBoolean());
+          TestBase.getRandomText(50), TestBase.getRandomText(50), TestBase.getRandomBoolean(), TestBase.getRandomInt());
       next.setup(syncAccount, testTime);
       next = CachedData.updateData(next);
       toDelete.add(next);
@@ -304,6 +314,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
       Assert.assertEquals(testData[i][6], next.getOwnerName());
       Assert.assertEquals(testData[i][7], next.getResponse());
       Assert.assertEquals((boolean) ((Boolean) testData[i][8]), next.isImportant());
+      Assert.assertEquals((int) ((Integer) testData[i][9]), next.getOwnerTypeID());
     }
     for (UpcomingCalendarEvent i : toDelete) {
       Assert.assertNull(UpcomingCalendarEvent.get(syncAccount, testTime, i.getEventID()));

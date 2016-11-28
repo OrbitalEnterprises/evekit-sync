@@ -202,7 +202,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     Assert.assertEquals(msg.getSenderID(), (long) ((Long) instanceData[1]));
     Assert.assertEquals(msg.getSentDate(), (long) ((Long) instanceData[3]));
     Assert.assertEquals(msg.getTitle(), instanceData[4]);
-    Assert.assertEquals(msg.getCorpOrAllianceID(), (long) ((Long) instanceData[5]));
+    Assert.assertEquals(msg.getToCorpOrAllianceID(), (long) ((Long) instanceData[5]));
     Assert.assertEquals(msg.isMsgRead(), (boolean) ((Boolean) instanceData[6]));
     Assert.assertEquals(msg.getSenderTypeID(), (int) ((Integer) instanceData[7]));
     Object[] data = (Object[]) instanceData[10];
