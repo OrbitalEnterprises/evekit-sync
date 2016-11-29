@@ -197,7 +197,7 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
           }
 
           // Set expiry based on UpcomingCalendarEvent. This way, we won't attempt to look up more attendees until we've updated calendar events. Not perfect
-          // since the two can change independently but probably good enough.
+          // since the tweo can change independently but probably good enough.
           nextExpiry = cap.getUpcomingCalendarEventsExpiry();
         }
 

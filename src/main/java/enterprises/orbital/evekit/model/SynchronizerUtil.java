@@ -75,7 +75,8 @@ public class SynchronizerUtil {
                                                                                           Class<C> containerType,
                                                                                           SynchronizedEveAccount accountKey,
                                                                                           String msgInfo,
-                                                                                          SynchronizationHandler<A, C> handler) throws IOException {
+                                                                                          SynchronizationHandler<A, C> handler)
+    throws IOException {
     String context = "[accountKey=" + accountKey + ", msgInfo=" + msgInfo + "]";
     SynchOutcome result = SynchOutcome.COMPLETE;
 
@@ -204,7 +205,8 @@ public class SynchronizerUtil {
                                                                               final long nextExpiry,
                                                                               final String msgInfo,
                                                                               List<CachedData> toStore,
-                                                                              final SynchronizationHandler<A, C> handler) throws IOException {
+                                                                              final SynchronizationHandler<A, C> handler)
+    throws IOException {
     final String context = "[accountKey=" + accountKey + ", msgInfo=" + msgInfo + "]";
 
     CommitBlock<IOException, A, C> commitBlock = new CommitBlock<IOException, A, C>() {

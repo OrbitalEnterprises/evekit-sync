@@ -78,7 +78,8 @@ public class CorporationIndustryJobsHistorySync extends AbstractCorporationSync 
 
   @Override
   protected Object getServerData(
-                                 ICorporationAPI corpRequest) throws IOException {
+                                 ICorporationAPI corpRequest)
+    throws IOException {
     return corpRequest.requestIndustryJobsHistory();
   }
 
@@ -88,7 +89,8 @@ public class CorporationIndustryJobsHistorySync extends AbstractCorporationSync 
                                    SynchronizedEveAccount syncAccount,
                                    ICorporationAPI corpRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IIndustryJob> jobs = (Collection<IIndustryJob>) data;
 
@@ -101,7 +103,7 @@ public class CorporationIndustryJobsHistorySync extends AbstractCorporationSync 
             next.getBlueprintLocationID(), next.getOutputLocationID(), next.getRuns(), next.getCost().setScale(2, RoundingMode.HALF_UP), next.getTeamID(),
             next.getLicensedRuns(), next.getProbability(), next.getProductTypeID(), next.getProductTypeName(), next.getStatus(), next.getTimeInSeconds(),
             ModelUtil.safeConvertDate(next.getStartDate()), ModelUtil.safeConvertDate(next.getEndDate()), ModelUtil.safeConvertDate(next.getPauseDate()),
-            Math.max(0L, ModelUtil.safeConvertDate(next.getCompletedDate())), next.getCompletedCharacterID(), next.getSuccessfulRuns());
+            ModelUtil.safeConvertDate(next.getCompletedDate()), next.getCompletedCharacterID(), next.getSuccessfulRuns());
         updates.add(instance);
       }
     }

@@ -48,8 +48,13 @@ public class ModelUtil {
     return formatDate(convertEpochToDate(epochTime));
   }
 
+  public static long dateNormalizer(
+                                    long sourceDate) {
+    return sourceDate <= 0 ? -1 : sourceDate;
+  }
+
   public static long safeConvertDate(
                                      Date dt) {
-    return dt == null ? -1 : dt.getTime();
+    return dt == null ? -1 : dateNormalizer(dt.getTime());
   }
 }

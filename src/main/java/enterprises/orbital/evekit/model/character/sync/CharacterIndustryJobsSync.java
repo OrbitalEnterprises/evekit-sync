@@ -82,7 +82,8 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
 
   @Override
   protected Object getServerData(
-                                 ICharacterAPI charRequest) throws IOException {
+                                 ICharacterAPI charRequest)
+    throws IOException {
     return charRequest.requestIndustryJobs();
   }
 
@@ -92,7 +93,8 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
                                    SynchronizedEveAccount syncAccount,
                                    ICharacterAPI charRequest,
                                    Object data,
-                                   List<CachedData> updates) throws IOException {
+                                   List<CachedData> updates)
+    throws IOException {
     @SuppressWarnings("unchecked")
     Collection<IIndustryJob> jobs = (Collection<IIndustryJob>) data;
 
@@ -103,7 +105,7 @@ public class CharacterIndustryJobsSync extends AbstractCharacterSync {
           next.getBlueprintLocationID(), next.getOutputLocationID(), next.getRuns(), next.getCost().setScale(2, RoundingMode.HALF_UP), next.getTeamID(),
           next.getLicensedRuns(), next.getProbability(), next.getProductTypeID(), next.getProductTypeName(), next.getStatus(), next.getTimeInSeconds(),
           ModelUtil.safeConvertDate(next.getStartDate()), ModelUtil.safeConvertDate(next.getEndDate()), ModelUtil.safeConvertDate(next.getPauseDate()),
-          Math.max(0L, ModelUtil.safeConvertDate(next.getCompletedDate())), next.getCompletedCharacterID(), next.getSuccessfulRuns());
+          ModelUtil.safeConvertDate(next.getCompletedDate()), next.getCompletedCharacterID(), next.getSuccessfulRuns());
       updates.add(instance);
     }
 
