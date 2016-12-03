@@ -287,7 +287,7 @@ public class CorporationAssetsSyncTest extends SyncTestBase {
 
     EasyMock.expect(mockServer.requestAssets()).andReturn(makeAssetTree());
     EasyMock.expect(mockServer.requestAssets(true)).andReturn(makeFlatAssetList());
-    EasyMock.expect(mockServer.isError()).andReturn(false);
+    EasyMock.expect(mockServer.isError()).andReturn(false).times(3);
     EasyMock.expect(mockServer.getCachedUntil()).andReturn(new Date(testDate));
   }
 
