@@ -3,6 +3,7 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -60,8 +61,10 @@ public class CorporationAssetsSync extends AbstractCorporationSync {
     throws IOException {
     // First retrieve nested assets
     Collection<IAsset> assetList = corpRequest.requestAssets();
+    if (corpRequest.isError()) return Collections.emptyList();
     // Then retrieve flat asset list and add in any assets that were not present in the initial request
     Collection<IAsset> flat = corpRequest.requestAssets(true);
+    if (corpRequest.isError()) return Collections.emptyList();
     // Build a map of all assets contained in the nested call
     Set<Long> itemSet = new HashSet<>();
     Queue<IAsset> processQueue = new ArrayDeque<>();

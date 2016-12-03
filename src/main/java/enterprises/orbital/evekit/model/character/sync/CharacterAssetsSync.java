@@ -3,6 +3,7 @@ package enterprises.orbital.evekit.model.character.sync;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Queue;
@@ -60,8 +61,10 @@ public class CharacterAssetsSync extends AbstractCharacterSync {
     throws IOException {
     // First retrieve nested assets
     Collection<IAsset> assetList = charRequest.requestAssets();
+    if (charRequest.isError()) return Collections.emptyList();
     // Then retrieve flat asset list and add in any assets that were not present in the initial request
     Collection<IAsset> flat = charRequest.requestAssets(true);
+    if (charRequest.isError()) return Collections.emptyList();
     // Build a map of all assets contained in the nested call
     Set<Long> itemSet = new HashSet<>();
     Queue<IAsset> processQueue = new ArrayDeque<>();

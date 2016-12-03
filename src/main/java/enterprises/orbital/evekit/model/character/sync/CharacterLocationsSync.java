@@ -110,10 +110,11 @@ public class CharacterLocationsSync extends AbstractCharacterSync {
         int j = 0;
         for (Asset next : retrieved.subList(i, i + nextBatchSize))
           nextFetch[j++] = next.getItemID();
-        result.addAll(charRequest.requestLocations(nextFetch));
+        Collection<ILocation> nextLocations = charRequest.requestLocations(nextFetch);
         if (charRequest.isError())
           // Break out if a request fails
           return result;
+        result.addAll(nextLocations);
       }
       contid = retrieved.get(retrieved.size() - 1).getItemID();
       retrieved = Asset.getAllAssets(requestOwner, requestTime, 1000, contid);
