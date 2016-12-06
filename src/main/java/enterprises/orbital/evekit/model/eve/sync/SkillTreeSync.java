@@ -182,8 +182,11 @@ public class SkillTreeSync extends AbstractRefSync {
     Map<Integer, Set<String>> seenBonusType = new HashMap<>();
     Map<Integer, Set<Integer>> seenRequiredSkill = new HashMap<>();
     for (ISkillGroup nextGroup : skillTree) {
-      seenGroups.add(nextGroup.getGroupID());
-      updates.add(new SkillGroup(nextGroup.getGroupID(), nextGroup.getGroupName()));
+      if (!seenGroups.contains(nextGroup.getGroupID())) {
+        // Groups appear multiple times as they appear in sections, but we only want to add once.
+        seenGroups.add(nextGroup.getGroupID());
+        updates.add(new SkillGroup(nextGroup.getGroupID(), nextGroup.getGroupName()));
+      }
       for (ISkillMember nextMember : nextGroup.getSkills()) {
         seenSkills.add(nextMember.getTypeID());
         updates.add(new SkillMember(
