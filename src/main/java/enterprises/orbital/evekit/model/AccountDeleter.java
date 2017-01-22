@@ -81,6 +81,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "KillAttacker");
     CachedData.cleanup(toDelete, "KillItem");
     CachedData.cleanup(toDelete, "KillVictim");
+    CachedData.cleanup(toDelete, "Location");
     CachedData.cleanup(toDelete, "MarketOrder");
     CachedData.cleanup(toDelete, "Standing");
     CachedData.cleanup(toDelete, "WalletJournal");
