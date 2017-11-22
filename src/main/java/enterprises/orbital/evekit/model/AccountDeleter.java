@@ -1,6 +1,8 @@
 package enterprises.orbital.evekit.model;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import enterprises.orbital.base.OrbitalProperties;
@@ -107,7 +109,11 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "Shareholder");
     CachedData.cleanup(toDelete, "Starbase");
     CachedData.cleanup(toDelete, "StarbaseDetail");
-    SynchronizedEveAccount.remove(toDelete);
+    try {
+      SynchronizedEveAccount.remove(toDelete);
+    } catch (IOException e) {
+      log.log(Level.SEVERE, "Failed to delete account", e);
+    }
     log.info("Account deleted");
   }
 }

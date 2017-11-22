@@ -25,11 +25,9 @@ public abstract class AbstractAccountBasedTest {
     PersistentProperty.setProvider(new DBPropertyProvider(OrbitalProperties.getGlobalProperty(EveKitUserAccountProvider.USER_ACCOUNT_PU_PROP)));
     userAccount = EveKitUserAccount.createNewUserAccount(true, true);
     userAccount2 = EveKitUserAccount.createNewUserAccount(false, true);
-    testAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true, 1234, "abcd", 5678, "charname", 8765, "corpname");
-    otherAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "otheraccount", true, true, 1234, "abcd", 5678, "charname", 8765,
-                                                                       "corpname");
-    testAccount2 = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount2, "testaccount2", true, true, 5678, "dcba", 1234, "charname2", 8765,
-                                                                       "corpname2");
+    testAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true);
+    otherAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "otheraccount", true, true);
+    testAccount2 = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount2, "testaccount2", true, true);
   }
 
   @After
