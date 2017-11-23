@@ -70,7 +70,7 @@ public class AbstractCharacterSyncTest extends SyncTestBase {
 
     // Prepare a test user and sync account
     userAccount = EveKitUserAccount.createNewUserAccount(true, true);
-    syncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true, 1234, "abcd", 5678, "charname", 8765, "corpname");
+    syncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true);
 
     // Prepare a test sync tracker
     tracker = CapsuleerSyncTracker.createOrGetUnfinishedTracker(syncAccount);

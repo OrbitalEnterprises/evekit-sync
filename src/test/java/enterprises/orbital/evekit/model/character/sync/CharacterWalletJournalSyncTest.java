@@ -130,7 +130,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
 
     // Prepare a test user and sync account
     userAccount = EveKitUserAccount.createNewUserAccount(true, true);
-    syncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true, 1234, "abcd", 5678, "charname", 8765, "corpname");
+    syncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(userAccount, "testaccount", true, true);
     testDate = DateFormat.getDateInstance().parse("Nov 16, 2010").getTime();
     prevDate = DateFormat.getDateInstance().parse("Jan 10, 2009").getTime();
 
