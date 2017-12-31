@@ -95,7 +95,7 @@ public class CorporationIndustryJobsHistorySync extends AbstractCorporationSync 
     Collection<IIndustryJob> jobs = (Collection<IIndustryJob>) data;
 
     for (IIndustryJob next : jobs) {
-      if (ModelUtil.safeConvertDate(next.getCompletedDate()) > 0 && next.getCompletedCharacterID() != 0) {
+      if (ModelUtil.safeConvertDate(next.getCompletedDate()) > 0) {
         // Only include completed jobs.
         IndustryJob instance = new IndustryJob(
             next.getJobID(), next.getInstallerID(), next.getInstallerName(), next.getFacilityID(), next.getSolarSystemID(), next.getSolarSystemName(),
