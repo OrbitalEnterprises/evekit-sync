@@ -69,4 +69,27 @@ EveKit models are organized into three groups:
 
 ## Common Model Changes
 
+### AccountBalance
+### AccountStatus
 
+Removed.  Account status is not supported from the ESI.  Similar information can be recovered from the `/characters/{character_id}/online/` endpoint which we may support in the future.
+
+### Asset
+### Blueprint
+### Bookmark
+### Contact
+### ContactLabel
+### Contract
+### ContractBid
+### ContractItem
+### FacWarStats
+### IndustryJob
+### Kill
+### KillAttacker
+### KillItem
+### KillVictim
+### Location
+### MarketOrder
+### Standing
+### WalletJournal
+### WalletTransaction
