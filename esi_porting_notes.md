@@ -14,6 +14,35 @@ EveKit models are organized into three groups:
 
 ## Character Model Changes
 
+### UpcomingCalendarEvent
+### CalendarEventAttendee
+### CharacterContactNotification
+### CharacterMailMessage
+### CharacterMailMessageBody
+### CharacterMedal
+### CharacterNotification
+### CharacterNotificationBody
+### CharacterRole
+### CharacterSheet
+### CharacterSheetBalance
+### CharacterSheetClone
+### CharacterSheetJump
+### CharacterSkill
+### CharacterSkillInTraining
+### SkillInQueue
+### CharacterTitle
+### ChatChannel
+### ChatChannelMember
+### Implant
+### JumpClone
+### JumpCloneImplant
+### MailingList
+### PlanetaryColony
+### PlanetaryLink
+### PlanetaryPin
+### PlanetaryRoute
+### ResearchAgent
+
 ## Corporation Model Changes
 
 ## Common Model Changes
