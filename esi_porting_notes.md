@@ -45,6 +45,28 @@ EveKit models are organized into three groups:
 
 ## Corporation Model Changes
 
+### ContainerLog
+### Corporation
+### CorporationMedal
+### CorporationMemberMedal
+### CorporationSheet
+### CorporationTitle
+### CustomsOffice
+### Division
+### Facility
+### Fuel
+### MemberSecurity
+### MemberSecurityLog
+### MemberTracking
+### Outpost
+### OutpostServiceDetail
+### Role
+### SecurityRole
+### SecurityTitle
+### Shareholder
+### Starbase
+### StarbaseDetail
+
 ## Common Model Changes
 
 
