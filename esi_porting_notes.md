@@ -135,14 +135,14 @@ ownerID2 | ownerID2 (generated) | *N/A* | Replaced by second_party_id in the ESI
 *N/A* | secondPartyID | second_party_id | Replaces ownerID2, historical data will be copied over to secondPartyID.
 owner2TypeID | (deleted) | *N/A* | Replaced in ESI by string enmerated second_party_type
 *N/A* | secondPartyType | second_party_type | New field in ESI.  To convert historical data, the owner2TypeID field has to be resolved to one of characte, corporation, alliance, faction, system.
-argName1 | | | **TODO**
-argID1 | | | **TODO**
+argName1 | argName1 | *N/A* | This data is now populated in extra_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
+argID1 | argID1 | *N/A* | This data is now populated in extra_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
 amount | amount | amount |
 balance | balance | balance |
 reason | reason | reason |
 taxReceiverID | taxReceiverID | tax_receiver_id |
 taxAmount | taxAmount | tax |
-dateDate (transient) | | |
+dateDate (generated) | dateDate (generated) | *N/A* | This is a conveneint string representation of the date field, rendered for human readability.
 *N/A* | locationID | extra_info -> location_id | New field in ESI.
 *N/A* | transactionID | extra_info -> transaction_id | New field in ESI.
 *N/A* | npcName | extra_info -> npc_name | New field in ESI.
