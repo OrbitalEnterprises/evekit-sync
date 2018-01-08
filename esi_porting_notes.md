@@ -49,7 +49,20 @@ Each change can be in one of the following states:
 ### PlanetaryLink (pending)
 ### PlanetaryPin (pending)
 ### PlanetaryRoute (pending)
-### ResearchAgent (pending)
+### ResearchAgent (dev)
+
+ESI endpoint(s):
+* `/characters/{character_id}/agents_research/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+agentID | agentID | agent_id |
+currentPoints | (deleted) | *N/A* | This field will be removed and deleted from historical data since this value can be computed with the formula: `currentPoints = remainderPoints + pointsPerDay * days(currentTime - researchStartDate)`
+pointsPerDay | pointsPerDay | points_per_day |
+remainderPoints | remainderPoints | remainder_points |
+researchStartDate | resarchStartDate | started_at | ESI stores this as a text string, which EveKit converts to milliseconds UTC.  `researchStartDateDate` can be used if a string-valued date is required
+skillTypeID | skillTypeID | skill_type_id |
+researchStartDateDate (generated) | researchStartDateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
 
 ## Corporation Model Changes
 
@@ -142,7 +155,7 @@ balance | balance | balance |
 reason | reason | reason |
 taxReceiverID | taxReceiverID | tax_receiver_id |
 taxAmount | taxAmount | tax |
-dateDate (generated) | dateDate (generated) | *N/A* | This is a conveneint string representation of the date field, rendered for human readability.
+dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
 *N/A* | locationID | extra_info -> location_id | New field in ESI.
 *N/A* | transactionID | extra_info -> transaction_id | New field in ESI.
 *N/A* | npcName | extra_info -> npc_name | New field in ESI.
