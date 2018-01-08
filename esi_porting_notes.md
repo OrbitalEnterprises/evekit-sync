@@ -169,4 +169,33 @@ dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient strin
 *N/A* | systemID | extra_info -> system_id | New field in ESI.
 *N/A* | planetID | extra_info -> planet_id | New field in ESI.
 
-### WalletTransaction (pending)
+### WalletTransaction (dev)
+
+ESI endpoint(s):
+* `/characters/{character_id}/wallet/transactions/`
+* `/corporations/{corporation_id}/wallets/{division}/transactions/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+accountKey | accountKey (generated) | *N/A* | This field doesn't exist in the XML API or the ESI, it is inserted by EveKit.  We're changing the name to division.  For now, we'll retain the field but generate it with the equation `accessKey = division - 1 + 1000`
+*N/A* | division | *N/A* | This field doesn't exist in ESI, EveKit will add it.  The value will be 1 for characters, and 1-7 for corporations
+transactionID | transactionID | transaction_id |
+date | date | date | ESI stores this as a text string, which EveKit converts to milliseconds UTC.  `dateDate` can be used if a string-valued date is required
+quantity | quantity | quantity | 
+typeName | (deleted) | *N/A* | ESI leaves lookup from ID to user
+typeID | typeID | type_id |
+price | price | unit_price |
+clientID | clientID | client_id |
+clientName | (deleted) | *N/A* | ESI leaves lookup from ID to user
+stationID | stationID (generated) | *N/A* | This is just a copy of locationID for now, which we'll remove at a future date
+*N/A* | locationID | location_id | This is the ESI replacement for station ID which we'll use going forward.  Historical data will be converted by setting locationID = stationID
+stationName | (deleted) | *N/A* | ESI leaves lookup from ID to user
+transactionType | transactionType (generated) | *N/A* | We'll generate this from is_buy for now (see next entry), and remove at a future date
+*N/A* | isBuy | is_buy | This is new in the ESI and we'll use it going forward.  Historical data will be converted with is_buy = true if transactionType = "buy", otherwise is_buy = false.
+transactionFor | transactionFor (generated) | *N/A* | We'll generate this from is_personal for now (see next entry), and remove at a future date
+*N/A* | isPersonal | is_personal | This is new in the ESI for characters and we'll use it going forward.  Historical data will be converted with is_personal = true if transactionFor = "personal", otherwise is_personal = false.
+journalTransactionID | journalTransactionID | journal_ref_id |
+clientTypeID | (deleted) | *N/A* | ESI has no analog, not clear what this was used for (even 3rd party docs aren't clear).
+characterID | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
+characterName | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
+dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
