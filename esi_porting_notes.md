@@ -20,36 +20,111 @@ Each change can be in one of the following states:
 * beta - live on the beta site (https://evekit-beta.orbital.enterprises)
 * prod - live on the main site (https://evekit.orbital.enterprises)
 
+## Index
+
+* Character Model Changes
+  * **pending** [UpcomingCalendarEvent](#upcomingcalendarevent)
+  * **pending** [CalendarEventAttendee](#calendareventattendee)
+  * **pending** [CharacterContactNotification](#charactercontactnotification)
+  * **pending** [CharacterMailMessage](#charactermailmessage)
+  * **pending** [CharacterMailMessageBody](#charactermailmessagebody)
+  * **pending** [CharacterMedal](#charactermedal)
+  * **pending** [CharacterNotification](#characternotification)
+  * **pending** [CharacterNotificationBody](#characternotificationbody)
+  * **pending** [CharacterRole](#characterrole)
+  * **pending** [CharacterSheet](#charactersheet)
+  * **pending** [CharacterSheetBalance](#charactersheetbalance)
+  * **pending** [CharacterSheetClone](#charactersheetclone)
+  * **pending** [CharacterSheetJump](#charactersheetjump)
+  * **pending** [CharacterSkill](#characterskill)
+  * **pending** [CharacterSkillInTraining](#characterskillintraining)
+  * **pending** [SkillInQueue](#skillinqueue)
+  * **pending** [CharacterTitle](#charactertitle)
+  * **pending** [ChatChannel](#chatchannel)
+  * **pending** [ChatChannelMember](#chatchannelmember)
+  * **pending** [Implant](#implant)
+  * **pending** [JumpClone](#jumpclone)
+  * **pending** [JumpCloneImplant](#jumpcloneimplant)
+  * **pending** [MailingList](#mailinglist)
+  * **pending** [PlanetaryColony](#planetarycolony)
+  * **pending** [PlanetaryLink](#planetarylink)
+  * **pending** [PlanetaryPin](#planetarypin)
+  * **pending** [PlanetaryRoute](#planetaryroute)
+  * **dev** [ResearchAgent](#researchagent)
+* Corporation Model Changes
+  * **pending** [ContainerLog](#containerlog)
+  * **pending** [CorporationMedal](#corporationmedal)
+  * **pending** [CorporationMemberMedal](#corporationmembermedal)
+  * **pending** [CorporationSheet](#corporationsheet)
+  * **pending** [CorporationTitle](#corporationtitle)
+  * **pending** [CustomsOffice](#customsoffice)
+  * **pending** [Division](#division)
+  * **pending** [Facility](#facility)
+  * **pending** [Fuel](#fuel)
+  * **pending** [MemberSecurity](#membersecurity)
+  * **pending** [MemberSecurityLog](#membersecuritylog)
+  * **pending** [MemberTracking](#membertracking)
+  * **pending** [Outpost](#outpost)
+  * **pending** [OutpostServiceDetail](#outpostservicedetail)
+  * **pending** [Role](#role)
+  * **pending** [SecurityRole](#securityrole)
+  * **pending** [SecurityTitle](#securitytitle)
+  * **pending** [Shareholder](#shareholder)
+  * **pending** [Starbase](#starbase)
+  * **pending** [StarbaseDetail](#starbasedetail)
+* Common Model Changes
+  * **dev** [AccountBalance](#accountbalance)
+  * **N/A** [AccountStatus](#accountstatus)
+  * **pending** [Asset](#asset)
+  * **pending** [Blueprint](#blueprint)
+  * **pending** [Bookmark](#bookmark)
+  * **pending** [Contact](#contact)
+  * **pending** [ContactLabel](#contactlabel)
+  * **pending** [Contract](#contract)
+  * **pending** [ContractBid](#contractbid)
+  * **pending** [ContractItem](#contractitem)
+  * **pending** [FacWarStats](#facwarstats)
+  * **pending** [IndustryJob](#industryjob)
+  * **pending** [Kill](#kill)
+  * **pending** [KillAttacker](#killattacker)
+  * **pending** [KillItem](#killitem)
+  * **pending** [KillVictim](#killvictim)
+  * **pending** [Location](#location)
+  * **pending** [MarketOrder](#marketorder)
+  * **pending** [Standing](#standing)
+  * **dev** [WalletJournal](#walletjournal)
+  * **dev** [WalletTransaction](#wallettransaction)
+
 ## Character Model Changes
 
-### UpcomingCalendarEvent (pending)
-### CalendarEventAttendee (pending)
-### CharacterContactNotification (pending)
-### CharacterMailMessage (pending)
-### CharacterMailMessageBody (pending)
-### CharacterMedal (pending)
-### CharacterNotification (pending)
-### CharacterNotificationBody (pending)
-### CharacterRole (pending)
-### CharacterSheet (pending)
-### CharacterSheetBalance (pending)
-### CharacterSheetClone (pending)
-### CharacterSheetJump (pending)
-### CharacterSkill (pending)
-### CharacterSkillInTraining (pending)
-### SkillInQueue (pending)
-### CharacterTitle (pending)
-### ChatChannel (pending)
-### ChatChannelMember (pending)
-### Implant (pending)
-### JumpClone (pending)
-### JumpCloneImplant (pending)
-### MailingList (pending)
-### PlanetaryColony (pending)
-### PlanetaryLink (pending)
-### PlanetaryPin (pending)
-### PlanetaryRoute (pending)
-### ResearchAgent (dev)
+### UpcomingCalendarEvent
+### CalendarEventAttendee
+### CharacterContactNotification
+### CharacterMailMessage
+### CharacterMailMessageBody
+### CharacterMedal
+### CharacterNotification
+### CharacterNotificationBody
+### CharacterRole
+### CharacterSheet
+### CharacterSheetBalance
+### CharacterSheetClone
+### CharacterSheetJump
+### CharacterSkill
+### CharacterSkillInTraining
+### SkillInQueue
+### CharacterTitle
+### ChatChannel
+### ChatChannelMember
+### Implant
+### JumpClone
+### JumpCloneImplant
+### MailingList
+### PlanetaryColony
+### PlanetaryLink
+### PlanetaryPin
+### PlanetaryRoute
+### ResearchAgent
 
 ESI endpoint(s):
 * `/characters/{character_id}/agents_research/`
@@ -66,31 +141,31 @@ researchStartDateDate (generated) | researchStartDateDate (generated) | *N/A* | 
 
 ## Corporation Model Changes
 
-### ContainerLog (pending)
-### Corporation (pending)
-### CorporationMedal (pending)
-### CorporationMemberMedal (pending)
-### CorporationSheet (pending)
-### CorporationTitle (pending)
-### CustomsOffice (pending)
-### Division (pending)
-### Facility (pending)
-### Fuel (pending)
-### MemberSecurity (pending)
-### MemberSecurityLog (pending)
-### MemberTracking (pending)
-### Outpost (pending)
-### OutpostServiceDetail (pending)
-### Role (pending)
-### SecurityRole (pending)
-### SecurityTitle (pending)
-### Shareholder (pending)
-### Starbase (pending)
-### StarbaseDetail (pending)
+### ContainerLog
+### Corporation
+### CorporationMedal
+### CorporationMemberMedal
+### CorporationSheet
+### CorporationTitle
+### CustomsOffice
+### Division
+### Facility
+### Fuel
+### MemberSecurity
+### MemberSecurityLog
+### MemberTracking
+### Outpost
+### OutpostServiceDetail
+### Role
+### SecurityRole
+### SecurityTitle
+### Shareholder
+### Starbase
+### StarbaseDetail
 
 ## Common Model Changes
 
-### AccountBalance (dev)
+### AccountBalance
 
 ESI endpoint(s):
 * `/characters/{character_id}/wallet/`
@@ -103,28 +178,28 @@ accountID | (deleted) | *N/A* | This field does not exist in the ESI and will be
 accountKey | accountKey (generated) | N/A | `Division` replaces this field in the ESI and is numbered from 1-7 instead of the previous numbering scheme.  For now, we'll generate this field from division using the equation `accountKey = division - + 1000` 
 balance | balance | balance | 
 
-### AccountStatus (N/A)
+### AccountStatus
 
 Removed.  Account status is not supported from the ESI.  Similar information can be recovered from the `/characters/{character_id}/online/` endpoint which we may support in the future.
 
-### Asset (pending)
-### Blueprint (pending)
-### Bookmark (pending)
-### Contact (pending)
-### ContactLabel (pending)
-### Contract (pending)
-### ContractBid (pending)
-### ContractItem (pending)
-### FacWarStats (pending)
-### IndustryJob (pending)
-### Kill (pending)
-### KillAttacker (pending)
-### KillItem (pending)
-### KillVictim (pending)
-### Location (pending)
-### MarketOrder (pending)
-### Standing (pending)
-### WalletJournal (dev)
+### Asset
+### Blueprint
+### Bookmark
+### Contact
+### ContactLabel
+### Contract
+### ContractBid
+### ContractItem
+### FacWarStats
+### IndustryJob
+### Kill
+### KillAttacker
+### KillItem
+### KillVictim
+### Location
+### MarketOrder
+### Standing
+### WalletJournal
 
 ESI endpoint(s):
 * `/characters/{character_id}/wallet/journal/`
@@ -169,7 +244,7 @@ dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient strin
 *N/A* | systemID | extra_info -> system_id | New field in ESI.
 *N/A* | planetID | extra_info -> planet_id | New field in ESI.
 
-### WalletTransaction (dev)
+### WalletTransaction
 
 ESI endpoint(s):
 * `/characters/{character_id}/wallet/transactions/`
