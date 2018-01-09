@@ -39,9 +39,9 @@ public class CorporationFacWarStatsSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setFacWarStatsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -56,7 +56,7 @@ public class CorporationFacWarStatsSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof FacWarStats;
 
     FacWarStats api = (FacWarStats) item;

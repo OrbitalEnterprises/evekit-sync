@@ -458,7 +458,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
     // Populate assets
     for (int i = 0; i < testDataAssets.length; i++) {
       Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
-      CachedData.updateData(nextAsset);
+      CachedData.update(nextAsset);
     }
 
     // Perform the sync
@@ -491,7 +491,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
     // Populate assets
     for (int i = 0; i < testDataAssets.length; i++) {
       Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
-      CachedData.updateData(nextAsset);
+      CachedData.update(nextAsset);
     }
 
     // Populate existing locations
@@ -501,7 +501,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
           itemID, (String) testDataLocations[i][1] + "foo", (Double) testDataLocations[i][2] + 7, (Double) testDataLocations[i][3] + 7,
           (Double) testDataLocations[i][4] + 7);
       next.setup(syncAccount, testTime);
-      CachedData.updateData(next);
+      CachedData.update(next);
     }
 
     // Perform the sync
@@ -535,7 +535,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
     // Populate assets
     for (int i = 0; i < testDataAssets.length; i++) {
       Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
-      CachedData.updateData(nextAsset);
+      CachedData.update(nextAsset);
     }
 
     // Populate existing locations
@@ -545,7 +545,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
           itemID, (String) testDataLocations[i][1] + "foo", (Double) testDataLocations[i][2] + 7, (Double) testDataLocations[i][3] + 7,
           (Double) testDataLocations[i][4] + 7);
       next.setup(syncAccount, testTime);
-      CachedData.updateData(next);
+      CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -553,7 +553,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
     tracker.setLocationsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setLocationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationLocationsSync.syncCorporationLocations(testTime, syncAccount, syncUtil, mockServer);
@@ -587,7 +587,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
     // Populate assets
     for (int i = 0; i < testDataAssets.length; i++) {
       Asset nextAsset = makeAsset(testTime, testDataAssets[i]);
-      CachedData.updateData(nextAsset);
+      CachedData.update(nextAsset);
     }
 
     // Populate existing locations which should be deleted
@@ -597,7 +597,7 @@ public class CorporationLocationsSyncTest extends SyncTestBase {
       Location next = new Location(
           itemID, TestBase.getRandomText(50), TestBase.getRandomDouble(50000), TestBase.getRandomDouble(50000), TestBase.getRandomDouble(50000));
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

@@ -340,10 +340,10 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate character sheet, skills, certificates, implants, jump clones, jump clone implants, balance, jump and clone
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] skillData = (Object[][]) testData[0][17];
     for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
+      CachedData.update(makeSkillObject(testTime, skillData[i]));
     }
 
     // Perform the sync
@@ -375,10 +375,10 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate existing character sheet
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] skillData = (Object[][]) testData[0][17];
     for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
+      CachedData.update(makeSkillObject(testTime, skillData[i]));
     }
 
     // Set the tracker as already updated and populate the container
@@ -386,7 +386,7 @@ public class CharacterSkillsSyncTest extends SyncTestBase {
     tracker.setSkillsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setSkillsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSkillsSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);

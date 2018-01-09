@@ -41,9 +41,9 @@ public class CorporationIndustryJobsSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setIndustryJobsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -58,7 +58,7 @@ public class CorporationIndustryJobsSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof IndustryJob;
 
     IndustryJob api = (IndustryJob) item;

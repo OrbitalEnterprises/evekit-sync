@@ -46,9 +46,9 @@ public class CharacterSkillsSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setSkillsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -57,7 +57,7 @@ public class CharacterSkillsSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     if (item instanceof CharacterSkill) {
       CharacterSkill api = (CharacterSkill) item;
       CharacterSkill existing = CharacterSkill.get(accountKey, time, api.getTypeID());

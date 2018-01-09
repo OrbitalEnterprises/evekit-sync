@@ -46,9 +46,9 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setBookmarksExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class CorporationBookmarksSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof Bookmark;
 
     Bookmark api = (Bookmark) item;

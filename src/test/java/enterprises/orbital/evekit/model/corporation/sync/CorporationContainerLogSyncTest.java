@@ -213,7 +213,7 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
           (String) testData[i][10] + "A", (Long) testData[i][11] + 2, (Integer) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -260,7 +260,7 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (String) testData[i][9] + "A",
           (String) testData[i][10] + "A", (Long) testData[i][11] + 2, (Integer) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -268,7 +268,7 @@ public class CorporationContainerLogSyncTest extends SyncTestBase {
     tracker.setContainerLogDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContainerLogExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContainerLogSync.syncCorporationContainerLog(testTime, syncAccount, syncUtil, mockServer);

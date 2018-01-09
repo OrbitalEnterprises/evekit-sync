@@ -359,29 +359,29 @@ public class CharacterChatChannelsSyncTest extends SyncTestBase {
           (Long) testData[i][0], (Long) testData[i][1], (String) testData[i][2], (String) testData[i][3], (String) testData[i][4], (Boolean) testData[i][5],
           (String) testData[i][6]);
       nextChannel.setup(syncAccount, testTime);
-      nextChannel = CachedData.updateData(nextChannel);
+      nextChannel = CachedData.update(nextChannel);
       for (int j = 0; j < allowedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember((Long) testData[i][0], "allowed", (Long) allowedData[j][0], (String) allowedData[j][1], 0, null);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < blockedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "blocked", (Long) blockedData[j][0], (String) blockedData[j][1], (Long) blockedData[j][2], (String) blockedData[j][3]);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < mutedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "muted", (Long) mutedData[j][0], (String) mutedData[j][1], (Long) mutedData[j][2], (String) mutedData[j][3]);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < operatorsData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "operators", (Long) operatorsData[j][0], (String) operatorsData[j][1], 0, null);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
     }
 
@@ -467,31 +467,31 @@ public class CharacterChatChannelsSyncTest extends SyncTestBase {
           (Long) testData[i][0], (Long) testData[i][1], ((String) testData[i][2]) + "foo", (String) testData[i][3], (String) testData[i][4],
           (Boolean) testData[i][5], (String) testData[i][6]);
       nextChannel.setup(syncAccount, testTime);
-      nextChannel = CachedData.updateData(nextChannel);
+      nextChannel = CachedData.update(nextChannel);
       for (int j = 0; j < allowedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "allowed", (Long) allowedData[j][0], ((String) allowedData[j][1]) + "foo", 0, null);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < blockedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "blocked", (Long) blockedData[j][0], ((String) blockedData[j][1]) + "foo", (Long) blockedData[j][2],
             (String) blockedData[j][3]);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < mutedData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "muted", (Long) mutedData[j][0], ((String) mutedData[j][1]) + "foo", (Long) mutedData[j][2], (String) mutedData[j][3]);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
       for (int j = 0; j < operatorsData.length; j++) {
         ChatChannelMember nextMember = new ChatChannelMember(
             (Long) testData[i][0], "operators", (Long) operatorsData[j][0], ((String) operatorsData[j][1]) + "foo", 0, null);
         nextMember.setup(syncAccount, testTime);
-        nextMember = CachedData.updateData(nextMember);
+        nextMember = CachedData.update(nextMember);
       }
     }
 
@@ -500,7 +500,7 @@ public class CharacterChatChannelsSyncTest extends SyncTestBase {
     tracker.setChatChannelsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setChatChannelsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterChatChannelsSync.syncChatChannels(testTime, syncAccount, syncUtil, mockServer);
@@ -581,7 +581,7 @@ public class CharacterChatChannelsSyncTest extends SyncTestBase {
           TestBase.getUniqueRandomLong(), TestBase.getRandomLong(), TestBase.getRandomText(50), TestBase.getRandomText(50), TestBase.getRandomText(50),
           TestBase.getRandomBoolean(), TestBase.getRandomText(50));
       nextChannel.setup(syncAccount, testTime);
-      nextChannel = CachedData.updateData(nextChannel);
+      nextChannel = CachedData.update(nextChannel);
       toDeleteChannels.add(nextChannel);
     }
     String[] cats = new String[] {
@@ -594,7 +594,7 @@ public class CharacterChatChannelsSyncTest extends SyncTestBase {
           TestBase.getUniqueRandomLong(), cats[category], TestBase.getUniqueRandomLong(), TestBase.getRandomText(50), TestBase.getRandomLong(),
           TestBase.getRandomText(50));
       nextMember.setup(syncAccount, testTime);
-      nextMember = CachedData.updateData(nextMember);
+      nextMember = CachedData.update(nextMember);
       toDeleteMembers.add(nextMember);
     }
 

@@ -198,7 +198,7 @@ public class CorporationFacWarStatsSyncTest extends SyncTestBase {
         (Integer) testData[0][6], (Integer) testData[0][7], (Integer) testData[0][8], (Integer) testData[0][9], (Integer) testData[0][10],
         (Integer) testData[0][11]);
     stats.setup(syncAccount, testTime);
-    stats = CachedData.updateData(stats);
+    stats = CachedData.update(stats);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationFacWarStatsSync.syncFacWarStats(testTime, syncAccount, syncUtil, mockServer);
@@ -228,14 +228,14 @@ public class CorporationFacWarStatsSyncTest extends SyncTestBase {
         (Integer) testData[0][6], (Integer) testData[0][7], (Integer) testData[0][8], (Integer) testData[0][9], (Integer) testData[0][10],
         (Integer) testData[0][11]);
     stats.setup(syncAccount, testTime);
-    stats = CachedData.updateData(stats);
+    stats = CachedData.update(stats);
 
     // Set the tracker as already updated and populate the container
     tracker.setFacWarStatsStatus(SyncState.UPDATED);
     tracker.setFacWarStatsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setFacWarStatsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationFacWarStatsSync.syncFacWarStats(testTime, syncAccount, syncUtil, mockServer);

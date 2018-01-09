@@ -233,7 +233,7 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
           (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
           (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2, (String) testData[i][13] + "A");
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -294,7 +294,7 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
           (Long) testData[i][5] + 2, (Long) testData[i][6] + 2, (Long) testData[i][7] + 2, (String) testData[i][8] + "A", (Long) testData[i][9] + 2,
           (String) testData[i][10] + "A", (Integer) testData[i][11] + 2, (Long) testData[i][12] + 2, (String) testData[i][13] + "A");
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -302,7 +302,7 @@ public class CorporationMemberTrackingSyncTest extends SyncTestBase {
     tracker.setMemberTrackingDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMemberTrackingExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMemberTrackingSync.syncCorporationMemberTracking(testTime, syncAccount, syncUtil, mockServer);

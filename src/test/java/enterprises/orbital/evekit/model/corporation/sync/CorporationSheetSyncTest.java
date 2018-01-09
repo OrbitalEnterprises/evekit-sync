@@ -379,12 +379,12 @@ public class CorporationSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate corporation sheet
-    CachedData.updateData(makeCorporationSheetObject(testTime, testData[0]));
+    CachedData.update(makeCorporationSheetObject(testTime, testData[0]));
     for (Division i : makeDivisionObject(testTime, testData[0], false, null)) {
-      CachedData.updateData(i);
+      CachedData.update(i);
     }
     for (Division i : makeDivisionObject(testTime, testData[0], true, null)) {
-      CachedData.updateData(i);
+      CachedData.update(i);
     }
 
     // Perform the sync
@@ -419,12 +419,12 @@ public class CorporationSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate existing corporation sheet
-    CachedData.updateData(makeCorporationSheetObject(testTime, testData[0]));
+    CachedData.update(makeCorporationSheetObject(testTime, testData[0]));
     for (Division i : makeDivisionObject(testTime, testData[0], false, null)) {
-      CachedData.updateData(i);
+      CachedData.update(i);
     }
     for (Division i : makeDivisionObject(testTime, testData[0], true, null)) {
-      CachedData.updateData(i);
+      CachedData.update(i);
     }
 
     // Set the tracker as already updated and populate the container
@@ -432,7 +432,7 @@ public class CorporationSheetSyncTest extends SyncTestBase {
     tracker.setCorporationSheetDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setCorporationSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationSheetSync.syncCorporationSheet(testTime, syncAccount, syncUtil, mockServer);
@@ -471,9 +471,9 @@ public class CorporationSheetSyncTest extends SyncTestBase {
     Collection<Division> divs = makeDivisionObject(testTime, testData[0], false, new Integer(1));
     divs.addAll(makeDivisionObject(testTime, testData[0], true, new Integer(1)));
     for (Division next : divs) {
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
-    existing = CachedData.updateData(existing);
+    existing = CachedData.update(existing);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationSheetSync.syncCorporationSheet(testTime, syncAccount, syncUtil, mockServer);

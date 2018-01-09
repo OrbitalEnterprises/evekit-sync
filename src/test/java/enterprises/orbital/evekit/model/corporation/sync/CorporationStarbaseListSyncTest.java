@@ -187,18 +187,18 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       StarbaseDetail dt = new StarbaseDetail(next.getItemID(), 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 0, false, 0, false, 0);
       dt.setup(syncAccount, testTime);
-      dt = CachedData.updateData(dt);
+      dt = CachedData.update(dt);
       int fuelCount = 3 + TestBase.getRandomInt(5);
       totalFuelCount += fuelCount;
       for (int j = 0; j < fuelCount; j++) {
         Fuel f = new Fuel(next.getItemID(), TestBase.getUniqueRandomInteger(), TestBase.getUniqueRandomInteger());
         f.setup(syncAccount, testTime);
-        f = CachedData.updateData(f);
+        f = CachedData.update(f);
       }
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -244,18 +244,18 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Long) testData[i][1] + 2, (Integer) testData[i][2] + 2, (Long) testData[i][3] + 2, (Integer) testData[i][4] + 2,
           (Long) testData[i][5] + 2, (Integer) testData[i][6] + 2, (Long) testData[i][7] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       StarbaseDetail dt = new StarbaseDetail(next.getItemID(), 0, 0, 0, 0, 0, false, false, 0, false, 0, false, 0, false, 0, false, 0);
       dt.setup(syncAccount, testTime);
-      dt = CachedData.updateData(dt);
+      dt = CachedData.update(dt);
       int fuelCount = 3 + TestBase.getRandomInt(5);
       totalFuelCount += fuelCount;
       for (int j = 0; j < fuelCount; j++) {
         Fuel f = new Fuel(next.getItemID(), TestBase.getUniqueRandomInteger(), TestBase.getUniqueRandomInteger());
         f.setup(syncAccount, testTime);
-        f = CachedData.updateData(f);
+        f = CachedData.update(f);
       }
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -263,7 +263,7 @@ public class CorporationStarbaseListSyncTest extends SyncTestBase {
     tracker.setStarbaseListDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setStarbaseListExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationStarbaseListSync.syncStarbaseList(testTime, syncAccount, syncUtil, mockServer);

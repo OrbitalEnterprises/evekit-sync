@@ -383,9 +383,9 @@ public class CorporationStarbaseDetailSyncTest extends SyncTestBase {
       for (int j = 0; j < fuelData.length; j++) {
         Fuel nextFuel = new Fuel((Long) testData[i][0] + 2, (Integer) fuelData[j][0] + 2, (Integer) fuelData[j][1] + 2);
         nextFuel.setup(syncAccount, testTime);
-        nextFuel = CachedData.updateData(nextFuel);
+        nextFuel = CachedData.update(nextFuel);
       }
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -451,9 +451,9 @@ public class CorporationStarbaseDetailSyncTest extends SyncTestBase {
       for (int j = 0; j < fuelData.length; j++) {
         Fuel nextFuel = new Fuel((Long) testData[i][0] + 2, (Integer) fuelData[j][0] + 2, (Integer) fuelData[j][1] + 2);
         nextFuel.setup(syncAccount, testTime);
-        nextFuel = CachedData.updateData(nextFuel);
+        nextFuel = CachedData.update(nextFuel);
       }
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -461,7 +461,7 @@ public class CorporationStarbaseDetailSyncTest extends SyncTestBase {
     tracker.setStarbaseDetailDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setStarbaseDetailExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationStarbaseDetailSync.syncStarbaseDetail(testTime, syncAccount, syncUtil, mockServer);

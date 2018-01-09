@@ -44,9 +44,9 @@ public class CorporationMarketOrderSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setMarketOrdersExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class CorporationMarketOrderSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof MarketOrder;
 
     MarketOrder api = (MarketOrder) item;

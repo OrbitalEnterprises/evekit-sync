@@ -43,10 +43,10 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     // Always use expiry from Contracts for items expiry
     container.setContractItemsExpiry(container.getContractsExpiry());
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class CharacterContractItemsSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof ContractItem;
 
     ContractItem api = (ContractItem) item;

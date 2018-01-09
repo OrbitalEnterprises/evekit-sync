@@ -193,7 +193,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8], (Integer) testData[i][9]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -238,7 +238,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], eventID, (String) testData[i][3], (String) testData[i][4], (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7] + "foo", (Boolean) testData[i][8], (Integer) testData[i][9]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -246,7 +246,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
     tracker.setUpcomingCalendarEventsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setUpcomingCalendarEventsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterUpcomingCalendarEventsSync.syncUpcomingCalendarEvents(testTime, syncAccount, syncUtil, mockServer);
@@ -291,7 +291,7 @@ public class UpcomingCalendarEventSyncTest extends SyncTestBase {
           TestBase.getRandomInt(), TestBase.getRandomLong(), eventID, TestBase.getRandomText(500), TestBase.getRandomText(50), TestBase.getRandomLong(),
           TestBase.getRandomText(50), TestBase.getRandomText(50), TestBase.getRandomBoolean(), TestBase.getRandomInt());
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

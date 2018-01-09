@@ -475,7 +475,7 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // Populate existing wallet entries which should not be modified.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < testData[acct].length; i++) {
-        CachedData.updateData(makeJournalObject(testTime, testData[acct][i], "foo"));
+        CachedData.update(makeJournalObject(testTime, testData[acct][i], "foo"));
       }
     }
 
@@ -520,7 +520,7 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     // Populate existing wallet entries which should not be modified.
     for (int acct = 0; acct < accounts.length; acct++) {
       for (int i = 0; i < testData[acct].length; i++) {
-        CachedData.updateData(makeJournalObject(testTime, testData[acct][i], "foo"));
+        CachedData.update(makeJournalObject(testTime, testData[acct][i], "foo"));
       }
     }
 
@@ -529,7 +529,7 @@ public class CorporationWalletJournalSyncTest extends SyncTestBase {
     tracker.setWalletJournalDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setWalletJournalExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationWalletJournalSync.syncCorporationWalletJournal(testTime, syncAccount, syncUtil, mockServer);

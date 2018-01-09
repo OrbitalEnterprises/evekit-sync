@@ -187,7 +187,7 @@ public class CharacterMedalSyncTest extends SyncTestBase {
           (String) testData[i][1], (Integer) testData[i][0], (String) testData[i][2], (Long) testData[i][3], refTime, (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -229,7 +229,7 @@ public class CharacterMedalSyncTest extends SyncTestBase {
           (String) testData[i][1], (Integer) testData[i][0], (String) testData[i][2], (Long) testData[i][3], refTime, (Long) testData[i][5],
           (String) testData[i][6], (String) testData[i][7]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -237,7 +237,7 @@ public class CharacterMedalSyncTest extends SyncTestBase {
     tracker.setMedalsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMedalsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMedalSync.syncCharacterMedals(testTime, syncAccount, syncUtil, mockServer);

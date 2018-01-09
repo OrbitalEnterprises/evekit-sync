@@ -189,7 +189,7 @@ public class CorporationFacilitiesSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Integer) testData[i][1] + 2, (String) testData[i][2] + "A", (Integer) testData[i][3] + 2, (String) testData[i][4] + "A",
           (Integer) testData[i][5] + 2, (String) testData[i][6] + "A", (Integer) testData[i][7] + 2, (Double) testData[i][8] + 2.0);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -233,7 +233,7 @@ public class CorporationFacilitiesSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Integer) testData[i][1] + 2, (String) testData[i][2] + "A", (Integer) testData[i][3] + 2, (String) testData[i][4] + "A",
           (Integer) testData[i][5] + 2, (String) testData[i][6] + "A", (Integer) testData[i][7] + 2, (Double) testData[i][8] + 2.0);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -241,7 +241,7 @@ public class CorporationFacilitiesSyncTest extends SyncTestBase {
     tracker.setFacilitiesDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setFacilitiesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationFacilitiesSync.syncFacilities(testTime, syncAccount, syncUtil, mockServer);

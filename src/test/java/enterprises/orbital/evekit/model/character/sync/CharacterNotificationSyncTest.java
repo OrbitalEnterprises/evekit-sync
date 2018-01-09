@@ -172,7 +172,7 @@ public class CharacterNotificationSyncTest extends SyncTestBase {
 
     // Populate existing notifications with a slight tweak
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeNotificationObject(testTime, testData[i], 25));
+      CachedData.update(makeNotificationObject(testTime, testData[i], 25));
     }
 
     // Perform the sync
@@ -203,7 +203,7 @@ public class CharacterNotificationSyncTest extends SyncTestBase {
 
     // Populate existing notifications with a slight tweak
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeNotificationObject(testTime, testData[i], 25));
+      CachedData.update(makeNotificationObject(testTime, testData[i], 25));
     }
 
     // Set the tracker as already updated and populate the container
@@ -211,7 +211,7 @@ public class CharacterNotificationSyncTest extends SyncTestBase {
     tracker.setNotificationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterNotificationSync.syncNotifications(testTime, syncAccount, syncUtil, mockServer);

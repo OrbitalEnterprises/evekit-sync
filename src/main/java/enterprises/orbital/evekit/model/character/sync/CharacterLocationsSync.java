@@ -47,9 +47,9 @@ public class CharacterLocationsSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setLocationsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -64,7 +64,7 @@ public class CharacterLocationsSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof Location;
 
     Location api = (Location) item;

@@ -40,9 +40,9 @@ public class CorporationTitlesSync extends AbstractCorporationSync {
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(Corporation container, long expiry) throws IOException {
     container.setTitlesExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class CorporationTitlesSync extends AbstractCorporationSync {
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) throws IOException {
 
     if (item instanceof CorporationTitle) {
       CorporationTitle api = (CorporationTitle) item;

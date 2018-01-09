@@ -51,9 +51,9 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setCalendarEventAttendeesExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -62,7 +62,7 @@ public class CharacterCalendarEventAttendeeSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof CalendarEventAttendee;
 
     CalendarEventAttendee api = (CalendarEventAttendee) item;

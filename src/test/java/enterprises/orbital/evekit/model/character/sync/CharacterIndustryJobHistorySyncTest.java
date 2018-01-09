@@ -346,7 +346,7 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
     // Populate jobs
     for (int i = 0; i < testData.length; i++) {
       IndustryJob next = makeJob(testTime, testData[i], new Long(0), Long.MIN_VALUE, Integer.MIN_VALUE, new Integer(-1));
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -378,7 +378,7 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
 
     // Populate existing jobs
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeJob(testTime, testData[i], null, null, null, null));
+      CachedData.update(makeJob(testTime, testData[i], null, null, null, null));
     }
 
     // Set the tracker as already updated and populate the container
@@ -386,7 +386,7 @@ public class CharacterIndustryJobHistorySyncTest extends SyncTestBase {
     tracker.setIndustryJobsHistoryDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setIndustryJobsHistoryExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterIndustryJobsHistorySync.syncCharacterIndustryJobsHistory(testTime, syncAccount, syncUtil, mockServer);

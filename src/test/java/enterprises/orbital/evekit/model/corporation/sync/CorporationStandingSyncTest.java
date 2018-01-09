@@ -193,17 +193,17 @@ public class CorporationStandingSyncTest extends SyncTestBase {
     for (int i = 0; i < agentTestData.length; i++) {
       Standing next = new Standing("AGENT", (Integer) agentTestData[i][0], (String) agentTestData[i][1], (Double) agentTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
     for (int i = 0; i < npcTestData.length; i++) {
       Standing next = new Standing("NPC_CORPORATION", (Integer) npcTestData[i][0], (String) npcTestData[i][1], (Double) npcTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
     for (int i = 0; i < factionTestData.length; i++) {
       Standing next = new Standing("FACTION", (Integer) factionTestData[i][0], (String) factionTestData[i][1], (Double) factionTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -246,17 +246,17 @@ public class CorporationStandingSyncTest extends SyncTestBase {
     for (int i = 0; i < agentTestData.length; i++) {
       Standing next = new Standing("AGENT", (Integer) agentTestData[i][0], (String) agentTestData[i][1], (Double) agentTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
     for (int i = 0; i < npcTestData.length; i++) {
       Standing next = new Standing("NPC_CORPORATION", (Integer) npcTestData[i][0], (String) npcTestData[i][1], (Double) npcTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
     for (int i = 0; i < factionTestData.length; i++) {
       Standing next = new Standing("FACTION", (Integer) factionTestData[i][0], (String) factionTestData[i][1], (Double) factionTestData[i][2]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -264,7 +264,7 @@ public class CorporationStandingSyncTest extends SyncTestBase {
     tracker.setStandingsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setStandingsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationStandingSync.syncStanding(testTime, syncAccount, syncUtil, mockServer);

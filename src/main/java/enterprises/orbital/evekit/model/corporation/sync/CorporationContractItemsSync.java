@@ -43,10 +43,10 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     // Always use expiry from Contracts for items expiry
     container.setContractItemsExpiry(container.getContractsExpiry());
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class CorporationContractItemsSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof ContractItem;
 
     ContractItem api = (ContractItem) item;

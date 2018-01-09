@@ -159,7 +159,7 @@ public class CorporationMedalsSyncTest extends SyncTestBase {
       CorporationMedal next = new CorporationMedal(
           (Integer) testData[i][0] + 2, (String) testData[i][1] + "A", (String) testData[i][2] + "A", (Long) testData[i][3] + 2, (Long) testData[i][4] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -199,7 +199,7 @@ public class CorporationMedalsSyncTest extends SyncTestBase {
       CorporationMedal next = new CorporationMedal(
           (Integer) testData[i][0] + 2, (String) testData[i][1] + "A", (String) testData[i][2] + "A", (Long) testData[i][3] + 2, (Long) testData[i][4] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -207,7 +207,7 @@ public class CorporationMedalsSyncTest extends SyncTestBase {
     tracker.setCorpMedalsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMedalsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMedalsSync.syncCorporationMedals(testTime, syncAccount, syncUtil, mockServer);

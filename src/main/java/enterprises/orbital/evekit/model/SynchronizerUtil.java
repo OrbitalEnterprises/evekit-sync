@@ -230,8 +230,11 @@ public class SynchronizerUtil {
         log.fine("Processing " + els.size() + " updates");
         long start = OrbitalProperties.getCurrentTime();
         for (CachedData i : els) {
-          if (!handler.commit(time, tracker, container, accountKey, i))
-            return new IOException(context + " DataCommitter returned false while committing: " + i);
+          try {
+            handler.commit(time, tracker, container, accountKey, i);
+          } catch (IOException e) {
+            return e;
+          }
         }
         long end = OrbitalProperties.getCurrentTime();
         if (log.isLoggable(Level.FINE)) {
@@ -271,8 +274,13 @@ public class SynchronizerUtil {
         }
 
         // Update sync state
-        handler.updateStatus(tracker, requestStatus, statusDetail);
-        handler.updateExpiry(container, nextExpiry);
+        try {
+          handler.updateStatus(tracker, requestStatus, statusDetail);
+          handler.updateExpiry(container, nextExpiry);
+        } catch (IOException e) {
+          log.log(Level.SEVERE, context + " database error while updating status and expiry", e);
+          return new TrackTriple<A, C>(null, null, e);
+        }
 
         return new TrackTriple<A, C>(tracker, container, null);
       }

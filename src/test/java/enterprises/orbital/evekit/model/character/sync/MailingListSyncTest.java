@@ -133,7 +133,7 @@ public class MailingListSyncTest extends SyncTestBase {
       long listID = (Long) testData[i][1];
       MailingList next = new MailingList((String) testData[i][0] + "foo", listID);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -168,7 +168,7 @@ public class MailingListSyncTest extends SyncTestBase {
       long listID = (Long) testData[i][1];
       MailingList next = new MailingList((String) testData[i][0] + "foo", listID);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -176,7 +176,7 @@ public class MailingListSyncTest extends SyncTestBase {
     tracker.setMailingListsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailingListsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMailingListSync.syncMailingLists(testTime, syncAccount, syncUtil, mockServer);
@@ -211,7 +211,7 @@ public class MailingListSyncTest extends SyncTestBase {
       long listID = TestBase.getUniqueRandomLong();
       MailingList next = new MailingList(TestBase.getRandomText(50), listID);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

@@ -47,9 +47,9 @@ public class CharacterChatChannelsSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setChatChannelsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -64,7 +64,7 @@ public class CharacterChatChannelsSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     // Handle both chat channels and chat channel members
     if (item instanceof ChatChannel) {
       ChatChannel api = (ChatChannel) item;

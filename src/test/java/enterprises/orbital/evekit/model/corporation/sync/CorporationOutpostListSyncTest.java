@@ -229,7 +229,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
           (Double) testData[i][7] + 2, (Double) testData[i][8] + 2, (Long) testData[i][9] + 2, (Long) testData[i][10] + 2, (Long) testData[i][11] + 2,
           (Long) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       // Add outpost details. These should be deleted.
       int detailCount = 3 + TestBase.getRandomInt(5);
       totalDetailCount += detailCount;
@@ -237,7 +237,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
         OutpostServiceDetail dt = new OutpostServiceDetail(
             next.getStationID(), TestBase.getRandomText(20) + String.valueOf(j), 0, 0, BigDecimal.ZERO, BigDecimal.ZERO);
         dt.setup(syncAccount, testTime);
-        dt = CachedData.updateData(dt);
+        dt = CachedData.update(dt);
       }
     }
 
@@ -290,14 +290,14 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
           (Double) testData[i][7] + 2, (Double) testData[i][8] + 2, (Long) testData[i][9] + 2, (Long) testData[i][10] + 2, (Long) testData[i][11] + 2,
           (Long) testData[i][12] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       // Add outpost details. These should be deleted.
       int detailCount = 3 + TestBase.getRandomInt(5);
       for (int j = 0; j < detailCount; j++) {
         OutpostServiceDetail dt = new OutpostServiceDetail(
             next.getStationID(), TestBase.getRandomText(20) + String.valueOf(j), 0, 0, BigDecimal.ZERO, BigDecimal.ZERO);
         dt.setup(syncAccount, testTime);
-        dt = CachedData.updateData(dt);
+        dt = CachedData.update(dt);
       }
       totalDetail += detailCount;
     }
@@ -307,7 +307,7 @@ public class CorporationOutpostListSyncTest extends SyncTestBase {
     tracker.setOutpostListDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setOutpostListExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationOutpostListSync.syncOutpostList(testTime, syncAccount, syncUtil, mockServer);

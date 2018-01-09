@@ -531,7 +531,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     // Populate unretrieved mail messages
     for (int i = 0; i < testData.length; i++) {
       CharacterMailMessageBody msg = makeMailMessageBody(testTime, testData[i], false, "");
-      msg = CachedData.updateData(msg);
+      msg = CachedData.update(msg);
     }
 
     // This sync requires character mail messages to already be processed.
@@ -539,7 +539,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     tracker.setMailMessagesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailMessagesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMailMessageBodiesSync.syncMailMessageBodies(testTime, syncAccount, syncUtil, mockServer);
@@ -568,7 +568,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     // Populate mail messages that have already been retrieved
     for (int i = 0; i < testData.length; i++) {
       CharacterMailMessageBody msg = makeMailMessageBody(testTime, testData[i], true, "foo");
-      msg = CachedData.updateData(msg);
+      msg = CachedData.update(msg);
     }
 
     // This sync requires character mail messages to already be processed.
@@ -576,7 +576,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     tracker.setMailMessagesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailMessagesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMailMessageBodiesSync.syncMailMessageBodies(testTime, syncAccount, syncUtil, mockServer);
@@ -616,7 +616,7 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     // Populate unretrieved mail messages
     for (int i = 0; i < testData.length; i++) {
       CharacterMailMessageBody msg = makeMailMessageBody(testTime, testData[i], false, "foo");
-      msg = CachedData.updateData(msg);
+      msg = CachedData.update(msg);
     }
 
     // This sync requires character mail messages to already be processed.
@@ -624,14 +624,14 @@ public class CharacterMailMessageBodiesSyncTest extends SyncTestBase {
     tracker.setMailMessagesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailMessagesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Set the tracker as already updated and populate the container
     tracker.setMailBodiesStatus(SyncState.UPDATED);
     tracker.setMailBodiesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailBodiesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMailMessageBodiesSync.syncMailMessageBodies(testTime, syncAccount, syncUtil, mockServer);

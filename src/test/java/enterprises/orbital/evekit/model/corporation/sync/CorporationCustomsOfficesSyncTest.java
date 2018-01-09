@@ -232,7 +232,7 @@ public class CorporationCustomsOfficesSyncTest extends SyncTestBase {
           (Boolean) testData[i][5], (Double) testData[i][6] + 2.0, (Double) testData[i][7] + 2.0, (Double) testData[i][8] + 2.0, (Double) testData[i][9] + 2.0,
           (Double) testData[i][10] + 2.0, (Double) testData[i][11] + 2.0, (Double) testData[i][12] + 2.0, (Double) testData[i][13] + 2.0);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -282,7 +282,7 @@ public class CorporationCustomsOfficesSyncTest extends SyncTestBase {
           (Boolean) testData[i][5], (Double) testData[i][6] + 2.0, (Double) testData[i][7] + 2.0, (Double) testData[i][8] + 2.0, (Double) testData[i][9] + 2.0,
           (Double) testData[i][10] + 2.0, (Double) testData[i][11] + 2.0, (Double) testData[i][12] + 2.0, (Double) testData[i][13] + 2.0);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -290,7 +290,7 @@ public class CorporationCustomsOfficesSyncTest extends SyncTestBase {
     tracker.setCustomsOfficeDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setCustomsOfficeExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationCustomsOfficesSync.syncCustomsOffices(testTime, syncAccount, syncUtil, mockServer);

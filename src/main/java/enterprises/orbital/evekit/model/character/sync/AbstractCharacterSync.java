@@ -49,8 +49,8 @@ public abstract class AbstractCharacterSync implements SynchronizationHandler<Ca
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        final CachedData item) {
-    return CachedData.updateData(item) != null;
+                        final CachedData item) throws IOException {
+    return CachedData.update(item) != null;
   }
 
   protected abstract Object getServerData(

@@ -49,9 +49,9 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setStarbaseDetailExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -66,7 +66,7 @@ public class CorporationStarbaseDetailSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     if (item instanceof StarbaseDetail) {
       StarbaseDetail api = (StarbaseDetail) item;
 

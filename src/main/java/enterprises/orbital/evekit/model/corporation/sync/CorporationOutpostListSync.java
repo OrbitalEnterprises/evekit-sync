@@ -38,9 +38,9 @@ public class CorporationOutpostListSync extends AbstractCorporationSync {
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(Corporation container, long expiry) throws IOException {
     container.setOutpostListExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -49,7 +49,7 @@ public class CorporationOutpostListSync extends AbstractCorporationSync {
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) throws IOException {
     assert item instanceof Outpost;
 
     Outpost api = (Outpost) item;

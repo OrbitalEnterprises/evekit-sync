@@ -502,7 +502,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     // Populate unretrieved notifications
     for (int i = 0; i < testData.length; i++) {
       CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "", false);
-      note = CachedData.updateData(note);
+      note = CachedData.update(note);
     }
 
     // This sync requires character notifications to already be processed.
@@ -510,7 +510,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     tracker.setNotificationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
@@ -539,7 +539,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     // Populate notifications that have already been retrieved
     for (int i = 0; i < testData.length; i++) {
       CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "foo", true);
-      note = CachedData.updateData(note);
+      note = CachedData.update(note);
     }
 
     // This sync requires character notifications to already be processed.
@@ -547,7 +547,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     tracker.setNotificationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);
@@ -587,7 +587,7 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     // Populate unretrieved notifications
     for (int i = 0; i < testData.length; i++) {
       CharacterNotificationBody note = makeNotificationBodyObject(testTime, testData[i], "foo", false);
-      note = CachedData.updateData(note);
+      note = CachedData.update(note);
     }
 
     // This sync requires character notifications to already be processed.
@@ -595,14 +595,14 @@ public class CharacterNotificationTextSyncTest extends SyncTestBase {
     tracker.setNotificationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Set the tracker as already updated and populate the container
     tracker.setNotificationTextsStatus(SyncState.UPDATED);
     tracker.setNotificationTextsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setNotificationTextsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterNotificationTextSync.syncNotificationTexts(testTime, syncAccount, syncUtil, mockServer);

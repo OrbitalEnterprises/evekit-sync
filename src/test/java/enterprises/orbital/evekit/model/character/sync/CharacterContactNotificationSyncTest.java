@@ -157,7 +157,7 @@ public class CharacterContactNotificationSyncTest extends SyncTestBase {
           (Long) testData[i][0], (Long) testData[i][1], (String) testData[i][2], DateFormat.getDateInstance().parse((String) testData[i][3]).getTime(),
           (String) testData[i][4]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -196,7 +196,7 @@ public class CharacterContactNotificationSyncTest extends SyncTestBase {
           (Long) testData[i][0], (Long) testData[i][1], (String) testData[i][2], DateFormat.getDateInstance().parse((String) testData[i][3]).getTime(),
           (String) testData[i][4]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -204,7 +204,7 @@ public class CharacterContactNotificationSyncTest extends SyncTestBase {
     tracker.setContactNotificationsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setContactNotificationsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterContactNotificationSync.syncCharacterContactNotifications(testTime, syncAccount, syncUtil, mockServer);

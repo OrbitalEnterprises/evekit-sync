@@ -296,7 +296,7 @@ public class CorporationContractsSyncTest extends SyncTestBase {
     // Populate existing contracts
     for (int i = 0; i < testData.length; i++) {
       Contract next = makeContract(testTime, testData[i], "foo");
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -328,7 +328,7 @@ public class CorporationContractsSyncTest extends SyncTestBase {
     // Populate existing contacts
     for (int i = 0; i < testData.length; i++) {
       Contract next = makeContract(testTime, testData[i], "foo");
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -336,7 +336,7 @@ public class CorporationContractsSyncTest extends SyncTestBase {
     tracker.setContractsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractsSync.syncCorporationContracts(testTime, syncAccount, syncUtil, mockServer);

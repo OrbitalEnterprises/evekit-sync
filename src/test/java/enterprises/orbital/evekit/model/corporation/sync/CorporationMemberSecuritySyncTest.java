@@ -8,7 +8,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -202,6 +204,57 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_GRANTABLEROLES")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_GRANTABLEROLESATBASE")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_GRANTABLEROLESATHQ")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_GRANTABLEROLESATOTHER")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_ROLES")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_ROLESATBASE")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_ROLESATHQ")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_ROLESATOTHER")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITY_TITLES")
+                                                                            .executeUpdate());
+    super.teardown();
+  }
+
   public void setupOkMock() throws Exception {
     mockServer = EasyMock.createMock(ICorporationAPI.class);
     Collection<IMemberSecurity> notes = new ArrayList<IMemberSecurity>();
@@ -285,7 +338,7 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
       stored.add(next.getRoleID() + delta);
       SecurityRole newRole = new SecurityRole(next.getRoleID() + delta, next.getRoleName());
       newRole.setup(owner, time);
-      newRole = CachedData.updateData(newRole);
+      newRole = CachedData.update(newRole);
     }
   }
 
@@ -303,7 +356,7 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
       stored.add(next.getTitleID() + delta);
       SecurityTitle newTitle = new SecurityTitle(next.getTitleID() + delta, next.getTitleName());
       newTitle.setup(owner, time);
-      newTitle = CachedData.updateData(newTitle);
+      newTitle = CachedData.update(newTitle);
     }
   }
 
@@ -382,7 +435,7 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 9), next.getRolesAtOther(), 5);
       addTitles(testTime, syncAccount, genTitles(testData[i]), next.getTitles(), 5);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -526,7 +579,7 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 9), next.getRolesAtOther(), 5);
       addTitles(testTime, syncAccount, genTitles(testData[i]), next.getTitles(), 5);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -534,7 +587,7 @@ public class CorporationMemberSecuritySyncTest extends SyncTestBase {
     tracker.setMemberSecurityDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMemberSecurityExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMemberSecuritySync.syncCorporationMemberSecurity(testTime, syncAccount, syncUtil, mockServer);

@@ -49,8 +49,8 @@ public abstract class AbstractCorporationSync implements SynchronizationHandler<
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        final CachedData item) {
-    return CachedData.updateData(item) != null;
+                        final CachedData item) throws IOException {
+    return CachedData.update(item) != null;
   }
 
   protected abstract Object getServerData(

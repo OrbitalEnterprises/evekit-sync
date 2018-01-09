@@ -167,7 +167,7 @@ public class CorporationShareholdersSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Boolean) testData[i][1], (Long) testData[i][2] + 2, (String) testData[i][3] + "A", (String) testData[i][4] + "A",
           (Integer) testData[i][5] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -209,7 +209,7 @@ public class CorporationShareholdersSyncTest extends SyncTestBase {
           (Long) testData[i][0] + 2, (Boolean) testData[i][1], (Long) testData[i][2] + 2, (String) testData[i][3] + "A", (String) testData[i][4] + "A",
           (Integer) testData[i][5] + 2);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container.
@@ -217,7 +217,7 @@ public class CorporationShareholdersSyncTest extends SyncTestBase {
     tracker.setShareholderDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setShareholdersExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync.
     SyncStatus syncOutcome = CorporationShareholdersSync.syncShareholders(testTime, syncAccount, syncUtil, mockServer);

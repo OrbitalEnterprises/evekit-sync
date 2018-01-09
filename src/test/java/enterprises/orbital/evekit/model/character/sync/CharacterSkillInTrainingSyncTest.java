@@ -159,7 +159,7 @@ public class CharacterSkillInTrainingSyncTest extends SyncTestBase {
         (Boolean) testData[0][0], (Long) testData[0][1], (Long) testData[0][2], (Long) testData[0][3], (Integer) testData[0][4], (Integer) testData[0][5],
         (Integer) testData[0][6], (Integer) testData[0][7]);
     skill.setup(syncAccount, testTime);
-    skill = CachedData.updateData(skill);
+    skill = CachedData.update(skill);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSkillInTrainingSync.syncSkillInTraining(testTime, syncAccount, syncUtil, mockServer);
@@ -187,14 +187,14 @@ public class CharacterSkillInTrainingSyncTest extends SyncTestBase {
         (Boolean) testData[0][0], (Long) testData[0][1], (Long) testData[0][2], (Long) testData[0][3], (Integer) testData[0][4], (Integer) testData[0][5],
         (Integer) testData[0][6], (Integer) testData[0][7]);
     skill.setup(syncAccount, testTime);
-    skill = CachedData.updateData(skill);
+    skill = CachedData.update(skill);
 
     // Set the tracker as already updated and populate the container
     tracker.setSkillInTrainingStatus(SyncState.UPDATED);
     tracker.setSkillInTrainingDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setSkillInTrainingExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSkillInTrainingSync.syncSkillInTraining(testTime, syncAccount, syncUtil, mockServer);

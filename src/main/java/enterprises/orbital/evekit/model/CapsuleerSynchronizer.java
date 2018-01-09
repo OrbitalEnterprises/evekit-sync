@@ -12,8 +12,6 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
 import enterprises.orbital.evekit.model.character.Capsuleer;
-import enterprises.orbital.evekit.model.character.sync.CharacterAccountBalanceSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterAccountStatusSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterAssetsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterBlueprintsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterBookmarksSync;
@@ -37,7 +35,6 @@ import enterprises.orbital.evekit.model.character.sync.CharacterMedalSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterNotificationSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterNotificationTextSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterPlanetaryColoniesSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterResearchAgentSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterSheetSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterSkillInQueueSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterSkillInTrainingSync;
@@ -157,58 +154,58 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
 
   // Initialize support features
   static {
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ACCOUNTSTATUS, new CharStateHandler() {
-
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterAccountStatusSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterAccountStatusSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterAccountStatusSync.syncAccountStatus(syncTime, syncAccount, syncUtil, charRequest, acctRequest);
-      }
-
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ACCOUNTBALANCE, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterAccountBalanceSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterAccountBalanceSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterAccountBalanceSync.syncAccountBalance(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ACCOUNTSTATUS, new CharStateHandler() {
+//
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterAccountStatusSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterAccountStatusSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterAccountStatusSync.syncAccountStatus(syncTime, syncAccount, syncUtil, charRequest, acctRequest);
+//      }
+//
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ACCOUNTBALANCE, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterAccountBalanceSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterAccountBalanceSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterAccountBalanceSync.syncAccountBalance(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_SKILLINTRAINING, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -884,31 +881,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterPlanetaryColoniesSync.syncPlanetaryColonies(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_RESEARCH, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterResearchAgentSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterResearchAgentSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterResearchAgentSync.syncResearchAgents(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_RESEARCH, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterResearchAgentSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterResearchAgentSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterResearchAgentSync.syncResearchAgents(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_SKILLQUEUE, new CharStateHandler() {
       @Override
       public SyncStatus exclude(

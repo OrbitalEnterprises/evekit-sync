@@ -36,9 +36,9 @@ public class CharacterNotificationTextSync extends AbstractCharacterSync {
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(Capsuleer container, long expiry) throws IOException {
     container.setNotificationTextsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -53,7 +53,7 @@ public class CharacterNotificationTextSync extends AbstractCharacterSync {
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) throws IOException {
     assert item instanceof CharacterNotificationBody;
 
     CharacterNotificationBody api = (CharacterNotificationBody) item;

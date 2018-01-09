@@ -53,9 +53,9 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setPlanetaryColoniesExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -70,7 +70,7 @@ public class CharacterPlanetaryColoniesSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     // Handle the four types of planetary info
     if (item instanceof PlanetaryColony) {
       PlanetaryColony api = (PlanetaryColony) item;

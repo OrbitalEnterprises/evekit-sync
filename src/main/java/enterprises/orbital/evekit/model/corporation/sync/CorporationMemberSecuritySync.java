@@ -41,9 +41,9 @@ public class CorporationMemberSecuritySync extends AbstractCorporationSync {
   }
 
   @Override
-  public void updateExpiry(Corporation container, long expiry) {
+  public void updateExpiry(Corporation container, long expiry) throws IOException {
     container.setMemberSecurityExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -68,7 +68,7 @@ public class CorporationMemberSecuritySync extends AbstractCorporationSync {
   }
 
   @Override
-  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(long time, CorporationSyncTracker tracker, Corporation container, SynchronizedEveAccount accountKey, CachedData item) throws IOException {
     // Item is one of MemberSecurity, SecurityRole or SecurityTitle
     if (item instanceof MemberSecurity) {
       MemberSecurity api = (MemberSecurity) item;

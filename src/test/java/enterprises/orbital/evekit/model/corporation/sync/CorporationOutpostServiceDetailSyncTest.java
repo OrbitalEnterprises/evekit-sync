@@ -261,7 +261,7 @@ public class CorporationOutpostServiceDetailSyncTest extends SyncTestBase {
             (Long) testData[i][j][0] + 2, (String) testData[i][j][1] + "A", (Long) testData[i][j][2] + 2, (Double) testData[i][j][3] + 2d,
             ((BigDecimal) testData[i][j][4]).add(new BigDecimal(2)), ((BigDecimal) testData[i][j][5]).add(new BigDecimal(2)));
         next.setup(syncAccount, testTime);
-        next = CachedData.updateData(next);
+        next = CachedData.update(next);
       }
     }
 
@@ -304,7 +304,7 @@ public class CorporationOutpostServiceDetailSyncTest extends SyncTestBase {
             (Long) testData[i][j][0] + 2, (String) testData[i][j][1] + "A", (Long) testData[i][j][2] + 2, (Double) testData[i][j][3] + 2d,
             ((BigDecimal) testData[i][j][4]).add(new BigDecimal(2)), ((BigDecimal) testData[i][j][5]).add(new BigDecimal(2)));
         next.setup(syncAccount, testTime);
-        next = CachedData.updateData(next);
+        next = CachedData.update(next);
       }
     }
 
@@ -313,7 +313,7 @@ public class CorporationOutpostServiceDetailSyncTest extends SyncTestBase {
     tracker.setOutpostDetailDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setOutpostServiceDetailExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationOutpostServiceDetailSync.syncOutpostServiceDetail(testTime, syncAccount, syncUtil, mockServer);

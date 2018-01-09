@@ -49,9 +49,9 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setKilllogExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -66,7 +66,7 @@ public class CorporationKillLogSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     // Handle the four types of kill info
     if (item instanceof Kill) {
       Kill api = (Kill) item;

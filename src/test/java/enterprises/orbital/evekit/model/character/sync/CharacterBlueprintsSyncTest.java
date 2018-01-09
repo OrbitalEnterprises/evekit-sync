@@ -6,8 +6,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
 import org.hsqldb.rights.User;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -78,6 +80,17 @@ public class CharacterBlueprintsSyncTest extends SyncTestBase {
 
     // Prepare the synchronizer util
     syncUtil = new SynchronizerUtil();
+  }
+
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createQuery("DELETE FROM Blueprint")
+                                                                            .executeUpdate());
+    super.teardown();
   }
 
   public void setupOkMock() throws Exception {
@@ -185,7 +198,7 @@ public class CharacterBlueprintsSyncTest extends SyncTestBase {
           itemID, (Long) testData[i][1] + 7, (Integer) testData[i][2] + 7, (String) testData[i][3] + "foo", (Integer) testData[i][4] + 7,
           (Integer) testData[i][5] + 7, (Integer) testData[i][6] + 7, (Integer) testData[i][7] + 7, (Integer) testData[i][8] + 7);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -229,7 +242,7 @@ public class CharacterBlueprintsSyncTest extends SyncTestBase {
           itemID, (Long) testData[i][1] + 7, (Integer) testData[i][2] + 7, (String) testData[i][3] + "foo", (Integer) testData[i][4] + 7,
           (Integer) testData[i][5] + 7, (Integer) testData[i][6] + 7, (Integer) testData[i][7] + 7, (Integer) testData[i][8] + 7);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -237,7 +250,7 @@ public class CharacterBlueprintsSyncTest extends SyncTestBase {
     tracker.setBlueprintsDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setBlueprintsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterBlueprintsSync.syncCharacterBlueprints(testTime, syncAccount, syncUtil, mockServer);
@@ -281,7 +294,7 @@ public class CharacterBlueprintsSyncTest extends SyncTestBase {
           itemID, TestBase.getRandomLong(), TestBase.getRandomInt(), TestBase.getRandomText(50), TestBase.getRandomInt(), TestBase.getRandomInt(),
           TestBase.getRandomInt(), TestBase.getRandomInt(), TestBase.getRandomInt());
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

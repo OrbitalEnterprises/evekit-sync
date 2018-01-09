@@ -8,7 +8,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,6 +154,22 @@ public class CorporationMemberSecurityLogSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITYLOG_NEWROLES")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from MEMBERSECURITYLOG_OLDROLES")
+                                                                            .executeUpdate());
+    super.teardown();
+  }
+
   public void setupOkMock() throws Exception {
     mockServer = EasyMock.createMock(ICorporationAPI.class);
     Collection<IMemberSecurityLog> logs = new ArrayList<IMemberSecurityLog>();
@@ -221,7 +239,7 @@ public class CorporationMemberSecurityLogSyncTest extends SyncTestBase {
       if (SecurityRole.get(owner, time, next.getRoleID()) == null) {
         SecurityRole newRole = new SecurityRole(next.getRoleID() + delta, next.getRoleName());
         newRole.setup(owner, time);
-        newRole = CachedData.updateData(newRole);
+        newRole = CachedData.update(newRole);
       }
     }
   }
@@ -284,7 +302,7 @@ public class CorporationMemberSecurityLogSyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 6), next.getOldRoles(), 0);
       addRoles(testTime, syncAccount, genRoles(testData[i], 7), next.getNewRoles(), 0);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -338,7 +356,7 @@ public class CorporationMemberSecurityLogSyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 6), next.getOldRoles(), 5);
       addRoles(testTime, syncAccount, genRoles(testData[i], 7), next.getNewRoles(), 5);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -346,7 +364,7 @@ public class CorporationMemberSecurityLogSyncTest extends SyncTestBase {
     tracker.setMemberSecurityLogDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMemberSecurityLogExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMemberSecurityLogSync.syncCorporationMemberSecurityLog(testTime, syncAccount, syncUtil, mockServer);

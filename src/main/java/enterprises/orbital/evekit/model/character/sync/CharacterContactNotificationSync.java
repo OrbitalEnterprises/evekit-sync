@@ -47,9 +47,9 @@ public class CharacterContactNotificationSync extends AbstractCharacterSync {
   @Override
   public void updateExpiry(
                            Capsuleer container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setContactNotificationsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -58,7 +58,7 @@ public class CharacterContactNotificationSync extends AbstractCharacterSync {
                         CapsuleerSyncTracker tracker,
                         Capsuleer container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof CharacterContactNotification;
 
     CharacterContactNotification api = (CharacterContactNotification) item;

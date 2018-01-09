@@ -8,7 +8,9 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -161,6 +163,52 @@ public class CorporationTitlesSyncTest extends SyncTestBase {
     syncUtil = new SynchronizerUtil();
   }
 
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_GRANTABLEROLES")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_GRANTABLEROLESATBASE")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_GRANTABLEROLESATHQ")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_GRANTABLEROLESATOTHER")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_ROLES")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_ROLESATBASE")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_ROLESATHQ")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CORPORATIONTITLE_ROLESATOTHER")
+                                                                            .executeUpdate());
+    super.teardown();
+  }
+
   public void setupOkMock() throws Exception {
     mockServer = EasyMock.createMock(ICorporationAPI.class);
     Collection<ITitle> titles = new ArrayList<ITitle>();
@@ -238,7 +286,7 @@ public class CorporationTitlesSyncTest extends SyncTestBase {
       stored.add(next.getRoleID() + delta);
       Role newRole = new Role(next.getRoleID() + delta, next.getRoleDescription(), next.getRoleName());
       newRole.setup(owner, time);
-      newRole = CachedData.updateData(newRole);
+      newRole = CachedData.update(newRole);
     }
   }
 
@@ -306,7 +354,7 @@ public class CorporationTitlesSyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 8), next.getRolesAtHQ(), 5);
       addRoles(testTime, syncAccount, genRoles(testData[i], 9), next.getRolesAtOther(), 5);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -413,7 +461,7 @@ public class CorporationTitlesSyncTest extends SyncTestBase {
       addRoles(testTime, syncAccount, genRoles(testData[i], 8), next.getRolesAtHQ(), 5);
       addRoles(testTime, syncAccount, genRoles(testData[i], 9), next.getRolesAtOther(), 5);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -421,7 +469,7 @@ public class CorporationTitlesSyncTest extends SyncTestBase {
     tracker.setCorpTitlesDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setTitlesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationTitlesSync.syncCorporationTitles(testTime, syncAccount, syncUtil, mockServer);

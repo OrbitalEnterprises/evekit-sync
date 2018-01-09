@@ -169,7 +169,7 @@ public class SkillInQueueSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], (Integer) testData[i][2], queuePosition, (Integer) testData[i][4], (Long) testData[i][5] + 27L,
           (Integer) testData[i][6]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -210,7 +210,7 @@ public class SkillInQueueSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], (Integer) testData[i][2], queuePosition, (Integer) testData[i][4], (Long) testData[i][5] + 27L,
           (Integer) testData[i][6]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -218,7 +218,7 @@ public class SkillInQueueSyncTest extends SyncTestBase {
     tracker.setSkillQueueDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setSkillQueueExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSkillInQueueSync.syncSkillQueue(testTime, syncAccount, syncUtil, mockServer);
@@ -259,7 +259,7 @@ public class SkillInQueueSyncTest extends SyncTestBase {
           TestBase.getRandomInt(), TestBase.getRandomLong(), TestBase.getRandomInt(5), queuePosition, TestBase.getRandomInt(), TestBase.getRandomLong(),
           TestBase.getRandomInt());
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

@@ -588,21 +588,21 @@ public class PartialCharacterSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate character sheet, implants, jump clones, jump clone implants, jump and clone
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
-      CachedData.updateData(makeImplantObject(testTime, implantData[i]));
+      CachedData.update(makeImplantObject(testTime, implantData[i]));
     }
     Object[][] cloneData = (Object[][]) testData[0][37];
     for (int i = 0; i < cloneData.length; i++) {
-      CachedData.updateData(makeJumpCloneObject(testTime, cloneData[i]));
+      CachedData.update(makeJumpCloneObject(testTime, cloneData[i]));
     }
     Object[][] cloneImplantData = (Object[][]) testData[0][38];
     for (int i = 0; i < cloneImplantData.length; i++) {
-      CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
+      CachedData.update(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetJumpObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Perform the sync
     SyncStatus syncOutcome = PartialCharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
@@ -646,28 +646,28 @@ public class PartialCharacterSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate existing character sheet
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
-      CachedData.updateData(makeImplantObject(testTime, implantData[i]));
+      CachedData.update(makeImplantObject(testTime, implantData[i]));
     }
     Object[][] cloneData = (Object[][]) testData[0][37];
     for (int i = 0; i < cloneData.length; i++) {
-      CachedData.updateData(makeJumpCloneObject(testTime, cloneData[i]));
+      CachedData.update(makeJumpCloneObject(testTime, cloneData[i]));
     }
     Object[][] cloneImplantData = (Object[][]) testData[0][38];
     for (int i = 0; i < cloneImplantData.length; i++) {
-      CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
+      CachedData.update(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetJumpObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Set the tracker as already updated and populate the container
     tracker.setPartialCharacterSheetStatus(SyncState.UPDATED);
     tracker.setPartialCharacterSheetDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setPartialCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = PartialCharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);

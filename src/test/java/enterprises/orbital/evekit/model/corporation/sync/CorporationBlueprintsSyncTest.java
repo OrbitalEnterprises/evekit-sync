@@ -185,7 +185,7 @@ public class CorporationBlueprintsSyncTest extends SyncTestBase {
           itemID, (Long) testData[i][1] + 7, (Integer) testData[i][2] + 7, (String) testData[i][3] + "foo", (Integer) testData[i][4] + 7,
           (Integer) testData[i][5] + 7, (Integer) testData[i][6] + 7, (Integer) testData[i][7] + 7, (Integer) testData[i][8] + 7);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -229,7 +229,7 @@ public class CorporationBlueprintsSyncTest extends SyncTestBase {
           itemID, (Long) testData[i][1] + 7, (Integer) testData[i][2] + 7, (String) testData[i][3] + "foo", (Integer) testData[i][4] + 7,
           (Integer) testData[i][5] + 7, (Integer) testData[i][6] + 7, (Integer) testData[i][7] + 7, (Integer) testData[i][8] + 7);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -237,7 +237,7 @@ public class CorporationBlueprintsSyncTest extends SyncTestBase {
     tracker.setBlueprintsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setBlueprintsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationBlueprintsSync.syncCorporationBlueprints(testTime, syncAccount, syncUtil, mockServer);
@@ -281,7 +281,7 @@ public class CorporationBlueprintsSyncTest extends SyncTestBase {
           itemID, TestBase.getRandomLong(), TestBase.getRandomInt(), TestBase.getRandomText(50), TestBase.getRandomInt(), TestBase.getRandomInt(),
           TestBase.getRandomInt(), TestBase.getRandomInt(), TestBase.getRandomInt());
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

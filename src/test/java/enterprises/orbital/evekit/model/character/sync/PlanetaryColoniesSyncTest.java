@@ -662,24 +662,24 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
       // Make colony
       long pid = (Long) testData[i][0];
       PlanetaryColony colony = makePlanetaryColonyObject(testTime, testData[i], 25, "foo");
-      colony = CachedData.updateData(colony);
+      colony = CachedData.update(colony);
       // Make pins
       Object[][] subData = (Object[][]) testData[i][11];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryPin pin = makePlanetaryPinObject(testTime, subData[j], pid + 25, 0, "foo");
-        pin = CachedData.updateData(pin);
+        pin = CachedData.update(pin);
       }
       // Make links
       subData = (Object[][]) testData[i][12];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryLink link = makePlanetaryLinkObject(testTime, subData[j], pid + 25, 0, "foo");
-        link = CachedData.updateData(link);
+        link = CachedData.update(link);
       }
       // Make routes
       subData = (Object[][]) testData[i][13];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryRoute route = makePlanetaryRouteObject(testTime, subData[j], pid + 25, 0, "foo");
-        route = CachedData.updateData(route);
+        route = CachedData.update(route);
       }
     }
 
@@ -713,24 +713,24 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
       // Make colony
       long pid = (Long) testData[i][0];
       PlanetaryColony colony = makePlanetaryColonyObject(testTime, testData[i], 25, "foo");
-      colony = CachedData.updateData(colony);
+      colony = CachedData.update(colony);
       // Make pins
       Object[][] subData = (Object[][]) testData[i][11];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryPin pin = makePlanetaryPinObject(testTime, subData[j], pid + 25, 0, "foo");
-        pin = CachedData.updateData(pin);
+        pin = CachedData.update(pin);
       }
       // Make links
       subData = (Object[][]) testData[i][12];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryLink link = makePlanetaryLinkObject(testTime, subData[j], pid + 25, 0, "foo");
-        link = CachedData.updateData(link);
+        link = CachedData.update(link);
       }
       // Make routes
       subData = (Object[][]) testData[i][13];
       for (int j = 0; j < subData.length; j++) {
         PlanetaryRoute route = makePlanetaryRouteObject(testTime, subData[j], pid + 25, 0, "foo");
-        route = CachedData.updateData(route);
+        route = CachedData.update(route);
       }
     }
 
@@ -739,7 +739,7 @@ public class PlanetaryColoniesSyncTest extends SyncTestBase {
     tracker.setPlanetaryColoniesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setPlanetaryColoniesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterPlanetaryColoniesSync.syncPlanetaryColonies(testTime, syncAccount, syncUtil, mockServer);

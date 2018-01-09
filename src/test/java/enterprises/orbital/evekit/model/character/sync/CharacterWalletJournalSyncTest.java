@@ -405,7 +405,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
 
     // Populate existing wallet entries which should not be modified.
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeJournalObject(testTime, testData[i], "foo"));
+      CachedData.update(makeJournalObject(testTime, testData[i], "foo"));
     }
 
     // Perform the sync
@@ -436,7 +436,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
 
     // Populate existing wallet entries which should not be modified.
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeJournalObject(testTime, testData[i], "foo"));
+      CachedData.update(makeJournalObject(testTime, testData[i], "foo"));
     }
 
     // Set the tracker as already updated and populate the container
@@ -444,7 +444,7 @@ public class CharacterWalletJournalSyncTest extends SyncTestBase {
     tracker.setWalletJournalDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setWalletJournalExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterWalletJournalSync.syncCharacterWalletJournal(testTime, syncAccount, syncUtil, mockServer);

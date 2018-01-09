@@ -125,10 +125,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     // Populate two calendar events
     UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
     event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
 
     // This sync requires character sheet and upcoming calendar events to already be processed.
     tracker.setUpcomingCalendarEventsStatus(SyncState.UPDATED);
@@ -138,7 +138,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setUpcomingCalendarEventsExpiry(prevDate);
     container.setCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(testTime, syncAccount, syncUtil, mockServer);
@@ -169,16 +169,16 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     // Populate two calendar events
     UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
     event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
 
     // Populate attendees
     for (int i = 0; i < testData.length; i++) {
       CalendarEventAttendee next = new CalendarEventAttendee((Long) testData[i][0], (Long) testData[i][1], (String) testData[i][2], (String) testData[i][3]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // This sync requires character sheet and upcoming calendar events to already be processed.
@@ -189,7 +189,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setUpcomingCalendarEventsExpiry(prevDate);
     container.setCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(testTime, syncAccount, syncUtil, mockServer);
@@ -233,10 +233,10 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     // Populate two calendar events
     UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
     event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
 
     // This sync requires character sheet and upcoming calendar events to already be processed.
     tracker.setUpcomingCalendarEventsStatus(SyncState.UPDATED);
@@ -246,14 +246,14 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setUpcomingCalendarEventsExpiry(prevDate);
     container.setCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Set the tracker as already updated and populate the container
     tracker.setCalendarEventAttendeesStatus(SyncState.UPDATED);
     tracker.setCalendarEventAttendeesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setCalendarEventAttendeesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(testTime, syncAccount, syncUtil, mockServer);
@@ -281,18 +281,18 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     // Populate two calendar events
     UpcomingCalendarEvent event = new UpcomingCalendarEvent(0, 0, (Long) testData[0][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
     event = new UpcomingCalendarEvent(0, 0, (Long) testData[2][0], "", "", syncAccount.getEveCharacterID(), "", "", true, 0);
     event.setup(syncAccount, testTime);
-    event = CachedData.updateData(event);
+    event = CachedData.update(event);
 
     // Populate attendees, these should be deleted
     CalendarEventAttendee next = new CalendarEventAttendee((Long) testData[0][0], 5678L, "del char one", "del response one");
     next.setup(syncAccount, testTime);
-    next = CachedData.updateData(next);
+    next = CachedData.update(next);
     next = new CalendarEventAttendee((Long) testData[2][0], 567822L, "del char two", "del response two");
     next.setup(syncAccount, testTime);
-    next = CachedData.updateData(next);
+    next = CachedData.update(next);
 
     // This sync requires character sheet and upcoming calendar events to already be processed.
     tracker.setUpcomingCalendarEventsStatus(SyncState.UPDATED);
@@ -302,7 +302,7 @@ public class CharacterCalendarEventAttendeeSyncTest extends SyncTestBase {
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setUpcomingCalendarEventsExpiry(prevDate);
     container.setCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(testTime, syncAccount, syncUtil, mockServer);

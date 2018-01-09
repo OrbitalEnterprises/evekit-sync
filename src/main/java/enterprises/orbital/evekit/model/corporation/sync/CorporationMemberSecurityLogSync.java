@@ -46,9 +46,9 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setMemberSecurityLogExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -63,7 +63,7 @@ public class CorporationMemberSecurityLogSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     // Item is one of MemberSecurityLog or SecurityRole
     if (item instanceof MemberSecurityLog) {
       MemberSecurityLog api = (MemberSecurityLog) item;

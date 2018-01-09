@@ -797,26 +797,26 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate character sheet, skills, certificates, implants, jump clones, jump clone implants, balance, jump and clone
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] skillData = (Object[][]) testData[0][17];
     for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
+      CachedData.update(makeSkillObject(testTime, skillData[i]));
     }
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
-      CachedData.updateData(makeImplantObject(testTime, implantData[i]));
+      CachedData.update(makeImplantObject(testTime, implantData[i]));
     }
     Object[][] cloneData = (Object[][]) testData[0][37];
     for (int i = 0; i < cloneData.length; i++) {
-      CachedData.updateData(makeJumpCloneObject(testTime, cloneData[i]));
+      CachedData.update(makeJumpCloneObject(testTime, cloneData[i]));
     }
     Object[][] cloneImplantData = (Object[][]) testData[0][38];
     for (int i = 0; i < cloneImplantData.length; i++) {
-      CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
+      CachedData.update(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetBalanceObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetBalanceObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetJumpObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);
@@ -866,33 +866,33 @@ public class CharacterSheetSyncTest extends SyncTestBase {
     long testTime = 1234L;
 
     // Populate existing character sheet
-    CachedData.updateData(makeCharacterSheetObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetObject(testTime, testData[0]));
     Object[][] skillData = (Object[][]) testData[0][17];
     for (int i = 0; i < skillData.length; i++) {
-      CachedData.updateData(makeSkillObject(testTime, skillData[i]));
+      CachedData.update(makeSkillObject(testTime, skillData[i]));
     }
     Object[][] implantData = (Object[][]) testData[0][36];
     for (int i = 0; i < implantData.length; i++) {
-      CachedData.updateData(makeImplantObject(testTime, implantData[i]));
+      CachedData.update(makeImplantObject(testTime, implantData[i]));
     }
     Object[][] cloneData = (Object[][]) testData[0][37];
     for (int i = 0; i < cloneData.length; i++) {
-      CachedData.updateData(makeJumpCloneObject(testTime, cloneData[i]));
+      CachedData.update(makeJumpCloneObject(testTime, cloneData[i]));
     }
     Object[][] cloneImplantData = (Object[][]) testData[0][38];
     for (int i = 0; i < cloneImplantData.length; i++) {
-      CachedData.updateData(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
+      CachedData.update(makeJumpCloneImplantObject(testTime, cloneImplantData[i]));
     }
-    CachedData.updateData(makeCharacterSheetBalanceObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetJumpObject(testTime, testData[0]));
-    CachedData.updateData(makeCharacterSheetCloneObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetBalanceObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetJumpObject(testTime, testData[0]));
+    CachedData.update(makeCharacterSheetCloneObject(testTime, testData[0]));
 
     // Set the tracker as already updated and populate the container
     tracker.setCharacterSheetStatus(SyncState.UPDATED);
     tracker.setCharacterSheetDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setCharacterSheetExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterSheetSync.syncCharacterSheet(testTime, syncAccount, syncUtil, mockServer);

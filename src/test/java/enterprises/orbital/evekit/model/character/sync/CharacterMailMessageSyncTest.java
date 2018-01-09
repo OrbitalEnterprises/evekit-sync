@@ -6,7 +6,9 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Set;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -170,6 +172,22 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     };
   }
 
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CHARACTERMAILMESSAGE_TOCHARACTERID")
+                                                                            .executeUpdate());
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createNativeQuery("delete from CHARACTERMAILMESSAGE_TOLISTID")
+                                                                            .executeUpdate());
+    super.teardown();
+  }
+
   public CharacterMailMessage makeMessageObject(
                                                 final long time,
                                                 final Object[] instanceData,
@@ -265,7 +283,7 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
 
     // Populate existing messages with a slight tweak
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeMessageObject(testTime, testData[i], "foo"));
+      CachedData.update(makeMessageObject(testTime, testData[i], "foo"));
     }
 
     // Perform the sync
@@ -298,7 +316,7 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     // Populate existing notifications
     // Populate existing messages with a slight tweak
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeMessageObject(testTime, testData[i], "foo"));
+      CachedData.update(makeMessageObject(testTime, testData[i], "foo"));
     }
 
     // Set the tracker as already updated and populate the container
@@ -306,7 +324,7 @@ public class CharacterMailMessageSyncTest extends SyncTestBase {
     tracker.setMailMessagesDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setMailMessagesExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterMailMessageSync.syncMailMessages(testTime, syncAccount, syncUtil, mockServer);

@@ -263,7 +263,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
       Contact next = new Contact(
           list, contactID, (String) testData[i][2] + "foo", (Double) testData[i][3], (Integer) testData[i][5], (Boolean) testData[i][4], (Long) testData[i][6]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Populate existing labels
@@ -272,7 +272,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
       long labelID = (Long) testData[i][8];
       ContactLabel next = new ContactLabel(list, labelID, (String) testData[i][9] + "foo");
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -321,7 +321,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
       Contact next = new Contact(
           list, contactID, (String) testData[i][2] + "foo", (Double) testData[i][3], (Integer) testData[i][5], (Boolean) testData[i][4], (Long) testData[i][6]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Populate existing labels
@@ -330,7 +330,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
       long labelID = (Long) testData[i][8];
       ContactLabel next = new ContactLabel(list, labelID, (String) testData[i][9] + "foo");
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -338,7 +338,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
     tracker.setContactListDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContactListExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContactListSync.syncContactList(testTime, syncAccount, syncUtil, mockServer);
@@ -386,7 +386,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
           list, contactID, TestBase.getRandomText(50), TestBase.getRandomDouble(10), TestBase.getRandomInt(), TestBase.getRandomBoolean(),
           TestBase.getRandomLong());
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 
@@ -397,7 +397,7 @@ public class CorporationContactListSyncTest extends SyncTestBase {
       long labelID = TestBase.getUniqueRandomLong();
       ContactLabel next = new ContactLabel(list, labelID, TestBase.getRandomText(50));
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDeleteLabel.add(next);
     }
 

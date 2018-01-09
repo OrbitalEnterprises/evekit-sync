@@ -638,14 +638,14 @@ public class CorporationKillLogSyncTest extends SyncTestBase {
       List<KillItem> items = new ArrayList<KillItem>();
       List<KillVictim> victim = new ArrayList<KillVictim>();
       Kill kill = makeKillObject(testTime, testData[i], attackers, items, victim, 0, "foo");
-      kill = CachedData.updateData(kill);
+      kill = CachedData.update(kill);
       for (KillAttacker attacker : attackers) {
-        attacker = CachedData.updateData(attacker);
+        attacker = CachedData.update(attacker);
       }
       for (KillItem item : items) {
-        item = CachedData.updateData(item);
+        item = CachedData.update(item);
       }
-      CachedData.updateData(victim.get(0));
+      CachedData.update(victim.get(0));
     }
 
     // Perform the sync
@@ -675,14 +675,14 @@ public class CorporationKillLogSyncTest extends SyncTestBase {
       List<KillItem> items = new ArrayList<KillItem>();
       List<KillVictim> victim = new ArrayList<KillVictim>();
       Kill kill = makeKillObject(testTime, testData[i], attackers, items, victim, 25, "foo");
-      kill = CachedData.updateData(kill);
+      kill = CachedData.update(kill);
       for (KillAttacker attacker : attackers) {
-        attacker = CachedData.updateData(attacker);
+        attacker = CachedData.update(attacker);
       }
       for (KillItem item : items) {
-        item = CachedData.updateData(item);
+        item = CachedData.update(item);
       }
-      CachedData.updateData(victim.get(0));
+      CachedData.update(victim.get(0));
     }
 
     // Set the tracker as already updated and populate the container
@@ -690,7 +690,7 @@ public class CorporationKillLogSyncTest extends SyncTestBase {
     tracker.setKilllogDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setKilllogExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationKillLogSync.syncCorporationKillLog(testTime, syncAccount, syncUtil, mockServer);

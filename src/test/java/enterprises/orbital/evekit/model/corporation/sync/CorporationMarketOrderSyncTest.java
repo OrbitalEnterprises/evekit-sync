@@ -356,7 +356,7 @@ public class CorporationMarketOrderSyncTest extends SyncTestBase {
 
     // Populate orders
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeOrder(testTime, testData[i], null));
+      CachedData.update(makeOrder(testTime, testData[i], null));
     }
 
     // Perform the sync
@@ -387,7 +387,7 @@ public class CorporationMarketOrderSyncTest extends SyncTestBase {
 
     // Populate existing orders
     for (int i = 0; i < testData.length; i++) {
-      CachedData.updateData(makeOrder(testTime, testData[i], null));
+      CachedData.update(makeOrder(testTime, testData[i], null));
     }
 
     // Set the tracker as already updated and populate the container
@@ -395,7 +395,7 @@ public class CorporationMarketOrderSyncTest extends SyncTestBase {
     tracker.setMarketOrdersDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMarketOrdersExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMarketOrderSync.syncCorporationMarketOrders(testTime, syncAccount, syncUtil, mockServer);
@@ -440,7 +440,7 @@ public class CorporationMarketOrderSyncTest extends SyncTestBase {
     for (int i = 0; i < testData.length; i++) {
       long orderID = (Long) testData[i][0];
       MarketOrder next = makeOrder(testTime, testData[i], closedOrders.containsKey(orderID) ? new Integer(0) : null);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync

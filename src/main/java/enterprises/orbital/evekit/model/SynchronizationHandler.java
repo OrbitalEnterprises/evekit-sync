@@ -2,6 +2,8 @@ package enterprises.orbital.evekit.model;
 
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 
+import java.io.IOException;
+
 public interface SynchronizationHandler<A extends SyncTracker, C extends CachedData> {
 
   /**
@@ -30,14 +32,14 @@ public interface SynchronizationHandler<A extends SyncTracker, C extends CachedD
   public void updateStatus(
                            A tracker,
                            SyncTracker.SyncState status,
-                           String detail);
+                           String detail) throws IOException;
 
   public boolean prereqSatisfied(
                                  A tracker);
 
   public void updateExpiry(
                            C container,
-                           long expiry);
+                           long expiry) throws IOException;
 
   public long getExpiryTime(
                             C container);
@@ -47,6 +49,6 @@ public interface SynchronizationHandler<A extends SyncTracker, C extends CachedD
                         A tracker,
                         C container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item);
+                        CachedData item) throws IOException;
 
 }

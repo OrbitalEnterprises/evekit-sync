@@ -12,7 +12,6 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
 import enterprises.orbital.evekit.model.corporation.Corporation;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationAccountBalanceSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationAssetsSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationBlueprintsSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationBookmarksSync;
@@ -154,35 +153,35 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
   // Initialize support features
   static {
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_ACCOUNTBALANCE, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationAccountBalanceSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationAccountBalanceSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationAccountBalanceSync.syncAccountBalance(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_ACCOUNTBALANCE, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationAccountBalanceSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationAccountBalanceSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationAccountBalanceSync.syncAccountBalance(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_ASSETLIST, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(

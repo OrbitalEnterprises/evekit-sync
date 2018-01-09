@@ -170,7 +170,7 @@ public class CorporationMemberMedalsSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], DateFormat.getDateInstance().parse((String) testData[i][2]).getTime(), ((Long) testData[i][3]) + 5L,
           (String) testData[i][4], (String) testData[i][5]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -210,7 +210,7 @@ public class CorporationMemberMedalsSyncTest extends SyncTestBase {
           (Integer) testData[i][0], (Long) testData[i][1], DateFormat.getDateInstance().parse((String) testData[i][2]).getTime(), ((Long) testData[i][3]) + 5L,
           (String) testData[i][4], (String) testData[i][5]);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -218,7 +218,7 @@ public class CorporationMemberMedalsSyncTest extends SyncTestBase {
     tracker.setMemberMedalsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setMemberMedalsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationMemberMedalsSync.syncCorporationMemberMedals(testTime, syncAccount, syncUtil, mockServer);

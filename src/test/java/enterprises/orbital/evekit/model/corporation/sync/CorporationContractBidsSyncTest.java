@@ -173,7 +173,7 @@ public class CorporationContractBidsSyncTest extends SyncTestBase {
     // Populate existing contract bids
     for (int i = 0; i < testData.length; i++) {
       ContractBid next = makeContractBid(testTime, testData[i], 44L);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Perform the sync
@@ -206,7 +206,7 @@ public class CorporationContractBidsSyncTest extends SyncTestBase {
     // Populate existing contract bids
     for (int i = 0; i < testData.length; i++) {
       ContractBid next = makeContractBid(testTime, testData[i], 44L);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
     }
 
     // Set the tracker as already updated and populate the container
@@ -214,7 +214,7 @@ public class CorporationContractBidsSyncTest extends SyncTestBase {
     tracker.setContractBidsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractBidsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractBidsSync.syncCorporationContractBids(testTime, syncAccount, syncUtil, mockServer);

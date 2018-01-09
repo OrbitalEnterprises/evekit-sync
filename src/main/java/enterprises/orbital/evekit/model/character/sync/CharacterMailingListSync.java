@@ -36,9 +36,9 @@ public class CharacterMailingListSync extends AbstractCharacterSync {
   }
 
   @Override
-  public void updateExpiry(Capsuleer container, long expiry) {
+  public void updateExpiry(Capsuleer container, long expiry) throws IOException {
     container.setMailingListsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -47,7 +47,7 @@ public class CharacterMailingListSync extends AbstractCharacterSync {
   }
 
   @Override
-  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) {
+  public boolean commit(long time, CapsuleerSyncTracker tracker, Capsuleer container, SynchronizedEveAccount accountKey, CachedData item) throws IOException {
     assert item instanceof MailingList;
 
     MailingList api = (MailingList) item;

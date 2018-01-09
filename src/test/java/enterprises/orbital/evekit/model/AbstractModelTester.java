@@ -1,5 +1,6 @@
 package enterprises.orbital.evekit.model;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 import org.junit.Assert;
@@ -33,7 +34,7 @@ public class AbstractModelTester<A extends CachedData> extends AbstractAccountBa
   // 4) Test other non-standard retrieval variants
   // @formatter:on
 
-  protected void runBasicTests(ClassUnderTestConstructor<A> ctor, CtorVariants<A> vars, byte[] mask) {
+  protected void runBasicTests(ClassUnderTestConstructor<A> ctor, CtorVariants<A> vars, byte[] mask) throws IOException {
     long time = TestBase.getRandomInt(100000000) + 5000L;
     A cut = ctor.getCUT();
     cut.setup(testAccount, time);
@@ -52,7 +53,7 @@ public class AbstractModelTester<A extends CachedData> extends AbstractAccountBa
     Assert.assertEquals(Long.MAX_VALUE, cut.getLifeEnd());
   }
 
-  protected void runGetLifelineTest(ClassUnderTestConstructor<A> eolMaker, ClassUnderTestConstructor<A> liveMaker, ModelRetriever<A> modelGetter) {
+  protected void runGetLifelineTest(ClassUnderTestConstructor<A> eolMaker, ClassUnderTestConstructor<A> liveMaker, ModelRetriever<A> modelGetter) throws IOException {
     A eol, live;
     long t1 = TestBase.getRandomInt(10000000) + 5000L;
     long t2 = t1 + TestBase.getRandomInt(10000) + 5000L;
@@ -61,8 +62,8 @@ public class AbstractModelTester<A extends CachedData> extends AbstractAccountBa
     live = liveMaker.getCUT();
     live.setup(testAccount, t2);
     eol.evolve(live, t2);
-    eol = CachedData.updateData(eol);
-    live = CachedData.updateData(live);
+    eol = CachedData.update(eol);
+    live = CachedData.update(live);
 
     A eolCheck = modelGetter.getModel(testAccount, t1 + 5);
     A liveCheck = modelGetter.getModel(testAccount, t2 + 5);

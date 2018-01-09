@@ -185,7 +185,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
           (Long) testContracts[i], 0, 0, 0, 0, 0, 0, "", "", "", true, "", OrbitalProperties.getCurrentTime(), 0, 0, 0, 0, BigDecimal.ONE, BigDecimal.ONE,
           BigDecimal.ONE, BigDecimal.ONE, 0);
       nextContract.setup(syncAccount, testTime);
-      nextContract = CachedData.updateData(nextContract);
+      nextContract = CachedData.update(nextContract);
     }
 
     // This sync requires contracts to already be processed
@@ -193,7 +193,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     tracker.setContractsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractsExpiry(testDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractItemsSync.syncCorporationContractItems(testTime, syncAccount, syncUtil, mockServer);
@@ -231,14 +231,14 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
           (Long) testContracts[i], 0, 0, 0, 0, 0, 0, "", "", "", true, "", OrbitalProperties.getCurrentTime(), 0, 0, 0, 0, BigDecimal.ONE, BigDecimal.ONE,
           BigDecimal.ONE, BigDecimal.ONE, 0);
       nextContract.setup(syncAccount, testTime);
-      nextContract = CachedData.updateData(nextContract);
+      nextContract = CachedData.update(nextContract);
     }
 
     // Populate existing items with tweak.
     for (long contractID : testContractItems.keySet()) {
       Object[][] testItems = testContractItems.get(contractID);
       for (int i = 0; i < testItems.length; i++) {
-        CachedData.updateData(makeContractItem(testTime, testItems[i], 44L));
+        CachedData.update(makeContractItem(testTime, testItems[i], 44L));
       }
     }
 
@@ -247,7 +247,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     tracker.setContractsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractsExpiry(testDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractItemsSync.syncCorporationContractItems(testTime, syncAccount, syncUtil, mockServer);
@@ -291,7 +291,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     for (long contractID : testContractItems.keySet()) {
       Object[][] testItems = testContractItems.get(contractID);
       for (int i = 0; i < testItems.length; i++) {
-        CachedData.updateData(makeContractItem(testTime, testItems[i], 44L));
+        CachedData.update(makeContractItem(testTime, testItems[i], 44L));
       }
     }
 
@@ -300,7 +300,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     tracker.setContractItemsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractItemsExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractItemsSync.syncCorporationContractItems(testTime, syncAccount, syncUtil, mockServer);
@@ -348,14 +348,14 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
           (Long) testContracts[i], 0, 0, 0, 0, 0, 0, "", "", "", true, "", dateIssued, 0, 0, 0, 0, BigDecimal.ONE, BigDecimal.ONE, BigDecimal.ONE,
           BigDecimal.ONE, 0);
       nextContract.setup(syncAccount, testTime);
-      nextContract = CachedData.updateData(nextContract);
+      nextContract = CachedData.update(nextContract);
     }
 
     // Populate existing items with tweak.
     for (long contractID : testContractItems.keySet()) {
       Object[][] testItems = testContractItems.get(contractID);
       for (int i = 0; i < testItems.length; i++) {
-        CachedData.updateData(makeContractItem(testTime, testItems[i], 44L));
+        CachedData.update(makeContractItem(testTime, testItems[i], 44L));
       }
     }
 
@@ -364,7 +364,7 @@ public class CorporationContractItemsSyncTest extends SyncTestBase {
     tracker.setContractsDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setContractsExpiry(testDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationContractItemsSync.syncCorporationContractItems(testTime, syncAccount, syncUtil, mockServer);

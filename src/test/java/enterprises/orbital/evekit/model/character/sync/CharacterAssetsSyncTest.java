@@ -9,8 +9,10 @@ import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import org.easymock.EasyMock;
 import org.hsqldb.rights.User;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -214,6 +216,17 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
         return (Long) instanceData[6];
       }
     };
+  }
+
+  @Override
+  @After
+  public void teardown() throws Exception {
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
+                                                                            .getEntityManager()
+                                                                            .createQuery("DELETE FROM Asset")
+                                                                            .executeUpdate());
+    super.teardown();
   }
 
   public Collection<IAsset> makeAssetTree() {
@@ -459,7 +472,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
           (Long) testData[i][1], (Long) testData[i][2], (Integer) testData[i][5], (Long) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
           (Long) testData[i][6], container);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       allAssets.add(next);
     }
     for (int i = 1; i < flatTestData.length; i += 2) {
@@ -467,7 +480,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
           (Long) flatTestData[i][1], (Long) flatTestData[i][2], (Integer) flatTestData[i][5], (Long) flatTestData[i][3], (Integer) flatTestData[i][0],
           (Boolean) flatTestData[i][4], (Long) flatTestData[i][6], Asset.TOP_LEVEL);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       allAssets.add(next);
     }
 
@@ -538,7 +551,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
           (Long) testData[i][1], (Long) testData[i][2], (Integer) testData[i][5], (Long) testData[i][3], (Integer) testData[i][0], (Boolean) testData[i][4],
           (Long) testData[i][6], container);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       allAssets.add(next);
     }
     for (int i = 1; i < flatTestData.length; i += 2) {
@@ -546,7 +559,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
           (Long) flatTestData[i][1], (Long) flatTestData[i][2], (Integer) flatTestData[i][5], (Long) flatTestData[i][3], (Integer) flatTestData[i][0],
           (Boolean) flatTestData[i][4], (Long) flatTestData[i][6], Asset.TOP_LEVEL);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       allAssets.add(next);
     }
 
@@ -555,7 +568,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     tracker.setAssetListDetail(null);
     CapsuleerSyncTracker.updateTracker(tracker);
     container.setAssetListExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CharacterAssetsSync.syncAssets(testTime, syncAccount, syncUtil, mockServer);
@@ -584,7 +597,7 @@ public class CharacterAssetsSyncTest extends SyncTestBase {
     for (int i = 0; i < 5; i++) {
       Asset next = new Asset(getUnusedItemID(), 1, 2, 3, 4, false, 5, Asset.TOP_LEVEL);
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       gcAssets.add(next);
     }
 

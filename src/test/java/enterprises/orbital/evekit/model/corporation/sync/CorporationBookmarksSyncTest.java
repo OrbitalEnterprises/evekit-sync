@@ -270,7 +270,7 @@ public class CorporationBookmarksSyncTest extends SyncTestBase {
             (Long) bmData[j][3], (Integer) bmData[j][4], (Long) bmData[j][5], (Double) bmData[j][6], (Double) bmData[j][7], (Double) bmData[j][8],
             (String) bmData[j][9], (String) bmData[j][10]);
         next.setup(syncAccount, testTime);
-        next = CachedData.updateData(next);
+        next = CachedData.update(next);
       }
     }
 
@@ -326,7 +326,7 @@ public class CorporationBookmarksSyncTest extends SyncTestBase {
             (Long) bmData[j][3], (Integer) bmData[j][4], (Long) bmData[j][5], (Double) bmData[j][6], (Double) bmData[j][7], (Double) bmData[j][8],
             (String) bmData[j][9], (String) bmData[j][10]);
         next.setup(syncAccount, testTime);
-        next = CachedData.updateData(next);
+        next = CachedData.update(next);
       }
     }
 
@@ -335,7 +335,7 @@ public class CorporationBookmarksSyncTest extends SyncTestBase {
     tracker.setBookmarksDetail(null);
     CorporationSyncTracker.updateTracker(tracker);
     container.setBookmarksExpiry(prevDate);
-    container = CachedData.updateData(container);
+    container = CachedData.update(container);
 
     // Perform the sync
     SyncStatus syncOutcome = CorporationBookmarksSync.syncBookmarks(testTime, syncAccount, syncUtil, mockServer);
@@ -388,7 +388,7 @@ public class CorporationBookmarksSyncTest extends SyncTestBase {
           TestBase.getRandomLong(), TestBase.getRandomLong(), TestBase.getRandomInt(), TestBase.getRandomLong(), TestBase.getRandomDouble(100000000),
           TestBase.getRandomDouble(100000000), TestBase.getRandomDouble(100000000), TestBase.getRandomText(50), TestBase.getRandomText(50));
       next.setup(syncAccount, testTime);
-      next = CachedData.updateData(next);
+      next = CachedData.update(next);
       toDelete.add(next);
     }
 

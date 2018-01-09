@@ -49,9 +49,9 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
   @Override
   public void updateExpiry(
                            Corporation container,
-                           long expiry) {
+                           long expiry) throws IOException {
     container.setWalletTransactionsExpiry(expiry);
-    CachedData.updateData(container);
+    CachedData.update(container);
   }
 
   @Override
@@ -66,7 +66,7 @@ public class CorporationWalletTransactionSync extends AbstractCorporationSync {
                         CorporationSyncTracker tracker,
                         Corporation container,
                         SynchronizedEveAccount accountKey,
-                        CachedData item) {
+                        CachedData item) throws IOException {
     assert item instanceof WalletTransaction;
 
     WalletTransaction api = (WalletTransaction) item;
