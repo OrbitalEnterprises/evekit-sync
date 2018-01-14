@@ -23,8 +23,8 @@ public class SyncTestBase {
     OrbitalProperties.addPropertyFile("SyncTest.properties");
     PersistentProperty.setProvider(new DBPropertyProvider(OrbitalProperties.getGlobalProperty(EveKitUserAccountProvider.USER_ACCOUNT_PU_PROP)));
     testUserAccount = EveKitUserAccount.createNewUserAccount(true, true);
-    charSyncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(testUserAccount, "chartestaccount", true, true);
-    corpSyncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(testUserAccount, "corptestaccount", false, true);
+    charSyncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(testUserAccount, "chartestaccount", true);
+    corpSyncAccount = SynchronizedEveAccount.createSynchronizedEveAccount(testUserAccount, "corptestaccount", false);
     String charScopes = Arrays.stream(ESIScope.getCharScopes())
                               .map(x -> x.getName())
                               .reduce("", (a, b) -> a + " " + b);
