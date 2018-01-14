@@ -127,16 +127,17 @@ Each change can be in one of the following states:
 ### ResearchAgent
 
 ESI endpoint(s):
+
 * `/characters/{character_id}/agents_research/`
 
 Old Model Field | New Model Field | ESI Field | Notes
 ---|---|---|---
 agentID | agentID | agent_id |
 currentPoints | (deleted) | *N/A* | This field will be removed and deleted from historical data since this value can be computed with the formula: `currentPoints = remainderPoints + pointsPerDay * days(currentTime - researchStartDate)`
-pointsPerDay | pointsPerDay | points_per_day |
+pointsPerDay | pointsPerDay | points\_per\_day |
 remainderPoints | remainderPoints | remainder_points |
 researchStartDate | resarchStartDate | started_at | ESI stores this as a text string, which EveKit converts to milliseconds UTC.  `researchStartDateDate` can be used if a string-valued date is required
-skillTypeID | skillTypeID | skill_type_id |
+skillTypeID | skillTypeID | skill\_type\_id |
 researchStartDateDate (generated) | researchStartDateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
 
 ## Corporation Model Changes
@@ -168,6 +169,7 @@ researchStartDateDate (generated) | researchStartDateDate (generated) | *N/A* | 
 ### AccountBalance
 
 ESI endpoint(s):
+
 * `/characters/{character_id}/wallet/`
 * `/corporations/{corporation_id}/wallets/`
 
@@ -202,6 +204,7 @@ Removed.  Account status is not supported from the ESI.  Similar information can
 ### WalletJournal
 
 ESI endpoint(s):
+
 * `/characters/{character_id}/wallet/journal/`
 * `/corporations/{corporation_id}/wallets/{division}/journal/`
 
@@ -214,39 +217,40 @@ date | date | date | ESI stores this as a text string, which EveKit converts to 
 refTypeID | (deleted) | *N/A* | ESI moves ref types to an enumerated string field
 *N/A* | refType | ref_type | This is now an enuerated string field.  Historical data will be converted from refTypeID using the mapping in https://gist.github.com/ccp-zoetrope/c03db66d90c2148724c06171bc52e0ec
 ownerName1 | (deleted) | *N/A* | ESI leaves lookup from ID to user
-ownerID1 | ownerID1 (generated) | *N/A* | Replaced by first_party_id in the ESI.  This will be copied from firstPartyID for now, and removed at a later date.
-*N/A* | firstPartyID | first_party_id | Replaces ownerID1, historical data will be copied over to firstPartyID.
-owner1TypeID | (deleted) | *N/A* | Replaced in ESI by string enumerated first_party_type
-*N/A* | firstPartyType | first_party_type | New field in ESI.  To convert historical data, the owner1TypeID field has to be resolved to one of characte, corporation, alliance, faction, system.
+ownerID1 | ownerID1 (generated) | *N/A* | Replaced by first\_party\_id in the ESI.  This will be copied from firstPartyID for now, and removed at a later date.
+*N/A* | firstPartyID | first\_party\_id | Replaces ownerID1, historical data will be copied over to firstPartyID.
+owner1TypeID | (deleted) | *N/A* | Replaced in ESI by string enumerated first\_party\_type
+*N/A* | firstPartyType | first\_party\_type | New field in ESI.  To convert historical data, the owner1TypeID field has to be resolved to one of character, corporation, alliance, faction, system.
 ownerName2 | (deleted) | *N/A* | ESI leaves lookup from ID to user
-ownerID2 | ownerID2 (generated) | *N/A* | Replaced by second_party_id in the ESI.  This will be copied from secondPartyID for now, and removed at a later date.
-*N/A* | secondPartyID | second_party_id | Replaces ownerID2, historical data will be copied over to secondPartyID.
-owner2TypeID | (deleted) | *N/A* | Replaced in ESI by string enmerated second_party_type
-*N/A* | secondPartyType | second_party_type | New field in ESI.  To convert historical data, the owner2TypeID field has to be resolved to one of characte, corporation, alliance, faction, system.
-argName1 | argName1 | *N/A* | This data is now populated in extra_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
-argID1 | argID1 | *N/A* | This data is now populated in extra_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
+ownerID2 | ownerID2 (generated) | *N/A* | Replaced by second\_party\_id in the ESI.  This will be copied from secondPartyID for now, and removed at a later date.
+*N/A* | secondPartyID | second\_party\_id | Replaces ownerID2, historical data will be copied over to secondPartyID.
+owner2TypeID | (deleted) | *N/A* | Replaced in ESI by string enmerated second\_party\_type
+*N/A* | secondPartyType | second\_party\_type | New field in ESI.  To convert historical data, the owner2TypeID field has to be resolved to one of characte, corporation, alliance, faction, system.
+argName1 | argName1 | *N/A* | This data is now populated in extra\_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
+argID1 | argID1 | *N/A* | This data is now populated in extra\_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
 amount | amount | amount |
 balance | balance | balance |
 reason | reason | reason |
-taxReceiverID | taxReceiverID | tax_receiver_id |
+taxReceiverID | taxReceiverID | tax\_receiver\_id |
 taxAmount | taxAmount | tax |
 dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
-*N/A* | locationID | extra_info -> location_id | New field in ESI.
-*N/A* | transactionID | extra_info -> transaction_id | New field in ESI.
-*N/A* | npcName | extra_info -> npc_name | New field in ESI.
-*N/A* | npcID | extra_info -> npc_id | New field in ESI.
-*N/A* | destroyedShipTypeID | extra_info -> destroyed_ship_type_id | New field in ESI.
-*N/A* | characerID | extra_info -> character_id | New field in ESI.
-*N/A* | corporationID | extra_info -> corporation_id | New field in ESI.
-*N/A* | allianceID | extra_info -> alliance_id | New field in ESI.
-*N/A* | jobID | extra_info -> job_id | New field in ESI.
-*N/A* | contractID | extra_info -> contract_id | New field in ESI.
-*N/A* | systemID | extra_info -> system_id | New field in ESI.
-*N/A* | planetID | extra_info -> planet_id | New field in ESI.
+*N/A* | locationID | extra\_info -> location_id | New field in ESI.
+*N/A* | transactionID | extra\_info -> transaction_id | New field in ESI.
+*N/A* | npcName | extra\_info -> npc_name | New field in ESI.
+*N/A* | npcID | extra\_info -> npc_id | New field in ESI.
+*N/A* | destroyedShipTypeID | extra\_info -> destroyed\_ship\_type\_id | New field in ESI.
+*N/A* | characerID | extra\_info -> character_id | New field in ESI.
+*N/A* | corporationID | extra\_info -> corporation_id | New field in ESI.
+*N/A* | allianceID | extra\_info -> alliance_id | New field in ESI.
+*N/A* | jobID | extra\_info -> job_id | New field in ESI.
+*N/A* | contractID | extra\_info -> contract_id | New field in ESI.
+*N/A* | systemID | extra\_info -> system_id | New field in ESI.
+*N/A* | planetID | extra\_info -> planet_id | New field in ESI.
 
 ### WalletTransaction
 
 ESI endpoint(s):
+
 * `/characters/{character_id}/wallet/transactions/`
 * `/corporations/{corporation_id}/wallets/{division}/transactions/`
 
@@ -265,11 +269,11 @@ clientName | (deleted) | *N/A* | ESI leaves lookup from ID to user
 stationID | stationID (generated) | *N/A* | This is just a copy of locationID for now, which we'll remove at a future date
 *N/A* | locationID | location_id | This is the ESI replacement for station ID which we'll use going forward.  Historical data will be converted by setting locationID = stationID
 stationName | (deleted) | *N/A* | ESI leaves lookup from ID to user
-transactionType | transactionType (generated) | *N/A* | We'll generate this from is_buy for now (see next entry), and remove at a future date
-*N/A* | isBuy | is_buy | This is new in the ESI and we'll use it going forward.  Historical data will be converted with is_buy = true if transactionType = "buy", otherwise is_buy = false.
-transactionFor | transactionFor (generated) | *N/A* | We'll generate this from is_personal for now (see next entry), and remove at a future date
-*N/A* | isPersonal | is_personal | This is new in the ESI for characters and we'll use it going forward.  Historical data will be converted with is_personal = true if transactionFor = "personal", otherwise is_personal = false.
-journalTransactionID | journalTransactionID | journal_ref_id |
+transactionType | transactionType (generated) | *N/A* | We'll generate this from is\_buy for now (see next entry), and remove at a future date
+*N/A* | isBuy | is_buy | This is new in the ESI and we'll use it going forward.  Historical data will be converted with is\_buy = true if transactionType = "buy", otherwise is\_buy = false.
+transactionFor | transactionFor (generated) | *N/A* | We'll generate this from is\_personal for now (see next entry), and remove at a future date
+*N/A* | isPersonal | is_personal | This is new in the ESI for characters and we'll use it going forward.  Historical data will be converted with is\_personal = true if transactionFor = "personal", otherwise is\_personal = false.
+journalTransactionID | journalTransactionID | journal\_ref\_id |
 clientTypeID | (deleted) | *N/A* | ESI has no analog, not clear what this was used for (even 3rd party docs aren't clear).
 characterID | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
 characterName | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
