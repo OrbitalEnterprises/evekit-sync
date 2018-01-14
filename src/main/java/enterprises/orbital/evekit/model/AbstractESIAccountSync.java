@@ -452,4 +452,14 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     if (value == null) return def;
     return value;
   }
+
+  public static double nullSafeDouble(Double value, double def) {
+    if (value == null) return def;
+    return value.doubleValue();
+  }
+
+  public static String nullSafeEnum(Enum<?> value, String def) {
+    return value == null ? def : value.toString();
+  }
+
 }

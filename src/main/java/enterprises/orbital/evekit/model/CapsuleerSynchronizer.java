@@ -41,8 +41,6 @@ import enterprises.orbital.evekit.model.character.sync.CharacterSkillInTrainingS
 import enterprises.orbital.evekit.model.character.sync.CharacterSkillsSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterStandingSync;
 import enterprises.orbital.evekit.model.character.sync.CharacterUpcomingCalendarEventsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterWalletJournalSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterWalletTransactionSync;
 import enterprises.orbital.evekit.model.character.sync.PartialCharacterSheetSync;
 import enterprises.orbital.evexmlapi.IEveXmlApi;
 import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
@@ -981,56 +979,56 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterStandingSync.syncStanding(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_WALLETJOURNAL, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterWalletJournalSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterWalletJournalSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterWalletJournalSync.syncCharacterWalletJournal(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_WALLETTRANSACTIONS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterWalletTransactionSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterWalletTransactionSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterWalletTransactionSync.syncCharacterWalletTransaction(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_WALLETJOURNAL, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterWalletJournalSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterWalletJournalSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterWalletJournalSync.syncCharacterWalletJournal(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_WALLETTRANSACTIONS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterWalletTransactionSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterWalletTransactionSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterWalletTransactionSync.syncCharacterWalletTransaction(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 
   }
 

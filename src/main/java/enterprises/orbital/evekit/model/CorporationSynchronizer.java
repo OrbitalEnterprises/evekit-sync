@@ -41,8 +41,6 @@ import enterprises.orbital.evekit.model.corporation.sync.CorporationStandingSync
 import enterprises.orbital.evekit.model.corporation.sync.CorporationStarbaseDetailSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationStarbaseListSync;
 import enterprises.orbital.evekit.model.corporation.sync.CorporationTitlesSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationWalletJournalSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationWalletTransactionSync;
 import enterprises.orbital.evexmlapi.IEveXmlApi;
 import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
 import enterprises.orbital.evexmlapi.act.IAccountAPI;
@@ -686,62 +684,62 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETJOURNAL, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationWalletJournalSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationWalletJournalSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationWalletJournalSync.syncCorporationWalletJournal(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETTRANSACTIONS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationWalletTransactionSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationWalletTransactionSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationWalletTransactionSync.syncCorporationWalletTransaction(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETJOURNAL, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationWalletJournalSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationWalletJournalSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationWalletJournalSync.syncCorporationWalletJournal(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_WALLETTRANSACTIONS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationWalletTransactionSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationWalletTransactionSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationWalletTransactionSync.syncCorporationWalletTransaction(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_SECURITY, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(
