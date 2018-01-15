@@ -194,15 +194,35 @@ ESI endpoint(s):
 Old Model Field | New Model Field | ESI Field | Notes
 ---|---|---|---
 typeID | typeID | type\_id | 
-quantity | quantity | quantity | 
-locationID | locationID | location\_id | This can be the itemID of a parent asset (e.g. container) which allows us to recover the asset tree as was provided by the XML API.
-*N/A* | locationType | location\_type | Historic data will be mapped using the technique [here](https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb#file-id_ranges-md) which amounts to:`if (locationID >= 30000000 && locationID <= 32000000) { location_flag = solar_system } else if (locationID >= 60000000 && locationID <= 64000000) { location_flag = station } else { location_flag = other }`
+quantity | quantity | quantity | For historic data, quantity was overloaded to encode singletons and blueprints.  See conversion notes below.
+locationID | locationID | location\_id | In the ESI, this can be the `itemID` of a parent asset (e.g. container) which allows us to recover the asset tree as was provided by the XML API.  In historic data, this is zero for a contained asset.  See conversion notes below.
+*N/A* | locationType | location\_type | See conversion notes below for historic data.
 itemID | itemID | item\_id |
 flag | (deleted) | *N/A* | This is replaced by the enumerated type location\_flag.
-*N/A* | locationFlag | location\_flag | Historic data will be populated from flag according to [this gist](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/location_flag.py).
-singleton | singleton | is\_singleton | This will be set to true for historic data where rawQuantity was -1 (representing an unpackaged singleton).
-rawQuantity | (deleted) | *N/A* | Used for encoding singleton for historic data, otherwise no longer needed.
-container | container | *N/A* | This is an EveKit specific encoding which gives the itemID of the container in which this asset is stored.  If locationID is an item, then this field will be a copy of itemID.
+*N/A* | locationFlag | location\_flag | Replaces `flag`.  See conversion notes below for historic data.
+singleton | singleton | is\_singleton | Replaces overloading in quantity for historic data.  See conversion notes below.
+rawQuantity | (deleted) | *N/A* | This field is non-null in historic data when quantity < 0.  See conversion notes below. 
+*N/A* | blueprint | *N/A* | New field to retain historic information.  See conversion notes below.
+container | (deleted) | *N/A* | This is an EveKit specific encoding which gives the `itemID` of the container in which this asset is stored.  In the ESI, the `itemID` of the parent of a contained asset is now stored in `locationID`.  See conversion notes below.
+
+#### Historical Conversion Notes
+* Quantity can be negative in historical data to indicate either a singleton (-1), or a blueprint (-1 = original, -2 = copy).  To preserve this distinction but remain consistent with future data, we'll make the following conversions:
+  * We'll introduce a new String field called `blueprint` which is only populated for historic data.  `blueprint = "copy"` if `quantity = -2`.  Otherwise, `blueprint = "original"` if `quantity = -1` and `itemID` is a blueprint.   `blueprint = null` otherwise, or if we can't resolve `typeID` (e.g. deleted from the SDE).
+  * We'll set `singleton = true` if `quantity = -1` representing either an unpackaged (non-stackable) singleton element and/or a blueprint original (note that blueprint originals are also unstackable, so this is consistent).
+  * We'll set `quantity = rawQuantity` in any case where `quantity < 0`.  This is to remain consistent with `quantity` going forward which will always be positive.
+  * If/when CCP introduces a proper blueprint field for assets, we'll populate the `blueprint` field appropriately.  Otherwise, it will be null for ESI data.
+* `locationType` will be populated for historic data using the technique described [here](https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb#file-id_ranges-md).  Specifically:
+
+```
+if (locationID >= 30000000 && locationID <= 32000000) { 
+  location_flag = solar_system 
+} else if (locationID >= 60000000 && locationID <= 64000000) { 
+  location_flag = station 
+} else { 
+  location_flag = other 
+}
+```
+* In historic data, contained assets would set `locationID = 0`.  In the ESI, `locationID` is now the `itemID` of the containing asset.  To maintain consistency with the ESI going forward, we'll set `locationID = container` when `locationID = 0` for historic data.  We can then remove the `container` field.
 
 ### Blueprint
 ### Bookmark
@@ -245,8 +265,8 @@ ownerID2 | ownerID2 (generated) | *N/A* | Replaced by second\_party\_id in the E
 *N/A* | secondPartyID | second\_party\_id | Replaces ownerID2, historical data will be copied over to secondPartyID.
 owner2TypeID | (deleted) | *N/A* | Replaced in ESI by string enmerated second\_party\_type
 *N/A* | secondPartyType | second\_party\_type | New field in ESI.  To convert historical data, the owner2TypeID field has to be resolved to one of characte, corporation, alliance, faction, system.
-argName1 | argName1 | *N/A* | This data is now populated in extra\_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
-argID1 | argID1 | *N/A* | This data is now populated in extra\_info in the ESI.  Historical data will be unchanged until we determine how to map into the new extra info fields.
+argName1 | (deleted) | *N/A* | ESI leaves lookup from ID to user.
+argID1 | argID1 | *N/A* | This data is now populated in extra\_info in the ESI.  See conversion notes below.
 amount | amount | amount |
 balance | balance | balance |
 reason | reason | reason |
@@ -265,6 +285,9 @@ dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient strin
 *N/A* | contractID | extra\_info -> contract_id | New field in ESI.
 *N/A* | systemID | extra\_info -> system_id | New field in ESI.
 *N/A* | planetID | extra\_info -> planet_id | New field in ESI.
+
+#### Historic Conversion Notes
+* `argID1` in historic data is now separated into the "extra info" fields in the ESI.  We can convert most historic data by mapping from `refType` as shown [here](https://eveonline-third-party-documentation.readthedocs.io/en/latest/xmlapi/constants.html#reference-type).  We'll perform this conversion on historic data over time.
 
 ### WalletTransaction
 
