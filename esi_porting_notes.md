@@ -50,7 +50,7 @@ Each change can be in one of the following states:
   * **pending** [PlanetaryLink](#planetarylink)
   * **pending** [PlanetaryPin](#planetarypin)
   * **pending** [PlanetaryRoute](#planetaryroute)
-  * **dev** [ResearchAgent](#researchagent)
+  * **beta** [ResearchAgent](#researchagent)
 * Corporation Model Changes
   * **pending** [ContainerLog](#containerlog)
   * **pending** [CorporationMedal](#corporationmedal)
@@ -73,9 +73,9 @@ Each change can be in one of the following states:
   * **pending** [Starbase](#starbase)
   * **pending** [StarbaseDetail](#starbasedetail)
 * Common Model Changes
-  * **dev** [AccountBalance](#accountbalance)
+  * **beta** [AccountBalance](#accountbalance)
   * **N/A** [AccountStatus](#accountstatus)
-  * **pending** [Asset](#asset)
+  * **dev** [Asset](#asset)
   * **pending** [Blueprint](#blueprint)
   * **pending** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
@@ -92,8 +92,8 @@ Each change can be in one of the following states:
   * **pending** [Location](#location)
   * **pending** [MarketOrder](#marketorder)
   * **pending** [Standing](#standing)
-  * **dev** [WalletJournal](#walletjournal)
-  * **dev** [WalletTransaction](#wallettransaction)
+  * **beta** [WalletJournal](#walletjournal)
+  * **beta** [WalletTransaction](#wallettransaction)
 
 ## Character Model Changes
 
@@ -185,6 +185,25 @@ balance | balance | balance |
 Removed.  Account status is not supported from the ESI.  Similar information can be recovered from the `/characters/{character_id}/online/` endpoint which we may support in the future.
 
 ### Asset
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/assets/`
+* `/corporations/{corporation_id}/assets/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+typeID | typeID | type\_id | 
+quantity | quantity | quantity | 
+locationID | locationID | location\_id | This can be the itemID of a parent asset (e.g. container) which allows us to recover the asset tree as was provided by the XML API.
+*N/A* | locationType | location\_type | Historic data will be mapped using the technique [here](https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb#file-id_ranges-md) which amounts to:`if (locationID >= 30000000 && locationID <= 32000000) { location_flag = solar_system } else if (locationID >= 60000000 && locationID <= 64000000) { location_flag = station } else { location_flag = other }`
+itemID | itemID | item\_id |
+flag | (deleted) | *N/A* | This is replaced by the enumerated type location\_flag.
+*N/A* | locationFlag | location\_flag | Historic data will be populated from flag according to [this gist](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/location_flag.py).
+singleton | singleton | is\_singleton | This will be set to true for historic data where rawQuantity was -1 (representing an unpackaged singleton).
+rawQuantity | (deleted) | *N/A* | Used for encoding singleton for historic data, otherwise no longer needed.
+container | container | *N/A* | This is an EveKit specific encoding which gives the itemID of the container in which this asset is stored.  If locationID is an item, then this field will be a copy of itemID.
+
 ### Blueprint
 ### Bookmark
 ### Contact
