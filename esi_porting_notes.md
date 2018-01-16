@@ -89,7 +89,7 @@ Each change can be in one of the following states:
   * **pending** [KillAttacker](#killattacker)
   * **pending** [KillItem](#killitem)
   * **pending** [KillVictim](#killvictim)
-  * **pending** [Location](#location)
+  * **dev** [Location](#location)
   * **pending** [MarketOrder](#marketorder)
   * **pending** [Standing](#standing)
   * **beta** [WalletJournal](#walletjournal)
@@ -269,6 +269,24 @@ runs | runs | runs |
 ### KillItem
 ### KillVictim
 ### Location
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/assets/names/`
+* `/characters/{character_id}/assets/locations/`
+* `/corporations/{corporation_id}/assets/names/`
+* `/corporations/{corporation_id}/assets/locations/`
+
+**Note:** this model is a special case because it combines the information from two separate ESI endpoints (location and name).  We combine the data into a single model for convenience.  
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+itemID | itemID | item_id | Included in both location and name endpoints.
+itemName | itemName | name | Only included in the name endpoint.
+x | x | x | Only included in the location endpoint.
+y | y | y | Only included in the location endpoint.
+z | z | z | Only included in the location endpoint.
+
 ### MarketOrder
 ### Standing
 ### WalletJournal
