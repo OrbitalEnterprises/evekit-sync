@@ -194,16 +194,32 @@ ESI endpoint(s):
 Old Model Field | New Model Field | ESI Field | Notes
 ---|---|---|---
 typeID | typeID | type\_id | 
-quantity | quantity | quantity | For historic data, quantity was overloaded to encode singletons and blueprints.  See conversion notes below.
+quantity | quantity | quantity | 
 locationID | locationID | location\_id | In the ESI, this can be the `itemID` of a parent asset (e.g. container) which allows us to recover the asset tree as was provided by the XML API.  In historic data, this is zero for a contained asset.  See conversion notes below.
 *N/A* | locationType | location\_type | See conversion notes below for historic data.
 itemID | itemID | item\_id |
 flag | (deleted) | *N/A* | This is replaced by the enumerated type location\_flag.
 *N/A* | locationFlag | location\_flag | Replaces `flag`.  See conversion notes below for historic data.
-singleton | singleton | is\_singleton | Replaces overloading in quantity for historic data.  See conversion notes below.
-rawQuantity | (deleted) | *N/A* | This field is non-null in historic data when quantity < 0.  See conversion notes below. 
+singleton | singleton | is\_singleton | 
+rawQuantity | (deleted) | *N/A* | This field is negative when encoding blueprint and singleton information.  See conversion notes below. 
 *N/A* | blueprint | *N/A* | New field to retain historic information.  See conversion notes below.
 container | (deleted) | *N/A* | This is an EveKit specific encoding which gives the `itemID` of the container in which this asset is stored.  In the ESI, the `itemID` of the parent of a contained asset is now stored in `locationID`.  See conversion notes below.
+
+#### Raw Quantity and Quantity in Historic Data
+
+* Source: https://eveonline-third-party-documentation.readthedocs.io/en/latest/xmlapi/character/char_assetlist.html
+* Source: conversations with GoldenGnu (jEveAssets dev)
+* Source: historical data stored in EveKit
+
+Raw Quantity | Quantity | Meaning 
+---|---|---
+0 | anything | A standard stack of assets.
+-1 | 1 | Either a blueprint original or a non-stackable (unpackaged) asset.
+-1 | > 1 | A stack of blueprint originals.
+-2 | 1 | A blueprint copy.  These can't be stacked.
+< -2 | 1 | Weird suff, probably bugs.  Example (from EveKit): flag:62, itemID:1021197887400, locationID:60014818, quantity:1, rawQuantity:-380, singleton:1, typeID:3468 (plastic wrap)
+
+I don't have any example of stacked blueprints, either originals or copies.
 
 #### Historical Conversion Notes
 * Quantity can be negative in historical data to indicate either a singleton (-1), or a blueprint (-1 = original, -2 = copy).  To preserve this distinction but remain consistent with future data, we'll make the following conversions:
