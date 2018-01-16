@@ -90,8 +90,8 @@ Each change can be in one of the following states:
   * **pending** [KillItem](#killitem)
   * **pending** [KillVictim](#killvictim)
   * **dev** [Location](#location)
-  * **pending** [MarketOrder](#marketorder)
-  * **pending** [Standing](#standing)
+  * **dev** [MarketOrder](#marketorder)
+  * **dev** [Standing](#standing)
   * **beta** [WalletJournal](#walletjournal)
   * **beta** [WalletTransaction](#wallettransaction)
 
@@ -288,7 +288,54 @@ y | y | y | Only included in the location endpoint.
 z | z | z | Only included in the location endpoint.
 
 ### MarketOrder
+
+* `/characters/{character_id}/orders/`
+* `/corporations/{corporation_id}/orders/`
+
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+orderID | orderID | order_id |
+accountKey | accountKey (generated) | *N/A* | This is replaced by `wallet_division`.  For now, we generate this field as `accountKey = division - 1 + 1000`.  We'll remove this field in the future.
+*N/A* | walletDivision | wallet\_division *or* account\_id | Replaces `accountKey`.  For historic data, we set `division = accountKey - 1000 + 1`.  Note: for characters, the ESI field is called `account_id` and is numbered the same was as `accountKey`.  In other words, we need to set `division = account_id - 1000 + 1`.
+bid | bid | is\_buy\_order |
+charID | charID (historic only) | *N/A* | This information no longer exists in the ESI.  It is implied for character orders, but can not be determined for corporation orders.  We will retain the field in historic data but not populate it going forward.
+duration | duration | duration | 
+escrow | escrow | escrow | 
+issued | issued | issued |
+minVolume | minVolume | min\_volume |
+orderState | orderState | state |
+price | price | price | 
+orderRange | orderRange | range | 
+stationID | (deleted) | *N/A* | Replaced by locationID.
+typeID | typeID | type\_id | 
+volEntered | volEntered | volume\_total |
+volRemaining | volRemaining | volume\_remain | 
+*N/A* | regionID | region\_id | New field introduced in ESI.  Historical data will be populated based on stationID where possible.  This won't be possible with certain player-owned stations due to access control rules.
+*N/A* | locationID | location\_id | New field introduced in ESI which replaces stationID.  For historic data, we'll set `locationID = stationID`.
+*N/A* | isCorp | is\_corp | New for the ESI, true when the order is placed on behalf of the player's corporation.  For historic data, we set this to true if `division` is greater than 1.  Otherwise, the result is ambiguous and `isCorp` will be set to false.
+
+#### Historic Conversion Notes
+* `walletDivision` will be populated historically from `accountKey`.
+* `accountKey` will be generated on the server for now (based on `walletDivision`), but will be removed in the future.
+* `charID` will be retained on historic entries, but not populated going forward.
+* `locationID` will be set to `stationID`.
+* `regionID` will be set to the region where `stationID` resides.  This may fail for recent orders if the station is a player-owned structure which can not be resolved.  In these cases, `regionID` will be 0.
+* `isCorp` will be set to true if `division > 1` and false otherwise.  This is the best we can do since this distinction is missing from historic data.
+
 ### Standing
+
+* `/characters/{character_id}/standings/`
+* `/corporations/{corporation_id}/standings/`
+
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+standingEntity | standingEntity | from\_type |
+fromID | fromID | from\_id |
+fromName | (deleted) | *N/A* | ESI expects lookup from `fromID`.
+standing | standing | standing |
+
 ### WalletJournal
 
 ESI endpoint(s):
