@@ -219,14 +219,10 @@ Raw Quantity | Quantity | Meaning
 -2 | 1 | A blueprint copy.  These can't be stacked.
 < -2 | 1 | Weird suff, probably bugs.  Example (from EveKit): flag:62, itemID:1021197887400, locationID:60014818, quantity:1, rawQuantity:-380, singleton:1, typeID:3468 (plastic wrap)
 
-I don't have any example of stacked blueprints, either originals or copies.
+We have enough information in historic EveKit data to preserve which assets were blueprint copies and which were originals, except for one weird case (plastic wrap).  The best we can likely do is record this information for historical purposes and rely on the ESI blueprint endpoint going forward.
 
-#### Historical Conversion Notes
-* Quantity can be negative in historical data to indicate either a singleton (-1), or a blueprint (-1 = original, -2 = copy).  To preserve this distinction but remain consistent with future data, we'll make the following conversions:
-  * We'll introduce a new String field called `blueprint` which is only populated for historic data.  `blueprint = "copy"` if `quantity = -2`.  Otherwise, `blueprint = "original"` if `quantity = -1` and `itemID` is a blueprint.   `blueprint = null` otherwise, or if we can't resolve `typeID` (e.g. deleted from the SDE).
-  * We'll set `singleton = true` if `quantity = -1` representing either an unpackaged (non-stackable) singleton element and/or a blueprint original (note that blueprint originals are also unstackable, so this is consistent).
-  * We'll set `quantity = rawQuantity` in any case where `quantity < 0`.  This is to remain consistent with `quantity` going forward which will always be positive.
-  * If/when CCP introduces a proper blueprint field for assets, we'll populate the `blueprint` field appropriately.  Otherwise, it will be null for ESI data.
+#### Historic Conversion Notes
+* To retain historic blueprint information, we'll introduce a new String field called `blueprint`.  We'll set `blueprint = "copy"` if `rawQuantity = -2`, `blueprint = "original"` if `rawQuantity = -1` and `itemID` is a blueprint, otherwise `blueprint = null`.
 * `locationType` will be populated for historic data using the technique described [here](https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb#file-id_ranges-md).  Specifically:
 
 ```
