@@ -76,7 +76,7 @@ Each change can be in one of the following states:
   * **beta** [AccountBalance](#accountbalance)
   * **N/A** [AccountStatus](#accountstatus)
   * **dev** [Asset](#asset)
-  * **pending** [Blueprint](#blueprint)
+  * **dev** [Blueprint](#blueprint)
   * **pending** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
   * **pending** [ContactLabel](#contactlabel)
@@ -237,6 +237,25 @@ if (locationID >= 30000000 && locationID <= 32000000) {
 * In historic data, contained assets would set `locationID = 0`.  In the ESI, `locationID` is now the `itemID` of the containing asset.  To maintain consistency with the ESI going forward, we'll set `locationID = container` when `locationID = 0` for historic data.  We can then remove the `container` field.
 
 ### Blueprint
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/blueprints/`
+* `/corporations/{corporation_id}/blueprints/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+itemID | itemID | item\_id |
+locationID | locationID | location\_id |
+typeID | typeID | type\_id |
+typeName | (deleted) | *N/A* | ESI requires lookup from typeID.
+flagID | (deleted) | *N/A* | Inventory flag, now represented by the enumerated type `location_flag`.  For historic data, `location_flag` will be populated by mapping `flagID` using the [inventory types table](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/location_flag.py).
+*N/A* | locationFlag | location\_flag | Enumerated type describing location.
+quantity | quantity | quantity | 
+timeEfficiency | timeEfficiency | time_efficiency |
+materialEfficiency | materialEfficiency | material_efficiency | 
+runs | runs | runs | 
+
 ### Bookmark
 ### Contact
 ### ContactLabel
