@@ -202,7 +202,7 @@ flag | (deleted) | *N/A* | This is replaced by the enumerated type location\_fla
 *N/A* | locationFlag | location\_flag | Replaces `flag`.  See conversion notes below for historic data.
 singleton | singleton | is\_singleton | 
 rawQuantity | (deleted) | *N/A* | This field is negative when encoding blueprint and singleton information.  See conversion notes below. 
-*N/A* | blueprint | *N/A* | New field to retain historic information.  See conversion notes below.
+*N/A* | blueprintType | *N/A* | New field to retain historic information.  See conversion notes below.
 container | (deleted) | *N/A* | This is an EveKit specific encoding which gives the `itemID` of the container in which this asset is stored.  In the ESI, the `itemID` of the parent of a contained asset is now stored in `locationID`.  See conversion notes below.
 
 #### Raw Quantity and Quantity in Historic Data
@@ -222,7 +222,7 @@ Raw Quantity | Quantity | Meaning
 We have enough information in historic EveKit data to preserve which assets were blueprint copies and which were originals, except for one weird case (plastic wrap).  The best we can likely do is record this information for historical purposes and rely on the ESI blueprint endpoint going forward.
 
 #### Historic Conversion Notes
-* To retain historic blueprint information, we'll introduce a new String field called `blueprint`.  We'll set `blueprint = "copy"` if `rawQuantity = -2`, `blueprint = "original"` if `rawQuantity = -1` and `itemID` is a blueprint, otherwise `blueprint = null`.
+* To retain historic blueprint information, we'll introduce a new String field called `blueprintType`.  We'll set `blueprintType = "copy"` if `rawQuantity = -2`, `blueprintType = "original"` if `rawQuantity = -1` and `itemID` is a blueprint, otherwise `blueprintType = null`.
 * `locationType` will be populated for historic data using the technique described [here](https://gist.github.com/a-tal/5ff5199fdbeb745b77cb633b7f4400bb#file-id_ranges-md).  Specifically:
 
 ```
