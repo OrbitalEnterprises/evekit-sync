@@ -4,16 +4,17 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.evekit.account.EveKitRefDataProvider;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -63,25 +64,10 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   public static final AttributeSelector ANY_SELECTOR = new AttributeSelector("{ any: true }");
 
   // List of endpoints we should skip during synchronization (separate with '|')
-  public static final String    PROP_EXCLUDE_SYNC               = "enterprises.orbital.evekit.account.exclude_sync";
+  public static final String PROP_EXCLUDE_SYNC = "enterprises.orbital.evekit.account.exclude_sync";
 
   // Account to be synchronized
   protected SynchronizedEveAccount account;
-
-  // Global map of locks to protect against races on the same (endpoint, account) pair
-  protected static Map<Pair<ESISyncEndpoint, Long>, Object> handlerLock = new HashMap<>();
-
-  protected Object getHandlerLock(ESISyncEndpoint ep, SynchronizedEveAccount acct) {
-    synchronized (handlerLock) {
-      Object lck = handlerLock.get(Pair.of(ep, acct.getAid()));
-      if (lck == null) {
-        lck = new Long(OrbitalProperties.getCurrentTime());
-        handlerLock.put(Pair.of(ep, acct.getAid()), lck);
-      }
-      return lck;
-    }
-  }
-
 
   /**
    * All synchronizer instances must be initialized with the account they will sync.
@@ -122,9 +108,10 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    * @throws IOException if a failure occurs while refreshing the access token.
    */
   protected String accessToken() throws IOException {
-    return account.refreshToken(PersistentProperty.getLongPropertyWithFallback(PROP_MIN_ESI_VALID_TIME, DEF_MIN_ESI_VALID_TIME),
-                                OrbitalProperties.getGlobalProperty(PROP_ESI_CLIENT_ID),
-                                OrbitalProperties.getGlobalProperty(PROP_ESI_SECRET_KEY));
+    return account.refreshToken(
+        PersistentProperty.getLongPropertyWithFallback(PROP_MIN_ESI_VALID_TIME, DEF_MIN_ESI_VALID_TIME),
+        OrbitalProperties.getGlobalProperty(PROP_ESI_CLIENT_ID),
+        OrbitalProperties.getGlobalProperty(PROP_ESI_SECRET_KEY));
   }
 
   // Convenience function to construct a time selector for the give time.
@@ -141,9 +128,9 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    * Retrieve all data items of the specified type live at the specified time.
    * This function continues to accumulate results until a query returns no results.
    *
-   * @param time the "live" time for the retrieval.
+   * @param time  the "live" time for the retrieval.
    * @param query an interface which performs the type appropriate query call.
-   * @param <A> class of the object which will be returned.
+   * @param <A>   class of the object which will be returned.
    * @return the list of results.
    * @throws IOException on any DB error.
    */
@@ -155,7 +142,8 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     List<A> nextBatch = query.query(contid, ats);
     while (!nextBatch.isEmpty()) {
       results.addAll(nextBatch);
-      contid = nextBatch.get(nextBatch.size() - 1).getCid();
+      contid = nextBatch.get(nextBatch.size() - 1)
+                        .getCid();
       nextBatch = query.query(contid, ats);
     }
     return results;
@@ -193,7 +181,8 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    * @return a time in the future when the next synchronization should be scheduled.
    */
   protected long defaultNextEvent() {
-    return OrbitalProperties.getCurrentTime() + OrbitalProperties.getLongGlobalProperty(PROP_DEFAULT_SYNC_DELAY, DEF_DEFAULT_SYNC_DELAY);
+    return OrbitalProperties.getCurrentTime() + OrbitalProperties.getLongGlobalProperty(PROP_DEFAULT_SYNC_DELAY,
+                                                                                        DEF_DEFAULT_SYNC_DELAY);
   }
 
   /**
@@ -302,17 +291,18 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
   /**
    * Utility method to check for common problems with API responses.  The current list of common problems are:
-   *
+   * <p>
    * <ul>
-   *   <li>A return code other than 200.</li>
-   *   <li>A null data response.</li>
+   * <li>A return code other than 200.</li>
+   * <li>A null data response.</li>
    * </ul>
    *
    * @param response the API response to check.
    * @throws IOException if a common problem is found in the response.
    */
   protected static void checkCommonProblems(ApiResponse<?> response) throws IOException {
-    if (response.getStatusCode() != HttpStatus.SC_OK) throw new IOException("Unexpected return code: " + response.getStatusCode());
+    if (response.getStatusCode() != HttpStatus.SC_OK)
+      throw new IOException("Unexpected return code: " + response.getStatusCode());
     if (response.getData() == null) throw new IOException("Response data is null");
   }
 
@@ -323,137 +313,131 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   public void synch(ESIAccountClientProvider cp) {
     log.fine("Starting synchronization: " + getContext());
 
-    // Grab a lock which will serialize synchronization across all handlers with
-    // the same endpoint and account.  Since we use optimistic concurrency in the database,
-    // this protects against races where multiple instances of the same handler are running.
-    synchronized (getHandlerLock(endpoint(), account())) {
+    try {
+      // Get the current tracker.  If no tracker exists, then we'll exit in the catch block below.
+      ESIEndpointSyncTracker tracker = getCurrentTracker();
+
+      // If the tracker is already refreshed, then exit
+      if (tracker.isRefreshed()) {
+        log.fine("Tracker is already refreshed: " + getContext());
+        return;
+      }
+
+      // Check whether this tracker has been in progress too long.  If so, then close it down and exit.
+      if (tracker.getSyncStart() > 0) {
+        long delaySinceStart = OrbitalProperties.getCurrentTime() - tracker.getSyncStart();
+        if (delaySinceStart > maxDelay()) {
+          log.fine("Forcing tracker " + tracker + " to terminate due to delay: " + getContext());
+          tracker.setStatus(ESISyncState.WARNING);
+          tracker.setDetail("Terminated due to excessive delay");
+          ESIEndpointSyncTracker.finishTracker(tracker);
+          return;
+        }
+      }
+
+      // Verify all pre-reqs have been satisfied.  If not then exit and scheduler will try again later.
+      if (!prereqSatisfied()) {
+        log.fine("Pre-reqs not satisfied: " + getContext());
+        return;
+      }
+
+      // Start sync for this endpoint
+      if (tracker.getSyncStart() <= 0) {
+        tracker.setSyncStart(OrbitalProperties.getCurrentTime());
+        tracker = EveKitUserAccountProvider.update(tracker);
+      }
+
+      // Set syncTime to the start of the current tracker
+      long syncTime = tracker.getSyncStart();
+      long nextEvent;
 
       try {
-        // Get the current tracker.  If no tracker exists, then we'll exit in the catch block below.
-        ESIEndpointSyncTracker tracker = getCurrentTracker();
+        // Retrieve server and process server data.  Any client or processing
+        // errors will result in marking the tracker as in error with an endpoint
+        // specific time for the next scheduled event.  Otherwise, the schedule time
+        // returned by the data processor is used.
+        List<CachedData> updateList = new ArrayList<>();
+        log.fine("Retrieving server data: " + getContext());
+        ESIAccountServerResult<ServerDataType> serverData = getServerData(cp);
+        nextEvent = serverData.getExpiryTime();
+        log.fine("Processing server data: " + getContext());
+        processServerData(syncTime, serverData, updateList);
 
-        // If the tracker is already refreshed, then exit
-        if (tracker.isRefreshed()) {
-          log.fine("Tracker is already refreshed: " + getContext());
-          return;
-        }
-
-        // Check whether this tracker has been in progress too long.  If so, then close it down and exit.
-        if (tracker.getSyncStart() > 0) {
-          long delaySinceStart = OrbitalProperties.getCurrentTime() - tracker.getSyncStart();
-          if (delaySinceStart > maxDelay()) {
-            log.fine("Forcing tracker " + tracker + " to terminate due to delay: " + getContext());
-            tracker.setStatus(ESISyncState.WARNING);
-            tracker.setDetail("Terminated due to excessive delay");
-            ESIEndpointSyncTracker.finishTracker(tracker);
-            return;
-          }
-        }
-
-        // Verify all pre-reqs have been satisfied.  If not then exit and scheduler will try again later.
-        if (!prereqSatisfied()) {
-          log.fine("Pre-reqs not satisfied: " + getContext());
-          return;
-        }
-
-        // Start sync for this endpoint
-        if (tracker.getSyncStart() <= 0) {
-          tracker.setSyncStart(OrbitalProperties.getCurrentTime());
-          tracker = EveKitUserAccountProvider.update(tracker);
-        }
-
-        // Set syncTime to the start of the current tracker
-        long syncTime = tracker.getSyncStart();
-        long nextEvent;
-
-        try {
-          // Retrieve server and process server data.  Any client or processing
-          // errors will result in marking the tracker as in error with an endpoint
-          // specific time for the next scheduled event.  Otherwise, the schedule time
-          // returned by the data processor is used.
-          List<CachedData> updateList = new ArrayList<>();
-          log.fine("Retrieving server data: " + getContext());
-          ESIAccountServerResult<ServerDataType> serverData = getServerData(cp);
-          nextEvent = serverData.getExpiryTime();
-          log.fine("Processing server data: " + getContext());
-          processServerData(syncTime, serverData, updateList);
-
-          // Commit all updates.  We process updates in batches with sizes that can be varied dynamically by the
-          // admin as needed.  Smaller batches prevent long running transactions from tying up contended resources.
-          log.fine("Storing updates: " + getContext());
-          int batchSize = PersistentProperty.getIntegerPropertyWithFallback(PROP_REF_COMMIT_BATCH_SIZE,
-                                                                            DEF_REF_COMMIT_BATCH_SIZE);
-          int count = updateList.size();
-          if (count > 0) {
-            log.fine("Processing " + updateList.size() + " total updates: " + getContext());
-            for (int i = 0, endIndex = Math.min(i + batchSize, count); i < count; i = endIndex, endIndex = Math.min(
-                i + batchSize, count)) {
-              List<CachedData> nextBlock = updateList.subList(i, endIndex);
-              try {
-                EveKitUserAccountProvider.getFactory()
-                                         .runTransaction(() -> {
-                                           // Handle next block of commits.
-                                           log.fine("Processing " + nextBlock.size() + " updates: " + getContext());
-                                           long start = OrbitalProperties.getCurrentTime();
-                                           for (CachedData obj : nextBlock) {
-                                             commit(syncTime, obj);
-                                           }
-                                           long end = OrbitalProperties.getCurrentTime();
-                                           if (log.isLoggable(Level.FINE)) {
-                                             // Commit commit rate if FINE if debugging
-                                             long delay = end - start;
-                                             double rate = delay / (double) nextBlock.size();
-                                             log.fine(
-                                                 "Process rate = " + rate + " milliseconds/update: " + getContext());
-                                           }
-                                         });
-              } catch (Exception e) {
-                if (e.getCause() instanceof IOException) throw (IOException) e.getCause();
-                log.log(Level.SEVERE, "query error: " + getContext(), e);
-                throw new IOException(e.getCause());
-              }
+        // Commit all updates.  We process updates in batches with sizes that can be varied dynamically by the
+        // admin as needed.  Smaller batches prevent long running transactions from tying up contended resources.
+        log.fine("Storing updates: " + getContext());
+        int batchSize = PersistentProperty.getIntegerPropertyWithFallback(PROP_REF_COMMIT_BATCH_SIZE,
+                                                                          DEF_REF_COMMIT_BATCH_SIZE);
+        int count = updateList.size();
+        if (count > 0) {
+          log.fine("Processing " + updateList.size() + " total updates: " + getContext());
+          for (int i = 0, endIndex = Math.min(i + batchSize, count); i < count; i = endIndex, endIndex = Math.min(
+              i + batchSize, count)) {
+            List<CachedData> nextBlock = updateList.subList(i, endIndex);
+            try {
+              EveKitUserAccountProvider.getFactory()
+                                       .runTransaction(() -> {
+                                         // Handle next block of commits.
+                                         log.fine("Processing " + nextBlock.size() + " updates: " + getContext());
+                                         long start = OrbitalProperties.getCurrentTime();
+                                         for (CachedData obj : nextBlock) {
+                                           commit(syncTime, obj);
+                                         }
+                                         long end = OrbitalProperties.getCurrentTime();
+                                         if (log.isLoggable(Level.FINE)) {
+                                           // Commit commit rate if FINE if debugging
+                                           long delay = end - start;
+                                           double rate = delay / (double) nextBlock.size();
+                                           log.fine(
+                                               "Process rate = " + rate + " milliseconds/update: " + getContext());
+                                         }
+                                       });
+            } catch (Exception e) {
+              if (e.getCause() instanceof IOException) throw (IOException) e.getCause();
+              log.log(Level.SEVERE, "query error: " + getContext(), e);
+              throw new IOException(e.getCause());
             }
           }
-
-          log.fine("Update and store finished normally: " + getContext());
-          tracker.setStatus(ESISyncState.FINISHED);
-          tracker.setDetail("Updated successfully");
-        } catch (ApiException e) {
-          // Client error while updating, mark the error in the tracker and exit
-          log.log(Level.WARNING, "ESI client error: " + getContext(), e);
-          nextEvent = -1;
-          tracker.setStatus(ESISyncState.ERROR);
-          tracker.setDetail("ESI client error, contact the site admin if this problem persists");
-        } catch (IOException e) {
-          // Other error while updating, mark the error in the tracker and exit
-          // Database errors during the update should end up here.
-          log.log(Level.WARNING, "Error during update: " + getContext(), e);
-          nextEvent = -1;
-          tracker.setStatus(ESISyncState.ERROR);
-          tracker.setDetail("Server error, contact the site admin if this problem persists");
         }
 
-        // Complete the tracker
-        ESIEndpointSyncTracker.finishTracker(tracker);
-
-        // Exit without scheduling if account no longer has required scopes or owning
-        // user is no longer active.
-        if (!account.hasScope(endpoint().getScope()
-                                        .getName()) || !account.getUserAccount()
-                                                               .isActive())
-          return;
-
-        // Schedule the next event
-        nextEvent = nextEvent < 0 ? defaultNextEvent() : nextEvent;
-        ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(account, endpoint(), nextEvent);
-
-      } catch (TrackerNotFoundException e) {
-        // No action to take, exit
-        log.fine("No unfinished tracker: " + getContext());
+        log.fine("Update and store finished normally: " + getContext());
+        tracker.setStatus(ESISyncState.FINISHED);
+        tracker.setDetail("Updated successfully");
+      } catch (ApiException e) {
+        // Client error while updating, mark the error in the tracker and exit
+        log.log(Level.WARNING, "ESI client error: " + getContext(), e);
+        nextEvent = -1;
+        tracker.setStatus(ESISyncState.ERROR);
+        tracker.setDetail("ESI client error, contact the site admin if this problem persists");
       } catch (IOException e) {
-        // Database errors during the update or access to the tracker will end up here.
-        log.log(Level.WARNING, "Error during synchronization, tracker may not be updated: " + getContext(), e);
+        // Other error while updating, mark the error in the tracker and exit
+        // Database errors during the update should end up here.
+        log.log(Level.WARNING, "Error during update: " + getContext(), e);
+        nextEvent = -1;
+        tracker.setStatus(ESISyncState.ERROR);
+        tracker.setDetail("Server error, contact the site admin if this problem persists");
       }
+
+      // Complete the tracker
+      ESIEndpointSyncTracker.finishTracker(tracker);
+
+      // Exit without scheduling if account no longer has required scopes or owning
+      // user is no longer active.
+      if (!account.hasScope(endpoint().getScope()
+                                      .getName()) || !account.getUserAccount()
+                                                             .isActive())
+        return;
+
+      // Schedule the next event
+      nextEvent = nextEvent < 0 ? defaultNextEvent() : nextEvent;
+      ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(account, endpoint(), nextEvent);
+
+    } catch (TrackerNotFoundException e) {
+      // No action to take, exit
+      log.fine("No unfinished tracker: " + getContext());
+    } catch (IOException e) {
+      // Database errors during the update or access to the tracker will end up here.
+      log.log(Level.WARNING, "Error during synchronization, tracker may not be updated: " + getContext(), e);
     }
   }
 
