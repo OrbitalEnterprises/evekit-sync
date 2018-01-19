@@ -177,7 +177,7 @@ Old Model Field | New Model Field | ESI Field | Notes
 ---|---|---|---
 accountID | (deleted) | *N/A* | This field does not exist in the ESI and will be removed from historic data.
 *N/A* | division | division  | Only exists for corporations. Set to 1 for characters (but can be ignored).  For historic data, this field will be computed as `division = accountKey - 1000 + 1`.
-accountKey | accountKey (generated) | N/A | `Division` replaces this field in the ESI and is numbered from 1-7 instead of the previous numbering scheme.  For now, we'll generate this field from division using the equation `accountKey = division - + 1000` 
+accountKey | accountKey (generated) | N/A | `Division` replaces this field in the ESI and is numbered from 1-7 instead of the previous numbering scheme.  For now, we'll generate this field from division using the equation `accountKey = division - 1 + 1000` 
 balance | balance | balance | 
 
 ### AccountStatus
@@ -304,9 +304,9 @@ duration | duration | duration |
 escrow | escrow | escrow | 
 issued | issued | issued |
 minVolume | minVolume | min\_volume |
-orderState | orderState | state |
+orderState | orderState | state | Now an enumerated type instead of an integer.
 price | price | price | 
-orderRange | orderRange | range | 
+orderRange | orderRange | range | Now an enumerated type instead of an integer.
 stationID | (deleted) | *N/A* | Replaced by locationID.
 typeID | typeID | type\_id | 
 volEntered | volEntered | volume\_total |
