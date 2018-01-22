@@ -93,7 +93,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
       } catch (ApiException e) {
         if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
           // Trap 404's since these can occur on some assets we might try to look up
-          log.warning("Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
+          log.warning(getContext() + "Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
         } else
           // Anything else we rethrow
           throw e;
