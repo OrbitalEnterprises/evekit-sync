@@ -13,6 +13,7 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Asset;
 import enterprises.orbital.evekit.model.common.Location;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.*;
@@ -80,14 +81,23 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
                            .stream()
                            .map(GetCorporationsCorporationIdAssets200Ok::getItemId)
                            .collect(Collectors.toList());
-      ApiResponse<List<PostCorporationsCorporationIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCorporationsCorporationIdAssetsLocationsWithHttpInfo(
-          (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
-      checkCommonProblems(nextLocationBatch);
-      resultData.assetLocations.addAll(nextLocationBatch.getData());
-      ApiResponse<List<PostCorporationsCorporationIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
-          (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
-      checkCommonProblems(nextNameBatch);
-      resultData.assetNames.addAll(nextNameBatch.getData());
+      try {
+        ApiResponse<List<PostCorporationsCorporationIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCorporationsCorporationIdAssetsLocationsWithHttpInfo(
+            (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
+        checkCommonProblems(nextLocationBatch);
+        resultData.assetLocations.addAll(nextLocationBatch.getData());
+        ApiResponse<List<PostCorporationsCorporationIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
+            (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
+        checkCommonProblems(nextNameBatch);
+        resultData.assetNames.addAll(nextNameBatch.getData());
+      } catch (ApiException e) {
+        if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
+          // Trap 404's since these can occur on some assets we might try to look up
+          log.warning("Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
+        } else
+          // Anything else we rethrow
+          throw e;
+      }
       i += BATCH_SIZE;
     }
     return new ESIAccountServerResult<>(expiry, resultData);

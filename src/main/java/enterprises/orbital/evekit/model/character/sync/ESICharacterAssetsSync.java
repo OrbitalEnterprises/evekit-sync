@@ -13,6 +13,7 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Asset;
 import enterprises.orbital.evekit.model.common.Location;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.*;
@@ -80,6 +81,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
                            .stream()
                            .map(GetCharactersCharacterIdAssets200Ok::getItemId)
                            .collect(Collectors.toList());
+      try {
       ApiResponse<List<PostCharactersCharacterIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCharactersCharacterIdAssetsLocationsWithHttpInfo(
           (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
       checkCommonProblems(nextLocationBatch);
@@ -88,6 +90,14 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
           (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
       checkCommonProblems(nextNameBatch);
       resultData.assetNames.addAll(nextNameBatch.getData());
+      } catch (ApiException e) {
+        if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
+          // Trap 404's since these can occur on some assets we might try to look up
+          log.warning("Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
+        } else
+          // Anything else we rethrow
+          throw e;
+      }
       i += BATCH_SIZE;
     }
     return new ESIAccountServerResult<>(expiry, resultData);
