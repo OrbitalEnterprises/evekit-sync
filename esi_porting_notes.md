@@ -75,8 +75,8 @@ Each change can be in one of the following states:
 * Common Model Changes
   * **beta** [AccountBalance](#accountbalance)
   * **N/A** [AccountStatus](#accountstatus)
-  * **dev** [Asset](#asset)
-  * **dev** [Blueprint](#blueprint)
+  * **beta** [Asset](#asset)
+  * **beta** [Blueprint](#blueprint)
   * **pending** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
   * **pending** [ContactLabel](#contactlabel)
@@ -89,9 +89,9 @@ Each change can be in one of the following states:
   * **pending** [KillAttacker](#killattacker)
   * **pending** [KillItem](#killitem)
   * **pending** [KillVictim](#killvictim)
-  * **dev** [Location](#location)
-  * **dev** [MarketOrder](#marketorder)
-  * **dev** [Standing](#standing)
+  * **beta** [Location](#location)
+  * **beta** [MarketOrder](#marketorder)
+  * **beta** [Standing](#standing)
   * **beta** [WalletJournal](#walletjournal)
   * **beta** [WalletTransaction](#wallettransaction)
 
@@ -227,14 +227,15 @@ We have enough information in historic EveKit data to preserve which assets were
 
 ```
 if (locationID >= 30000000 && locationID <= 32000000) { 
-  location_flag = solar_system 
+  location_type = solar_system 
 } else if (locationID >= 60000000 && locationID <= 64000000) { 
-  location_flag = station 
+  location_type = station 
 } else { 
-  location_flag = other 
+  location_type = other 
 }
 ```
 * In historic data, contained assets would set `locationID = 0`.  In the ESI, `locationID` is now the `itemID` of the containing asset.  To maintain consistency with the ESI going forward, we'll set `locationID = container` when `locationID = 0` for historic data.  We can then remove the `container` field.
+* `locationFlag` will be set from `flag` using the mapping [here](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/location_flag.py).
 
 ### Blueprint
 
