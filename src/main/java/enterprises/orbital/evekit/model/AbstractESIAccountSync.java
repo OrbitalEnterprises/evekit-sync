@@ -2,10 +2,14 @@ package enterprises.orbital.evekit.model;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
+import enterprises.orbital.eve.esi.client.api.AssetsApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
+import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdAssets200Ok;
+import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdBlueprints200Ok;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.utils.DateUtils;
 import org.joda.time.DateTime;
@@ -290,6 +294,25 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   }
 
   /**
+   * Utility method to extract X-Pages header from an ESI ApiResponse.
+   *
+   * @param result the ApiResponse which may contain an "x-pages" header.
+   * @param def    value to return if header does not contain "x-pages" or the header can not be parsed properly.
+   * @return x-pages value as an integer, or the default.
+   */
+  protected static int extractXPages(ApiResponse<?> result, int def) {
+    try {
+      String expireHeader = result.getHeaders()
+                                  .get("X-Pages")
+                                  .get(0);
+      return Integer.valueOf(expireHeader);
+    } catch (Exception e) {
+      log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
+    }
+    return def;
+  }
+
+  /**
    * Utility method to check for common problems with API responses.  The current list of common problems are:
    * <p>
    * <ul>
@@ -469,6 +492,25 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
   public static String nullSafeEnum(Enum<?> value, String def) {
     return value == null ? def : value.toString();
+  }
+
+  public interface GetNextPage<A> {
+    ApiResponse<List<A>> retrievePage(int page) throws ApiException, IOException;
+  }
+
+  protected static <A> Pair<Long, List<A>> pagedResultRetriever(GetNextPage<A> pageFetcher) throws ApiException, IOException {
+    List<A> results = new ArrayList<>();
+    int page = 1, maxPages = 1;
+    long expiry = 0L;
+    while (page <= maxPages) {
+      ApiResponse<List<A>> result = pageFetcher.retrievePage(page);
+      checkCommonProblems(result);
+      expiry = extractExpiry(result, -1);
+      maxPages = extractXPages(result, 1);
+      results.addAll(result.getData());
+      page++;
+    }
+    return Pair.of(expiry, results);
   }
 
 }

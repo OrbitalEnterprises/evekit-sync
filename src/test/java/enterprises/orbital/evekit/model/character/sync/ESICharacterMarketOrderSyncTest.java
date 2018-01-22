@@ -1,0 +1,309 @@
+package enterprises.orbital.evekit.model.character.sync;
+
+import enterprises.orbital.base.OrbitalProperties;
+import enterprises.orbital.eve.esi.client.api.MarketApi;
+import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
+import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdOrders200Ok;
+import enterprises.orbital.evekit.TestBase;
+import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
+import enterprises.orbital.evekit.model.*;
+import enterprises.orbital.evekit.model.common.MarketOrder;
+import org.easymock.EasyMock;
+import org.joda.time.DateTime;
+import org.joda.time.DateTimeZone;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@SuppressWarnings("Duplicates")
+public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
+
+  // Local mocks and other objects
+  private ESIAccountClientProvider mockServer;
+  private MarketApi mockEndpoint;
+  private long testTime = 1238L;
+
+  private static Object[][] marketTestData;
+
+  static {
+    // MarketOrder test data
+    // 0 long orderID;
+    // 1 int walletDivision;
+    // 2 boolean bid;
+    // 3 long charID;
+    // 4 int duration;
+    // 5 BigDecimal escrow;
+    // 6 long issued = -1;
+    // 7 int minVolume;
+    // 8 String orderState;
+    // 9 BigDecimal price;
+    // 10 String orderRange;
+    // 11 int typeID;
+    // 12 int volEntered;
+    // 13 int volRemaining;
+    // 14 int regionID;
+    // 15 long locationID;
+    // 16 boolean isCorp;
+    int size = 50 + TestBase.getRandomInt(50);
+    marketTestData = new Object[size][17];
+    int orderStateLen = GetCharactersCharacterIdOrders200Ok.StateEnum.values().length;
+    int orderRangeLen = GetCharactersCharacterIdOrders200Ok.RangeEnum.values().length;
+    for (int i = 0; i < size; i++) {
+      marketTestData[i][0] = TestBase.getUniqueRandomLong();
+      marketTestData[i][1] = 1;
+      marketTestData[i][2] = TestBase.getRandomBoolean();
+      marketTestData[i][3] = TestBase.getRandomLong();
+      marketTestData[i][4] = TestBase.getRandomInt();
+      marketTestData[i][5] = BigDecimal.valueOf(TestBase.getRandomDouble(10000))
+                                       .setScale(2, RoundingMode.HALF_UP);
+      marketTestData[i][6] = TestBase.getRandomLong();
+      marketTestData[i][7] = TestBase.getRandomInt();
+      marketTestData[i][8] = GetCharactersCharacterIdOrders200Ok.StateEnum.values()[TestBase.getRandomInt(
+          orderStateLen)];
+      marketTestData[i][9] = BigDecimal.valueOf(TestBase.getRandomDouble(10000))
+                                       .setScale(2, RoundingMode.HALF_UP);
+      marketTestData[i][10] = GetCharactersCharacterIdOrders200Ok.RangeEnum.values()[TestBase.getRandomInt(
+          orderRangeLen)];
+      marketTestData[i][11] = TestBase.getRandomInt();
+      marketTestData[i][12] = TestBase.getRandomInt();
+      marketTestData[i][13] = TestBase.getRandomInt();
+      marketTestData[i][14] = TestBase.getRandomInt();
+      marketTestData[i][15] = TestBase.getRandomLong();
+      marketTestData[i][16] = TestBase.getRandomBoolean();
+    }
+  }
+
+  @Override
+  @Before
+  public void setup() throws Exception {
+    super.setup();
+
+    // Prepare a test sync tracker
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_MARKET, 1234L);
+
+    // Initialize time keeper
+    OrbitalProperties.setTimeGenerator(() -> testTime);
+  }
+
+  @Override
+  @After
+  public void teardown() throws Exception {
+    // Cleanup test specific tables after each test
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> {
+                               EveKitUserAccountProvider.getFactory()
+                                                        .getEntityManager()
+                                                        .createQuery("DELETE FROM MarketOrder ")
+                                                        .executeUpdate();
+                             });
+    OrbitalProperties.setTimeGenerator(null);
+    super.teardown();
+  }
+
+  // Mock up server interface
+  private void setupOkMock() throws Exception {
+    mockEndpoint = EasyMock.createMock(MarketApi.class);
+    // Setup asset retrieval mock calls
+    List<GetCharactersCharacterIdOrders200Ok> orderList =
+        Arrays.stream(marketTestData)
+              .map(x -> {
+                GetCharactersCharacterIdOrders200Ok nextOrder = new GetCharactersCharacterIdOrders200Ok();
+                nextOrder.setOrderId((Long) x[0]);
+                nextOrder.setIsBuyOrder((Boolean) x[2]);
+                nextOrder.setDuration((Integer) x[4]);
+                nextOrder.setEscrow(((BigDecimal) x[5]).doubleValue());
+                nextOrder.setIssued(new DateTime(new Date((Long) x[6])));
+                nextOrder.setMinVolume((Integer) x[7]);
+                nextOrder.setState((GetCharactersCharacterIdOrders200Ok.StateEnum) x[8]);
+                nextOrder.setPrice(((BigDecimal) x[9]).doubleValue());
+                nextOrder.setRange((GetCharactersCharacterIdOrders200Ok.RangeEnum) x[10]);
+                nextOrder.setTypeId((Integer) x[11]);
+                nextOrder.setVolumeTotal((Integer) x[12]);
+                nextOrder.setVolumeRemain((Integer) x[13]);
+                nextOrder.setRegionId((Integer) x[14]);
+                nextOrder.setLocationId((Long) x[15]);
+                nextOrder.setIsCorp((Boolean) x[16]);
+                return nextOrder;
+              })
+              .collect(Collectors.toList());
+    Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
+    ApiResponse<List<GetCharactersCharacterIdOrders200Ok>> apir = new ApiResponse<>(200, headers, orderList);
+    EasyMock.expect(mockEndpoint.getCharactersCharacterIdOrdersWithHttpInfo(
+        EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+        EasyMock.isNull(),
+        EasyMock.anyString(),
+        EasyMock.isNull(),
+        EasyMock.isNull()))
+            .andReturn(apir);
+    // Setup server mock
+    mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
+    EasyMock.expect(mockServer.getMarketApi())
+            .andReturn(mockEndpoint);
+  }
+
+  private void verifyDataUpdate() throws Exception {
+    // Retrieve all stored data
+    List<MarketOrder> storedData = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
+        MarketOrder.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+
+    // Check data matches test data
+    Assert.assertEquals(marketTestData.length, storedData.size());
+
+    // Check stored data
+    for (int i = 0; i < marketTestData.length; i++) {
+      MarketOrder nextEl = storedData.get(i);
+      Assert.assertEquals((long) (Long) marketTestData[i][0], nextEl.getOrderID());
+      Assert.assertEquals((int) (Integer) marketTestData[i][1], nextEl.getWalletDivision());
+      Assert.assertEquals(marketTestData[i][2], nextEl.isBid());
+      Assert.assertEquals(0L, nextEl.getCharID());
+      Assert.assertEquals((int) (Integer) marketTestData[i][4], nextEl.getDuration());
+      Assert.assertEquals(marketTestData[i][5], nextEl.getEscrow());
+      Assert.assertEquals((long) (Long) marketTestData[i][6], nextEl.getIssued());
+      Assert.assertEquals((int) (Integer) marketTestData[i][7], nextEl.getMinVolume());
+      Assert.assertEquals(marketTestData[i][8].toString(), nextEl.getOrderState());
+      Assert.assertEquals(marketTestData[i][9], nextEl.getPrice());
+      Assert.assertEquals(marketTestData[i][10].toString(), nextEl.getOrderRange());
+      Assert.assertEquals((int) (Integer) marketTestData[i][11], nextEl.getTypeID());
+      Assert.assertEquals((int) (Integer) marketTestData[i][12], nextEl.getVolEntered());
+      Assert.assertEquals((int) (Integer) marketTestData[i][13], nextEl.getVolRemaining());
+      Assert.assertEquals((int) (Integer) marketTestData[i][14], nextEl.getRegionID());
+      Assert.assertEquals((long) (Long) marketTestData[i][15], nextEl.getLocationID());
+      Assert.assertEquals(marketTestData[i][16], nextEl.isCorp());
+    }
+  }
+
+  @Test
+  public void testSyncUpdate() throws Exception {
+    setupOkMock();
+    EasyMock.replay(mockServer, mockEndpoint);
+
+    // Perform the sync
+    ESICharacterMarketOrderSync sync = new ESICharacterMarketOrderSync(charSyncAccount);
+    sync.synch(mockServer);
+    EasyMock.verify(mockServer, mockEndpoint);
+
+    // Verify updated properly
+    verifyDataUpdate();
+
+    // Verify tracker was updated properly
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_MARKET);
+    Assert.assertEquals(1234L, syncTracker.getScheduled());
+    Assert.assertEquals(testTime, syncTracker.getSyncStart());
+    Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
+    Assert.assertEquals("Updated successfully", syncTracker.getDetail());
+    Assert.assertEquals(testTime, syncTracker.getSyncEnd());
+
+    // Verify new tracker was created with next sync time
+    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_MARKET);
+    long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    Assert.assertEquals(schedTime, syncTracker.getScheduled());
+  }
+
+  @Test
+  public void testSyncUpdateExisting() throws Exception {
+    setupOkMock();
+    EasyMock.replay(mockServer, mockEndpoint);
+
+    // Populate existing
+    for (Object[] aMarketTestData : marketTestData) {
+      MarketOrder newEl = new MarketOrder((Long) aMarketTestData[0],
+                                          1,
+                                          !((Boolean) aMarketTestData[2]),
+                                          0,
+                                          (Integer) aMarketTestData[4] + 1,
+                                          ((BigDecimal) aMarketTestData[5]).add(BigDecimal.ONE),
+                                          (Long) aMarketTestData[6] + 1,
+                                          (Integer) aMarketTestData[7] + 1,
+                                          aMarketTestData[8].toString(),
+                                          ((BigDecimal) aMarketTestData[9]).add(BigDecimal.ONE),
+                                          aMarketTestData[10].toString(),
+                                          (Integer) aMarketTestData[11] + 1,
+                                          (Integer) aMarketTestData[12] + 1,
+                                          (Integer) aMarketTestData[13] + 1,
+                                          (Integer) aMarketTestData[14] + 1,
+                                          (Long) aMarketTestData[15] + 1,
+                                          !((Boolean) aMarketTestData[16]));
+      newEl.setup(charSyncAccount, testTime - 1);
+      CachedData.update(newEl);
+    }
+
+    // Perform the sync
+    ESICharacterMarketOrderSync sync = new ESICharacterMarketOrderSync(charSyncAccount);
+    sync.synch(mockServer);
+    EasyMock.verify(mockServer, mockEndpoint);
+
+    // Verify old objects were evolved properly
+    List<MarketOrder> oldEls = AbstractESIAccountSync.retrieveAll(testTime - 1, (long contid, AttributeSelector at) ->
+        MarketOrder.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+
+    // Check data matches test data
+    Assert.assertEquals(marketTestData.length, oldEls.size());
+
+    // Check old data
+    for (int i = 0; i < marketTestData.length; i++) {
+      MarketOrder nextEl = oldEls.get(i);
+      Assert.assertEquals(testTime, nextEl.getLifeEnd());
+      Assert.assertEquals((long) (Long) marketTestData[i][0], nextEl.getOrderID());
+      Assert.assertEquals(1, nextEl.getWalletDivision());
+      Assert.assertEquals(!((Boolean) marketTestData[i][2]), nextEl.isBid());
+      Assert.assertEquals(0, nextEl.getCharID());
+      Assert.assertEquals((Integer) marketTestData[i][4] + 1, nextEl.getDuration());
+      Assert.assertEquals(((BigDecimal) marketTestData[i][5]).add(BigDecimal.ONE), nextEl.getEscrow());
+      Assert.assertEquals((Long) marketTestData[i][6] + 1, nextEl.getIssued());
+      Assert.assertEquals((Integer) marketTestData[i][7] + 1, nextEl.getMinVolume());
+      Assert.assertEquals(marketTestData[i][8].toString(), nextEl.getOrderState());
+      Assert.assertEquals(((BigDecimal) marketTestData[i][9]).add(BigDecimal.ONE), nextEl.getPrice());
+      Assert.assertEquals(marketTestData[i][10].toString(), nextEl.getOrderRange());
+      Assert.assertEquals((Integer) marketTestData[i][11] + 1, nextEl.getTypeID());
+      Assert.assertEquals((Integer) marketTestData[i][12] + 1, nextEl.getVolEntered());
+      Assert.assertEquals((Integer) marketTestData[i][13] + 1, nextEl.getVolRemaining());
+      Assert.assertEquals((Integer) marketTestData[i][14] + 1, nextEl.getRegionID());
+      Assert.assertEquals((Long) marketTestData[i][15] + 1, nextEl.getLocationID());
+      Assert.assertEquals(!((Boolean) marketTestData[i][16]), nextEl.isCorp());
+    }
+
+    // Verify updates which will also verify that all old alliances were properly end of life
+    verifyDataUpdate();
+
+    // Verify tracker was updated properly
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_MARKET);
+    Assert.assertEquals(1234L, syncTracker.getScheduled());
+    Assert.assertEquals(testTime, syncTracker.getSyncStart());
+    Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
+    Assert.assertEquals("Updated successfully", syncTracker.getDetail());
+    Assert.assertEquals(testTime, syncTracker.getSyncEnd());
+
+    // Verify new tracker was created with next sync time
+    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_MARKET);
+    long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    Assert.assertEquals(schedTime, syncTracker.getScheduled());
+  }
+
+}

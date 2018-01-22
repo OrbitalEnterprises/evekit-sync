@@ -1,5 +1,15 @@
 package enterprises.orbital.evekit.model;
 
+import enterprises.orbital.base.OrbitalProperties;
+import enterprises.orbital.evekit.account.SynchronizedEveAccount;
+import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
+import enterprises.orbital.evekit.model.character.Capsuleer;
+import enterprises.orbital.evekit.model.character.sync.*;
+import enterprises.orbital.evexmlapi.IEveXmlApi;
+import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
+import enterprises.orbital.evexmlapi.act.IAccountAPI;
+import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -7,45 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import enterprises.orbital.base.OrbitalProperties;
-import enterprises.orbital.evekit.account.SynchronizedEveAccount;
-import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
-import enterprises.orbital.evekit.model.character.Capsuleer;
-import enterprises.orbital.evekit.model.character.sync.CharacterAssetsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterBlueprintsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterBookmarksSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterCalendarEventAttendeeSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterChatChannelsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterContactListSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterContactNotificationSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterContractBidsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterContractItemsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterContractsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterFacWarStatsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterIndustryJobsHistorySync;
-import enterprises.orbital.evekit.model.character.sync.CharacterIndustryJobsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterKillLogSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterLocationsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterMailMessageBodiesSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterMailMessageSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterMailingListSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterMarketOrderSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterMedalSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterNotificationSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterNotificationTextSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterPlanetaryColoniesSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterSheetSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterSkillInQueueSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterSkillInTrainingSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterSkillsSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterStandingSync;
-import enterprises.orbital.evekit.model.character.sync.CharacterUpcomingCalendarEventsSync;
-import enterprises.orbital.evekit.model.character.sync.PartialCharacterSheetSync;
-import enterprises.orbital.evexmlapi.IEveXmlApi;
-import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
-import enterprises.orbital.evexmlapi.act.IAccountAPI;
-import enterprises.orbital.evexmlapi.chr.ICharacterAPI;
 
 /**
  * Synchronize a capsuleer account.
@@ -304,31 +275,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterChatChannelsSync.syncChatChannels(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ASSETLIST, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterAssetsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterAssetsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterAssetsSync.syncAssets(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_ASSETLIST, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterAssetsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterAssetsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterAssetsSync.syncAssets(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_UPCOMINGCALENDAREVENTS, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -429,31 +400,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterContactNotificationSync.syncCharacterContactNotifications(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_BLUEPRINTS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterBlueprintsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterBlueprintsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterBlueprintsSync.syncCharacterBlueprints(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_BLUEPRINTS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterBlueprintsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterBlueprintsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterBlueprintsSync.syncCharacterBlueprints(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_BOOKMARKS, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -654,31 +625,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterKillLogSync.syncCharacterKillLog(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_LOCATIONS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterLocationsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterLocationsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterLocationsSync.syncCharacterLocations(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_LOCATIONS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterLocationsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterLocationsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterLocationsSync.syncCharacterLocations(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILMESSAGES, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -754,31 +725,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterMailingListSync.syncMailingLists(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MARKETORDERS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterMarketOrderSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterMarketOrderSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterMarketOrderSync.syncCharacterMarketOrders(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MARKETORDERS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterMarketOrderSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterMarketOrderSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterMarketOrderSync.syncCharacterMarketOrders(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_MEDALS, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -954,31 +925,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterSkillsSync.syncCharacterSheet(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_STANDINGS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterStandingSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterStandingSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterStandingSync.syncStanding(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_STANDINGS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterStandingSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterStandingSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterStandingSync.syncStanding(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CHAR_WALLETJOURNAL, new CharStateHandler() {
 //      @Override
 //      public SyncStatus exclude(

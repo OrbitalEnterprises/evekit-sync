@@ -55,7 +55,7 @@ public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<G
   @Override
   protected void processServerData(long time, ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> data,
                                    List<CachedData> updates) throws IOException {
-    // And and record seen agents
+    // Add and record seen agents
     Set<Integer> seenAgents = new HashSet<>();
     for (GetCharactersCharacterIdAgentsResearch200Ok next : data.getData()) {
       ResearchAgent nextAgent = new ResearchAgent(next.getAgentId(), next.getPointsPerDay(), next.getRemainderPoints(), next.getStartedAt().getMillis(), next.getSkillTypeId());

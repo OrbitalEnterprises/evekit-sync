@@ -15,4 +15,10 @@ public interface ESIAccountClientProvider {
   WalletApi getWalletApi();
 
   CharacterApi getCharacterApi();
+
+  AssetsApi getAssetsApi();
+
+  CorporationApi getCorporationApi();
+
+  MarketApi getMarketApi();
 }
