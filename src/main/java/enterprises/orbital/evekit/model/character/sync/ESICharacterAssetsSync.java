@@ -56,6 +56,19 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
     evolveOrAdd(time, existing, item);
   }
 
+  private void retrieveLocationBatch(AssetsApi apiInstance, List<Long> itemBatch,
+                                     List<PostCharactersCharacterIdAssetsLocations200Ok> assetLocations,
+                                     List<PostCharactersCharacterIdAssetsNames200Ok> assetNames) throws ApiException, IOException {
+    ApiResponse<List<PostCharactersCharacterIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCharactersCharacterIdAssetsLocationsWithHttpInfo(
+      (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
+    checkCommonProblems(nextLocationBatch);
+    assetLocations.addAll(nextLocationBatch.getData());
+    ApiResponse<List<PostCharactersCharacterIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCharactersCharacterIdAssetsNamesWithHttpInfo(
+      (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
+    checkCommonProblems(nextNameBatch);
+    assetNames.addAll(nextNameBatch.getData());
+  }
+
   @Override
   protected ESIAccountServerResult<ESICharacterAssetsSync.AssetData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -82,18 +95,23 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
                            .map(GetCharactersCharacterIdAssets200Ok::getItemId)
                            .collect(Collectors.toList());
       try {
-      ApiResponse<List<PostCharactersCharacterIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCharactersCharacterIdAssetsLocationsWithHttpInfo(
-          (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
-      checkCommonProblems(nextLocationBatch);
-      resultData.assetLocations.addAll(nextLocationBatch.getData());
-      ApiResponse<List<PostCharactersCharacterIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCharactersCharacterIdAssetsNamesWithHttpInfo(
-          (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
-      checkCommonProblems(nextNameBatch);
-      resultData.assetNames.addAll(nextNameBatch.getData());
+        retrieveLocationBatch(apiInstance, itemBatch, resultData.assetLocations, resultData.assetNames);
       } catch (ApiException e) {
         if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
-          // Trap 404's since these can occur on some assets we might try to look up
-          log.warning(getContext() + "Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
+          // One of the items in this batch could not be found.  Iterate through the items one at a time and skip
+          // offending items.  If we were smart we'd keep track of these problematic items for future calls.
+          // We'll leave that for future work.
+          for (long nextItem : itemBatch) {
+            try {
+              retrieveLocationBatch(apiInstance, Collections.singletonList(nextItem), resultData.assetLocations, resultData.assetNames);
+            } catch (ApiException f) {
+              if (f.getCode() == HttpStatus.SC_NOT_FOUND) {
+                log.fine(getContext() + " Location or name for asset not found, skipping: " + nextItem);
+              } else
+                // Unexpected error looking up single item, throw
+                throw f;
+            }
+          }
         } else
           // Anything else we rethrow
           throw e;

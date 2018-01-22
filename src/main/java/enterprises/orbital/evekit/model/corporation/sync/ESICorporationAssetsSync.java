@@ -5,9 +5,7 @@ import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.api.AssetsApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdAssets200Ok;
-import enterprises.orbital.eve.esi.client.model.PostCorporationsCorporationIdAssetsLocations200Ok;
-import enterprises.orbital.eve.esi.client.model.PostCorporationsCorporationIdAssetsNames200Ok;
+import enterprises.orbital.eve.esi.client.model.*;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Asset;
@@ -56,6 +54,20 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
     evolveOrAdd(time, existing, item);
   }
 
+  private void retrieveLocationBatch(AssetsApi apiInstance, List<Long> itemBatch,
+                                     List<PostCorporationsCorporationIdAssetsLocations200Ok> assetLocations,
+                                     List<PostCorporationsCorporationIdAssetsNames200Ok> assetNames) throws ApiException, IOException {
+    ApiResponse<List<PostCorporationsCorporationIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCorporationsCorporationIdAssetsLocationsWithHttpInfo(
+        (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
+    checkCommonProblems(nextLocationBatch);
+    assetLocations.addAll(nextLocationBatch.getData());
+    ApiResponse<List<PostCorporationsCorporationIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
+        (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
+    checkCommonProblems(nextNameBatch);
+    assetNames.addAll(nextNameBatch.getData());
+  }
+
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<ESICorporationAssetsSync.AssetData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -82,18 +94,23 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
                            .map(GetCorporationsCorporationIdAssets200Ok::getItemId)
                            .collect(Collectors.toList());
       try {
-        ApiResponse<List<PostCorporationsCorporationIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCorporationsCorporationIdAssetsLocationsWithHttpInfo(
-            (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
-        checkCommonProblems(nextLocationBatch);
-        resultData.assetLocations.addAll(nextLocationBatch.getData());
-        ApiResponse<List<PostCorporationsCorporationIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
-            (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
-        checkCommonProblems(nextNameBatch);
-        resultData.assetNames.addAll(nextNameBatch.getData());
+        retrieveLocationBatch(apiInstance, itemBatch, resultData.assetLocations, resultData.assetNames);
       } catch (ApiException e) {
         if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
-          // Trap 404's since these can occur on some assets we might try to look up
-          log.warning(getContext() + "Locations for some assets could not be resolved, skipping this batch: " + itemBatch);
+          // One of the items in this batch could not be found.  Iterate through the items one at a time and skip
+          // offending items.  If we were smart we'd keep track of these problematic items for future calls.
+          // We'll leave that for future work.
+          for (long nextItem : itemBatch) {
+            try {
+              retrieveLocationBatch(apiInstance, Collections.singletonList(nextItem), resultData.assetLocations, resultData.assetNames);
+            } catch (ApiException f) {
+              if (f.getCode() == HttpStatus.SC_NOT_FOUND) {
+                log.fine(getContext() + " Location or name for asset not found, skipping: " + nextItem);
+              } else
+                // Unexpected error looking up single item, throw
+                throw f;
+            }
+          }
         } else
           // Anything else we rethrow
           throw e;
