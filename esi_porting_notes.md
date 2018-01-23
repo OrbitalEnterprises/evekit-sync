@@ -80,11 +80,11 @@ Each change can be in one of the following states:
   * **pending** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
   * **pending** [ContactLabel](#contactlabel)
-  * **pending** [Contract](#contract)
-  * **pending** [ContractBid](#contractbid)
-  * **pending** [ContractItem](#contractitem)
+  * **dev** [Contract](#contract)
+  * **dev** [ContractBid](#contractbid)
+  * **dev** [ContractItem](#contractitem)
   * **pending** [FacWarStats](#facwarstats)
-  * **pending** [IndustryJob](#industryjob)
+  * **dev** [IndustryJob](#industryjob)
   * **pending** [Kill](#kill)
   * **pending** [KillAttacker](#killattacker)
   * **pending** [KillItem](#killitem)
@@ -261,10 +261,137 @@ runs | runs | runs |
 ### Contact
 ### ContactLabel
 ### Contract
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/contracts/`
+* `/corporations/{corporation_id}/contracts/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+contractID | contractID | contract\_id |
+issuerID | issuerID | issuer\_id |
+issuerCorpID | issuerCorpID | issuer\_corporation\_id |
+assigneeID | assigneeID | assignee\_id |
+acceptorID | acceptorID | acceptor\_id |
+startStationID | startStationID | start\_location\_id |
+endStationID | endStationID | end\_location\_id |
+type | type | type | Enumerated type in ESI.
+status | status | status | Enumerated type in ESI.
+title | title | title |
+forCorp | forCorp | for\_corporation |
+availability | availability | availability | Enumerated type in ESI.
+dateIssued | dateIssued | date\_issued |
+dateExpired | dateExpired | date\_expired | 
+dateAccepted | dateAccepted | date\_accepted |
+numDays | numDays | days\_to\_complete |
+dateCompleted | dateCompleted | date\_completed |
+price | price | price |
+reward | reward | reward |
+collateral | collateral | collateral |
+buyout | buyout | buyout |
+volume | volume | volume |
+
+#### Historic Conversion Notes
+* Historic `type` will be mapped to the enumerated type as follows:
+  * Unknown = unknown
+  * ItemExchange = item\_exchange
+  * Auction = auction
+  * Courier = courier
+  * Loan = loan
+* Historic `status` will be mapped to the enumerated type as follows:
+  * Outstanding = outstanding
+  * InProgress = in\_progress
+  * FinishedIssuer = finished\_issuer
+  * FinishedContractor = finished\_contractor
+  * Finished = finished
+  * Cancelled = cancelled
+  * Rejected = rejected
+  * Failed = failed
+  * Deleted = deleted
+  * Reversed = reversed
+* Historic `availability` will be mapped to the enumerated type as follows:
+  * Public = public
+  * Personal = personal
+  * Corporation = corporation
+  * Alliance = alliance
+  * Private = personal
+    * This is not always correct.  The proper way to convert historically is to determine whether the assignee is a character, corporation or alliance so that Private = personal for characters, Private = corporation for corporations, and Private = alliance for alliances.
+
 ### ContractBid
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/contracts/{contract_id}/bids/`
+* `/corporations/{corporation_id}/contracts/{contract_id}/bids/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+bidID | bidID | bid\_id |
+contractID | contractID | *N/A* | Inserted by EveKit since this model has its own table.
+bidderID | bidderID | bidder\_id |
+dateBid | dateBid | date\_bid |
+amount | amount | amount |
+
 ### ContractItem
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/contracts/{contract_id}/items/`
+* `/corporations/{corporation_id}/contracts/{contract_id}/items/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+contractID | contractID | *N/A* | Inserted by EveKit since ths model has its own table.
+recordID | recordID | record\_id |
+typeID | typeID | type\_id |
+quantity | quantity | quantity |
+rawQuantity | rawQuantity | raw\_quantity | 
+singleton | singleton | is\_singleton |
+included | included | is\_included |
+
 ### FacWarStats
 ### IndustryJob
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/industry/jobs/`
+* `/corporations/{corporation_id}/industry/jobs/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+jobID | jobID | job\_id  |
+installerID | installerID | installer\_id |
+installerName | (deleted) | *N/A* | ESI expects lookup from `installerID`
+facilityID | facilityID | facility\_id |
+solarSystemID | (deleted) | *N/A* | Removed in ESI
+solarSystemName | (deleted) | *N/A* | Removed in ESI
+stationID | stationID | station\_id or location\_id | Character and corporation endpoints name this inconsistently.  We'll use `stationID` for now.
+activityID | activityID | activity\_id |
+blueprintID | blueprintID | blueprint\_id |
+blueprintTypeID | blueprintTypeID | blueprint\_type\_id |
+blueprintTypeName | (deleted) | *N/A*| ESI expects lookup from `blueprintTypeID`
+blueprintLocationID | blueprintLocationID | blueprint\_location\_id |
+outputLocationID | outputLocationID | output\_location\_id |
+runs | runs | runs |
+cost | cost | cost |
+teamID | (deleted) | *N/A*| Removed in ESI
+licensedRuns | licensedRuns | licensed\_runs |
+probability | probability | probability |
+productTypeID | productTypeID | product\_type\_id |
+productTypeName | (deleted) | *N/A* | ESI expects lookup from `productTypeID`
+status | status | status | Now an enumerated typr
+timeInSeconds | timeInSeconds | duration |
+startDate | startDate | start\_date |
+endDate | endDate | end\_date |
+pauseDate | pauseDate | pause\_date |
+completedDate | completedDate | completed\_date |
+completedCharacterID | completedCharacterID | completed\_character\_id |
+successfulRuns | successfulRuns | successful\_runs |
+
+#### Historic Conversion Notes
+* Historic `status` will be mapped to the enumerated type using [this table](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/industry_job_status.py).
+
 ### Kill
 ### KillAttacker
 ### KillItem
