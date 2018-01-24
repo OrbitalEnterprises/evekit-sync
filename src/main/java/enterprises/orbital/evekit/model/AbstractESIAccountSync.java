@@ -432,6 +432,8 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         nextEvent = -1;
         tracker.setStatus(ESISyncState.ERROR);
         tracker.setDetail("ESI client error, contact the site admin if this problem persists");
+        // Throttle in case we're about to exhaust the error limit
+        ESIThrottle.throttle(e);
       } catch (IOException e) {
         // Other error while updating, mark the error in the tracker and exit
         // Database errors during the update should end up here.

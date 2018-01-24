@@ -16,6 +16,7 @@ import org.apache.http.HttpStatus;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -100,26 +101,35 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
       try {
         retrieveLocationBatch(apiInstance, itemBatch, resultData.assetLocations, resultData.assetNames);
       } catch (ApiException e) {
+        // Throttle in case we're about to exhaust the error limit
+        ESIThrottle.throttle(e);
+        // Handle the not found case
         if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
-          // One of the items in this batch could not be found.  Iterate through the items one at a time and skip
-          // offending items.  If we were smart we'd keep track of these problematic items for future calls.
-          // We'll leave that for future work.
+          // One of the items in this batch could not be found or we were rate limited during the lookup.
+          // Iterate through the items one at a time and skip offending items.  If we were smart we'd keep
+          // track of these problematic items for future calls.  We'll leave that for future work.
           for (long nextItem : itemBatch) {
             try {
-              retrieveLocationBatch(apiInstance, Collections.singletonList(nextItem), resultData.assetLocations, resultData.assetNames);
+              retrieveLocationBatch(apiInstance, Collections.singletonList(nextItem), resultData.assetLocations,
+                                    resultData.assetNames);
             } catch (ApiException f) {
+              // Throttle in case we're about to exhaust the error limit
+              ESIThrottle.throttle(f);
+              // If still not found then log it.
               if (f.getCode() == HttpStatus.SC_NOT_FOUND) {
                 log.fine(getContext() + " Location or name for asset not found, skipping: " + nextItem);
-              } else if (f.getCode() == HttpStatus.SC_METHOD_FAILURE) {
-                log.fine(getContext() + " Rate limited, skipping: " + nextItem);
-              } else
-                // Unexpected error looking up single item, throw
-                throw f;
+              } else {
+                // On everything else, log the exception so we can attempt to make progress without losing
+                // the entire asset sync.
+                log.log(Level.FINE, getContext() + " Giving up on resolving " + nextItem + ":", f);
+              }
             }
           }
-        } else
-          // Anything else we rethrow
-          throw e;
+        } else {
+          // On everything else, log the exception so we can attempt to make progress without losing
+          // the entire asset sync.
+          log.log(Level.FINE, getContext() + " Giving up on resolving batch " + itemBatch + ":", e);
+        }
       }
       i += BATCH_SIZE;
     }
