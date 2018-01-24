@@ -70,6 +70,7 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
       resultObject.ensureDivision(division);
       
       // Retrieve initial batch
+      ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> result =
           apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
               (int) account.getEveCorporationID(),
@@ -92,6 +93,7 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
                                GetCorporationsCorporationIdWalletsDivisionJournal200Ok::getRefId))
                            .get()
                            .getRefId();
+        ESIThrottle.throttle(endpoint().name(), account);
         result = apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
             (int) account.getEveCorporationID(),
             division,

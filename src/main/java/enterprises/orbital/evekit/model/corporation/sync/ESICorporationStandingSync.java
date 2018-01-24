@@ -44,14 +44,16 @@ public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetC
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdStandings200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CorporationApi apiInstance = cp.getCorporationApi();
-    Pair<Long, List<GetCorporationsCorporationIdStandings200Ok>> result = pagedResultRetriever((page) ->
-                                                                                                   apiInstance.getCorporationsCorporationIdStandingsWithHttpInfo(
-                                                                                                       (int) account.getEveCorporationID(),
-                                                                                                       null,
-                                                                                                       page,
-                                                                                                       accessToken(),
-                                                                                                       null,
-                                                                                                       null));
+    Pair<Long, List<GetCorporationsCorporationIdStandings200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCorporationsCorporationIdStandingsWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
         result.getRight());

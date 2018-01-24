@@ -44,14 +44,16 @@ public class ESICharacterBlueprintsSync extends AbstractESIAccountSync<List<GetC
   protected ESIAccountServerResult<List<GetCharactersCharacterIdBlueprints200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
-    Pair<Long, List<GetCharactersCharacterIdBlueprints200Ok>> result = pagedResultRetriever((page) ->
-                                                                                                apiInstance.getCharactersCharacterIdBlueprintsWithHttpInfo(
-                                                                                                    (int) account.getEveCharacterID(),
-                                                                                                    null,
-                                                                                                    page,
-                                                                                                    accessToken(),
-                                                                                                    null,
-                                                                                                    null));
+    Pair<Long, List<GetCharactersCharacterIdBlueprints200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCharactersCharacterIdBlueprintsWithHttpInfo(
+          (int) account.getEveCharacterID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
         result.getRight());

@@ -52,6 +52,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
     long txnIdLimit = Long.MAX_VALUE;
 
     // Retrieve initial batch
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdWalletTransactions200Ok>> result = apiInstance.getCharactersCharacterIdWalletTransactionsWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
@@ -72,6 +73,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
                              GetCharactersCharacterIdWalletTransactions200Ok::getTransactionId))
                          .get()
                          .getTransactionId();
+      ESIThrottle.throttle(endpoint().name(), account);
       result = apiInstance.getCharactersCharacterIdWalletTransactionsWithHttpInfo((int) account.getEveCharacterID(),
                                                                                   null,
                                                                                   txnIdLimit,

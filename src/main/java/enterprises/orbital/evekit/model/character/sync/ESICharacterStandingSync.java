@@ -45,6 +45,7 @@ public class ESICharacterStandingSync extends AbstractESIAccountSync<List<GetCha
   protected ESIAccountServerResult<List<GetCharactersCharacterIdStandings200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdStandings200Ok>> result = apiInstance.getCharactersCharacterIdStandingsWithHttpInfo(
         (int) account.getEveCharacterID(), null, accessToken(), null, null);
     checkCommonProblems(result);

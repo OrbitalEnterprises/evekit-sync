@@ -40,6 +40,7 @@ public class ESICorporationWalletBalanceSync extends AbstractESIAccountSync<List
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdWallets200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     WalletApi apiInstance = cp.getWalletApi();
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCorporationsCorporationIdWallets200Ok>> result = apiInstance.getCorporationsCorporationIdWalletsWithHttpInfo((int) account.getEveCorporationID(), null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());

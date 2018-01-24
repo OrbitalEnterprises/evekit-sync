@@ -54,6 +54,7 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
     long refIdLimit = Long.MAX_VALUE;
 
     // Retrieve initial batch
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdWalletJournal200Ok>> result = apiInstance.getCharactersCharacterIdWalletJournalWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
@@ -73,6 +74,7 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
                          .min(Comparator.comparingLong(GetCharactersCharacterIdWalletJournal200Ok::getRefId))
                          .get()
                          .getRefId();
+      ESIThrottle.throttle(endpoint().name(), account);
       result = apiInstance.getCharactersCharacterIdWalletJournalWithHttpInfo((int) account.getEveCharacterID(),
                                                                              null,
                                                                              refIdLimit,

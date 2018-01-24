@@ -46,6 +46,7 @@ public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<G
   @Override
   protected ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());

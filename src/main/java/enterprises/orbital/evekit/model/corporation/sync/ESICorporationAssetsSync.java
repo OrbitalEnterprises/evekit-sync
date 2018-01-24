@@ -57,10 +57,12 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
   private void retrieveLocationBatch(AssetsApi apiInstance, List<Long> itemBatch,
                                      List<PostCorporationsCorporationIdAssetsLocations200Ok> assetLocations,
                                      List<PostCorporationsCorporationIdAssetsNames200Ok> assetNames) throws ApiException, IOException {
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCorporationsCorporationIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCorporationsCorporationIdAssetsLocationsWithHttpInfo(
         (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
     checkCommonProblems(nextLocationBatch);
     assetLocations.addAll(nextLocationBatch.getData());
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCorporationsCorporationIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
         (int) account.getEveCorporationID(), itemBatch, null, accessToken(), null, null);
     checkCommonProblems(nextNameBatch);
@@ -73,14 +75,16 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
       ESIAccountClientProvider cp) throws ApiException, IOException {
     AssetData resultData = new AssetData();
     AssetsApi apiInstance = cp.getAssetsApi();
-    Pair<Long, List<GetCorporationsCorporationIdAssets200Ok>> result = pagedResultRetriever((page) ->
-                                                                                                apiInstance.getCorporationsCorporationIdAssetsWithHttpInfo(
-                                                                                                    (int) account.getEveCorporationID(),
-                                                                                                    null,
-                                                                                                    page,
-                                                                                                    accessToken(),
-                                                                                                    null,
-                                                                                                    null));
+    Pair<Long, List<GetCorporationsCorporationIdAssets200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCorporationsCorporationIdAssetsWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     resultData.assets = result.getRight();
     int BATCH_SIZE = PersistentProperty.getIntegerPropertyWithFallback(PROP_LOCATION_BATCH_SIZE,

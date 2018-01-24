@@ -59,29 +59,34 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
   private void retrieveLocationBatch(AssetsApi apiInstance, List<Long> itemBatch,
                                      List<PostCharactersCharacterIdAssetsLocations200Ok> assetLocations,
                                      List<PostCharactersCharacterIdAssetsNames200Ok> assetNames) throws ApiException, IOException {
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCharactersCharacterIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCharactersCharacterIdAssetsLocationsWithHttpInfo(
       (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
     checkCommonProblems(nextLocationBatch);
     assetLocations.addAll(nextLocationBatch.getData());
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCharactersCharacterIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCharactersCharacterIdAssetsNamesWithHttpInfo(
       (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
     checkCommonProblems(nextNameBatch);
     assetNames.addAll(nextNameBatch.getData());
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<ESICharacterAssetsSync.AssetData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     AssetData resultData = new AssetData();
     AssetsApi apiInstance = cp.getAssetsApi();
-    Pair<Long, List<GetCharactersCharacterIdAssets200Ok>> result = pagedResultRetriever((page) ->
-                                                                                            apiInstance.getCharactersCharacterIdAssetsWithHttpInfo(
-                                                                                                (int) account.getEveCharacterID(),
-                                                                                                null,
-                                                                                                page,
-                                                                                                accessToken(),
-                                                                                                null,
-                                                                                                null));
+    Pair<Long, List<GetCharactersCharacterIdAssets200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCharactersCharacterIdAssetsWithHttpInfo(
+          (int) account.getEveCharacterID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     resultData.assets = result.getRight();
     int BATCH_SIZE = PersistentProperty.getIntegerPropertyWithFallback(PROP_LOCATION_BATCH_SIZE,

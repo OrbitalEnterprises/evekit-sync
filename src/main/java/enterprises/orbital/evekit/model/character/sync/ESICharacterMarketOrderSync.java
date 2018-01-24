@@ -43,6 +43,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<List<Get
   protected ESIAccountServerResult<List<GetCharactersCharacterIdOrders200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     MarketApi apiInstance = cp.getMarketApi();
+    ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdOrders200Ok>> result = apiInstance.getCharactersCharacterIdOrdersWithHttpInfo(
         (int) account.getEveCharacterID(), null, accessToken(), null, null);
     checkCommonProblems(result);

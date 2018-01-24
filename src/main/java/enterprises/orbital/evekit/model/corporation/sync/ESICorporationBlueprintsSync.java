@@ -43,14 +43,16 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdBlueprints200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CorporationApi apiInstance = cp.getCorporationApi();
-    Pair<Long, List<GetCorporationsCorporationIdBlueprints200Ok>> result = pagedResultRetriever((page) ->
-                                                                                                    apiInstance.getCorporationsCorporationIdBlueprintsWithHttpInfo(
-                                                                                                        (int) account.getEveCorporationID(),
-                                                                                                        null,
-                                                                                                        page,
-                                                                                                        accessToken(),
-                                                                                                        null,
-                                                                                                        null));
+    Pair<Long, List<GetCorporationsCorporationIdBlueprints200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCorporationsCorporationIdBlueprintsWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
         result.getRight());

@@ -43,14 +43,16 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<List<G
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdOrders200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     MarketApi apiInstance = cp.getMarketApi();
-    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> result = pagedResultRetriever((page) ->
-                                                                                                apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
-                                                                                                    (int) account.getEveCorporationID(),
-                                                                                                    null,
-                                                                                                    page,
-                                                                                                    accessToken(),
-                                                                                                    null,
-                                                                                                    null));
+    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> result = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
         result.getRight());
