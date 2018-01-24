@@ -110,6 +110,8 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
             } catch (ApiException f) {
               if (f.getCode() == HttpStatus.SC_NOT_FOUND) {
                 log.fine(getContext() + " Location or name for asset not found, skipping: " + nextItem);
+              } else if (f.getCode() == HttpStatus.SC_METHOD_FAILURE) {
+                log.fine(getContext() + " Rate limited, skipping: " + nextItem);
               } else
                 // Unexpected error looking up single item, throw
                 throw f;
