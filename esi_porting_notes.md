@@ -377,16 +377,16 @@ runs | runs | runs |
 cost | cost | cost |
 teamID | (deleted) | *N/A*| Removed in ESI
 licensedRuns | licensedRuns | licensed\_runs |
-probability | probability | probability |
+probability | probability | probability | This is a float in the ESI, instead of a double.
 productTypeID | productTypeID | product\_type\_id |
 productTypeName | (deleted) | *N/A* | ESI expects lookup from `productTypeID`
-status | status | status | Now an enumerated typr
+status | status | status | Now an enumerated type
 timeInSeconds | timeInSeconds | duration |
 startDate | startDate | start\_date |
 endDate | endDate | end\_date |
 pauseDate | pauseDate | pause\_date |
 completedDate | completedDate | completed\_date |
-completedCharacterID | completedCharacterID | completed\_character\_id |
+completedCharacterID | completedCharacterID | completed\_character\_id | This is an int in the ESI, instead of a long.
 successfulRuns | successfulRuns | successful\_runs |
 
 #### Historic Conversion Notes
