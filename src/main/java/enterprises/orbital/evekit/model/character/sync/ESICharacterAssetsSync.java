@@ -142,7 +142,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
   @Override
   protected void processServerData(long time, ESIAccountServerResult<ESICharacterAssetsSync.AssetData> data,
                                    List<CachedData> updates) throws IOException {
-    // Add and record seen assets
+    // Add and record seen contracts
     Set<Long> seenAssets = new HashSet<>();
     for (GetCharactersCharacterIdAssets200Ok next : data.getData().assets) {
       Asset nextAsset = new Asset(next.getItemId(), next.getLocationId(), next.getLocationType()
@@ -175,7 +175,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
       }
     }
 
-    // Check for assets that no longer exist and schedule for EOL
+    // Check for contracts that no longer exist and schedule for EOL
     for (Asset existing : retrieveAll(time,
                                       (long contid, AttributeSelector at) -> Asset.accessQuery(account, contid, 1000,
                                                                                                false, at, ANY_SELECTOR,

@@ -35,7 +35,7 @@ public class ESICharacterStandingSyncTest extends SyncTestBase {
     // Standing test data
     // 0 String standingEntity;
     // 1 int fromID;
-    // 2 double standing;
+    // 2 float standing;
     int size = 50 + TestBase.getRandomInt(50);
     standingTestData = new Object[size][3];
     int standingEntityLen = GetCharactersCharacterIdStandings200Ok.FromTypeEnum.values().length;
@@ -43,7 +43,7 @@ public class ESICharacterStandingSyncTest extends SyncTestBase {
       standingTestData[i][0] = GetCharactersCharacterIdStandings200Ok.FromTypeEnum.values()[TestBase.getRandomInt(
           standingEntityLen)];
       standingTestData[i][1] = TestBase.getUniqueRandomInteger();
-      standingTestData[i][2] = (float) TestBase.getRandomDouble(10);
+      standingTestData[i][2] = TestBase.getRandomFloat(10);
     }
   }
 
@@ -169,7 +169,7 @@ public class ESICharacterStandingSyncTest extends SyncTestBase {
     for (int i = 0; i < standingTestData.length; i++) {
       Standing newEl = new Standing(standingTestData[i][0].toString(),
                                     modifiedIDs[i],
-                                    (Float) standingTestData[i][2] + 1.0);
+                                    (Float) standingTestData[i][2] + 1.0F);
       newEl.setup(charSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }

@@ -88,6 +88,10 @@ public class TestBase {
     return next;
   }
 
+  public static float getRandomFloat(float max) {
+    return GEN.nextFloat() * max;
+  }
+
   public static double getRandomDouble(double max) {
     return GEN.nextDouble() * max;
   }

@@ -21,4 +21,8 @@ public interface ESIAccountClientProvider {
   CorporationApi getCorporationApi();
 
   MarketApi getMarketApi();
+
+  IndustryApi getIndustryApi();
+
+  ContractsApi getContractsApi();
 }

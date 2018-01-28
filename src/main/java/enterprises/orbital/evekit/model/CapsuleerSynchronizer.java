@@ -450,81 +450,81 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterBookmarksSync.syncBookmarks(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterContractsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterContractsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterContractsSync.syncCharacterContracts(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTITEMS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterContractItemsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterContractItemsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterContractItemsSync.syncCharacterContractItems(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTBIDS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterContractBidsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterContractBidsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterContractBidsSync.syncCharacterContractBids(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterContractsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterContractsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterContractsSync.syncCharacterContracts(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTITEMS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterContractItemsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterContractItemsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterContractItemsSync.syncCharacterContractItems(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTBIDS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterContractBidsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterContractBidsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterContractBidsSync.syncCharacterContractBids(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_FACWARSTATS, new CharStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -550,56 +550,56 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
         return CharacterFacWarStatsSync.syncFacWarStats(syncTime, syncAccount, syncUtil, charRequest);
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_INDUSTRYJOBS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterIndustryJobsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterIndustryJobsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterIndustryJobsSync.syncCharacterIndustryJobs(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_INDUSTRYJOBSHISTORY, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterIndustryJobsHistorySync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterIndustryJobsHistorySync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterIndustryJobsHistorySync.syncCharacterIndustryJobsHistory(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_INDUSTRYJOBS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterIndustryJobsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterIndustryJobsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterIndustryJobsSync.syncCharacterIndustryJobs(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_INDUSTRYJOBSHISTORY, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterIndustryJobsHistorySync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterIndustryJobsHistorySync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterIndustryJobsHistorySync.syncCharacterIndustryJobsHistory(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CHAR_KILLLOG, new CharStateHandler() {
       @Override
       public SyncStatus exclude(

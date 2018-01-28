@@ -1,5 +1,15 @@
 package enterprises.orbital.evekit.model;
 
+import enterprises.orbital.base.OrbitalProperties;
+import enterprises.orbital.evekit.account.SynchronizedEveAccount;
+import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
+import enterprises.orbital.evekit.model.corporation.Corporation;
+import enterprises.orbital.evekit.model.corporation.sync.*;
+import enterprises.orbital.evexmlapi.IEveXmlApi;
+import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
+import enterprises.orbital.evexmlapi.act.IAccountAPI;
+import enterprises.orbital.evexmlapi.crp.ICorporationAPI;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
@@ -7,39 +17,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import enterprises.orbital.base.OrbitalProperties;
-import enterprises.orbital.evekit.account.SynchronizedEveAccount;
-import enterprises.orbital.evekit.model.SynchronizerUtil.SyncStatus;
-import enterprises.orbital.evekit.model.corporation.Corporation;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationBookmarksSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationContactListSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationContainerLogSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationContractBidsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationContractItemsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationContractsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationCustomsOfficesSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationFacWarStatsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationFacilitiesSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationIndustryJobsHistorySync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationIndustryJobsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationKillLogSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationMedalsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationMemberMedalsSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationMemberSecurityLogSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationMemberSecuritySync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationMemberTrackingSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationOutpostListSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationOutpostServiceDetailSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationShareholdersSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationSheetSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationStarbaseDetailSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationStarbaseListSync;
-import enterprises.orbital.evekit.model.corporation.sync.CorporationTitlesSync;
-import enterprises.orbital.evexmlapi.IEveXmlApi;
-import enterprises.orbital.evexmlapi.act.IAPIKeyInfo;
-import enterprises.orbital.evexmlapi.act.IAccountAPI;
-import enterprises.orbital.evexmlapi.crp.ICorporationAPI;
 
 /**
  * Synchronize a corporation account.
@@ -315,90 +292,90 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationContractsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationContractsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationContractsSync.syncCorporationContracts(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTITEMS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationContractItemsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationContractItemsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationContractItemsSync.syncCorporationContractItems(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTBIDS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationContractBidsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationContractBidsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationContractBidsSync.syncCorporationContractBids(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationContractsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationContractsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationContractsSync.syncCorporationContracts(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTITEMS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationContractItemsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationContractItemsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationContractItemsSync.syncCorporationContractItems(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTRACTBIDS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationContractBidsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationContractBidsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationContractBidsSync.syncCorporationContractBids(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_CUSTOMSOFFICE, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(
@@ -483,62 +460,62 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationIndustryJobsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationIndustryJobsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationIndustryJobsSync.syncCorporationIndustryJobs(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBSHISTORY, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationIndustryJobsHistorySync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationIndustryJobsHistorySync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationIndustryJobsHistorySync.syncCorporationIndustryJobsHistory(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationIndustryJobsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationIndustryJobsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationIndustryJobsSync.syncCorporationIndustryJobs(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBSHISTORY, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationIndustryJobsHistorySync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationIndustryJobsHistorySync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationIndustryJobsHistorySync.syncCorporationIndustryJobsHistory(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_KILLLOG, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(

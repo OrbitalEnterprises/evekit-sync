@@ -2,14 +2,12 @@ package enterprises.orbital.evekit.model.character.sync;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CharacterApi;
-import enterprises.orbital.eve.esi.client.api.WalletApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdAgentsResearch200Ok;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.ResearchAgent;
-import enterprises.orbital.evekit.model.common.AccountBalance;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -18,8 +16,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -38,16 +34,16 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
   static {
     // Agent test data
     // 0 int agentID
-    // 1 double pointsPerDay
-    // 2 double remainderPoints
+    // 1 float pointsPerDay
+    // 2 float remainderPoints
     // 3 long researchStartDate
     // 4 int skillTypeID
     int size = 20 + TestBase.getRandomInt(20);
     agentTestData = new Object[size][5];
     for (int i = 0; i < size; i++) {
       agentTestData[i][0] = TestBase.getUniqueRandomInteger();
-      agentTestData[i][1] = TestBase.getRandomDouble(1000);
-      agentTestData[i][2] = TestBase.getRandomDouble(1000);
+      agentTestData[i][1] = TestBase.getRandomFloat(1000);
+      agentTestData[i][2] = TestBase.getRandomFloat(1000);
       agentTestData[i][3] = Math.abs(TestBase.getRandomLong());
       agentTestData[i][4] = TestBase.getRandomInt();
 
@@ -87,8 +83,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
         Arrays.stream(agentTestData).map(x -> {
           GetCharactersCharacterIdAgentsResearch200Ok nextAgent = new GetCharactersCharacterIdAgentsResearch200Ok();
           nextAgent.setAgentId((Integer) x[0]);
-          nextAgent.setPointsPerDay(((Double) x[1]).floatValue());
-          nextAgent.setRemainderPoints(((Double) x[2]).floatValue());
+          nextAgent.setPointsPerDay((Float) x[1]);
+          nextAgent.setRemainderPoints((Float) x[2]);
           nextAgent.setStartedAt(new DateTime(new Date((Long) x[3])));
           nextAgent.setSkillTypeId((Integer) x[4]);
           return nextAgent;
@@ -119,8 +115,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
     for (int i = 0; i < agentTestData.length; i++) {
       ResearchAgent nextEl = storedData.get(i);
       Assert.assertEquals((int) (Integer) agentTestData[i][0], nextEl.getAgentID());
-      Assert.assertEquals((Double) agentTestData[i][1], nextEl.getPointsPerDay(), 0.001);
-      Assert.assertEquals((Double) agentTestData[i][2], nextEl.getRemainderPoints(), 0.001);
+      Assert.assertEquals((Float) agentTestData[i][1], nextEl.getPointsPerDay(), 0.001);
+      Assert.assertEquals((Float) agentTestData[i][2], nextEl.getRemainderPoints(), 0.001);
       Assert.assertEquals((long) (Long) agentTestData[i][3], nextEl.getResearchStartDate());
       Assert.assertEquals((int) (Integer) agentTestData[i][4], nextEl.getSkillTypeID());
     }
@@ -171,8 +167,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
     }
     for (int i = 0; i < agentTestData.length; i++) {
       ResearchAgent newEl = new ResearchAgent(modifiedIDs[i],
-                                              (Double) agentTestData[i][1] + 1.0D,
-                                              (Double) agentTestData[i][2] + 1.0D,
+                                              (Float) agentTestData[i][1] + 1.0F,
+                                              (Float) agentTestData[i][2] + 1.0F,
                                               (Long) agentTestData[i][3] + 1,
                                               (Integer) agentTestData[i][4] + 1);
       newEl.setup(charSyncAccount, testTime - 1);
@@ -196,8 +192,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
       ResearchAgent nextEl = oldEls.get(i);
       Assert.assertEquals(testTime, nextEl.getLifeEnd());
       Assert.assertEquals(modifiedIDs[i], nextEl.getAgentID());
-      Assert.assertEquals((Double) agentTestData[i][1] + 1.0D, nextEl.getPointsPerDay(), 0.001);
-      Assert.assertEquals((Double) agentTestData[i][2] + 1.0D, nextEl.getRemainderPoints(), 0.001);
+      Assert.assertEquals((Float) agentTestData[i][1] + 1.0D, nextEl.getPointsPerDay(), 0.001);
+      Assert.assertEquals((Float) agentTestData[i][2] + 1.0D, nextEl.getRemainderPoints(), 0.001);
       Assert.assertEquals((Long) agentTestData[i][3] + 1, nextEl.getResearchStartDate());
     }
 

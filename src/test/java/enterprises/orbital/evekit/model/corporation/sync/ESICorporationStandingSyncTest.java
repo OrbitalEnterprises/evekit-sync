@@ -36,7 +36,7 @@ public class ESICorporationStandingSyncTest extends SyncTestBase {
     // Standing test data
     // 0 String standingEntity;
     // 1 int fromID;
-    // 2 double standing;
+    // 2 float standing;
     int size = 100 + TestBase.getRandomInt(100);
     standingTestData = new Object[size][3];
     int standingEntityLen = GetCorporationsCorporationIdStandings200Ok.FromTypeEnum.values().length;
@@ -44,7 +44,7 @@ public class ESICorporationStandingSyncTest extends SyncTestBase {
       standingTestData[i][0] = GetCorporationsCorporationIdStandings200Ok.FromTypeEnum.values()[TestBase.getRandomInt(
           standingEntityLen)];
       standingTestData[i][1] = TestBase.getUniqueRandomInteger();
-      standingTestData[i][2] = (float) TestBase.getRandomDouble(10);
+      standingTestData[i][2] = TestBase.getRandomFloat(10);
     }
 
     int pageCount = 2 + TestBase.getRandomInt(4);
@@ -184,7 +184,7 @@ public class ESICorporationStandingSyncTest extends SyncTestBase {
     for (int i = 0; i < standingTestData.length; i++) {
       Standing newEl = new Standing(standingTestData[i][0].toString(),
                                     modifiedIDs[i],
-                                    (Float) standingTestData[i][2] + 1.0);
+                                    (Float) standingTestData[i][2] + 1.0F);
       newEl.setup(corpSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }
