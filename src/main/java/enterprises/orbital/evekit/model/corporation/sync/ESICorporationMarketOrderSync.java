@@ -4,6 +4,7 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.MarketApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdOrders200Ok;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdOrdersHistory200Ok;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.MarketOrder;
@@ -15,8 +16,13 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.logging.Logger;
 
-public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdOrders200Ok>> {
+public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICorporationMarketOrderSync.OrderSet> {
   protected static final Logger log = Logger.getLogger(ESICorporationMarketOrderSync.class.getName());
+
+  class OrderSet {
+    List<GetCorporationsCorporationIdOrders200Ok> liveOrders;
+    List<GetCorporationsCorporationIdOrdersHistory200Ok> historicalOrders;
+  }
 
   public ESICorporationMarketOrderSync(SynchronizedEveAccount account) {
     super(account);
@@ -40,10 +46,13 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<List<G
   }
 
   @Override
-  protected ESIAccountServerResult<List<GetCorporationsCorporationIdOrders200Ok>> getServerData(
+  protected ESIAccountServerResult<OrderSet> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
+    OrderSet orders = new OrderSet();
     MarketApi apiInstance = cp.getMarketApi();
-    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> result = pagedResultRetriever((page) -> {
+
+    // Retrieve live orders
+    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> liveResult = pagedResultRetriever((page) -> {
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
           (int) account.getEveCorporationID(),
@@ -53,18 +62,33 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<List<G
           null,
           null);
     });
-    return new ESIAccountServerResult<>(
-        result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
-        result.getRight());
+    long expiry = liveResult.getLeft() > 0 ? liveResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
+    orders.liveOrders = liveResult.getRight();
+
+    // Retrieve historical orders
+    Pair<Long, List<GetCorporationsCorporationIdOrdersHistory200Ok>> histResult = pagedResultRetriever((page) -> {
+      ESIThrottle.throttle(endpoint().name(), account);
+      return apiInstance.getCorporationsCorporationIdOrdersHistoryWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          page,
+          accessToken(),
+          null,
+          null);
+    });
+    expiry = histResult.getLeft() > 0 ? Math.max(histResult.getLeft(), expiry) : expiry;
+    orders.historicalOrders = histResult.getRight();
+
+    return new ESIAccountServerResult<>(expiry, orders);
   }
 
   @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
-                                   ESIAccountServerResult<List<GetCorporationsCorporationIdOrders200Ok>> data,
+                                   ESIAccountServerResult<OrderSet> data,
                                    List<CachedData> updates) throws IOException {
     // Add and record orders
-    for (GetCorporationsCorporationIdOrders200Ok next : data.getData()) {
+    for (GetCorporationsCorporationIdOrders200Ok next : data.getData().liveOrders) {
       MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
                                               next.getDuration(),
                                               BigDecimal.valueOf(next.getEscrow())
@@ -80,6 +104,24 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<List<G
                                               next.getRegionId(), next.getLocationId(), true);
       updates.add(nextOrder);
     }
+
+    for (GetCorporationsCorporationIdOrdersHistory200Ok next : data.getData().historicalOrders) {
+      MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
+                                              next.getDuration(),
+                                              BigDecimal.valueOf(next.getEscrow())
+                                                        .setScale(2, RoundingMode.HALF_UP),
+                                              next.getIssued()
+                                                  .getMillis(), next.getMinVolume(),
+                                              next.getState()
+                                                  .toString(), BigDecimal.valueOf(next.getPrice())
+                                                                         .setScale(2, RoundingMode.HALF_UP),
+                                              next.getRange()
+                                                  .toString(), next.getTypeId(), next.getVolumeTotal(),
+                                              next.getVolumeRemain(),
+                                              next.getRegionId(), next.getLocationId(), true);
+      updates.add(nextOrder);
+    }
+
   }
 
 
