@@ -232,7 +232,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
             .andReturn(mockEndpoint);
   }
 
-  private void verifyDataUpdate() throws Exception {
+  private void verifyDataUpdate(boolean includeHistory) throws Exception {
     // Retrieve all stored data
     List<MarketOrder> storedData = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
         MarketOrder.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
@@ -246,7 +246,10 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                                 AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
-    Assert.assertEquals(marketTestData.length + historicMarketTestData.length, storedData.size());
+    if (includeHistory)
+        Assert.assertEquals(marketTestData.length + historicMarketTestData.length, storedData.size());
+      else
+        Assert.assertEquals(marketTestData.length, storedData.size());
 
     // Check stored data
     for (int i = 0; i < marketTestData.length; i++) {
@@ -270,26 +273,27 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
       Assert.assertEquals(marketTestData[i][16], nextEl.isCorp());
     }
 
-    for (int i = 0; i < historicMarketTestData.length; i++) {
-      MarketOrder nextEl = storedData.get(i + marketTestData.length);
-      Assert.assertEquals((long) (Long) historicMarketTestData[i][0], nextEl.getOrderID());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][1], nextEl.getWalletDivision());
-      Assert.assertEquals(historicMarketTestData[i][2], nextEl.isBid());
-      Assert.assertEquals(0L, nextEl.getCharID());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][4], nextEl.getDuration());
-      Assert.assertEquals(historicMarketTestData[i][5], nextEl.getEscrow());
-      Assert.assertEquals((long) (Long) historicMarketTestData[i][6], nextEl.getIssued());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][7], nextEl.getMinVolume());
-      Assert.assertEquals(historicMarketTestData[i][8].toString(), nextEl.getOrderState());
-      Assert.assertEquals(historicMarketTestData[i][9], nextEl.getPrice());
-      Assert.assertEquals(historicMarketTestData[i][10].toString(), nextEl.getOrderRange());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][11], nextEl.getTypeID());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][12], nextEl.getVolEntered());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][13], nextEl.getVolRemaining());
-      Assert.assertEquals((int) (Integer) historicMarketTestData[i][14], nextEl.getRegionID());
-      Assert.assertEquals((long) (Long) historicMarketTestData[i][15], nextEl.getLocationID());
-      Assert.assertEquals(historicMarketTestData[i][16], nextEl.isCorp());
-    }
+    if (includeHistory)
+      for (int i = 0; i < historicMarketTestData.length; i++) {
+        MarketOrder nextEl = storedData.get(i + marketTestData.length);
+        Assert.assertEquals((long) (Long) historicMarketTestData[i][0], nextEl.getOrderID());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][1], nextEl.getWalletDivision());
+        Assert.assertEquals(historicMarketTestData[i][2], nextEl.isBid());
+        Assert.assertEquals(0L, nextEl.getCharID());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][4], nextEl.getDuration());
+        Assert.assertEquals(historicMarketTestData[i][5], nextEl.getEscrow());
+        Assert.assertEquals((long) (Long) historicMarketTestData[i][6], nextEl.getIssued());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][7], nextEl.getMinVolume());
+        Assert.assertEquals(historicMarketTestData[i][8].toString(), nextEl.getOrderState());
+        Assert.assertEquals(historicMarketTestData[i][9], nextEl.getPrice());
+        Assert.assertEquals(historicMarketTestData[i][10].toString(), nextEl.getOrderRange());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][11], nextEl.getTypeID());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][12], nextEl.getVolEntered());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][13], nextEl.getVolRemaining());
+        Assert.assertEquals((int) (Integer) historicMarketTestData[i][14], nextEl.getRegionID());
+        Assert.assertEquals((long) (Long) historicMarketTestData[i][15], nextEl.getLocationID());
+        Assert.assertEquals(historicMarketTestData[i][16], nextEl.isCorp());
+      }
 
   }
 
@@ -304,7 +308,8 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
     EasyMock.verify(mockServer, mockEndpoint);
 
     // Verify updated properly
-    verifyDataUpdate();
+    // Historic endpoint should not update anything since no previous orders exist
+    verifyDataUpdate(false);
 
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
@@ -350,24 +355,30 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
     }
 
     // Populate existing historic
+    // Note that historic updates only modify a select set of fields:
+    // price
+    // volume remaining
+    // issued
+    // escrow
+    // state
     for (Object[] aMarketTestData : historicMarketTestData) {
       MarketOrder newEl = new MarketOrder((Long) aMarketTestData[0],
                                           1,
-                                          !((Boolean) aMarketTestData[2]),
+                                          (Boolean) aMarketTestData[2],
                                           0,
-                                          (Integer) aMarketTestData[4] + 1,
+                                          (Integer) aMarketTestData[4],
                                           ((BigDecimal) aMarketTestData[5]).add(BigDecimal.ONE),
                                           (Long) aMarketTestData[6] + 1,
-                                          (Integer) aMarketTestData[7] + 1,
+                                          (Integer) aMarketTestData[7],
                                           GetCharactersCharacterIdOrders200Ok.StateEnum.OPEN.toString(),
                                           ((BigDecimal) aMarketTestData[9]).add(BigDecimal.ONE),
                                           aMarketTestData[10].toString(),
-                                          (Integer) aMarketTestData[11] + 1,
-                                          (Integer) aMarketTestData[12] + 1,
+                                          (Integer) aMarketTestData[11],
+                                          (Integer) aMarketTestData[12],
                                           (Integer) aMarketTestData[13] + 1,
-                                          (Integer) aMarketTestData[14] + 1,
-                                          (Long) aMarketTestData[15] + 1,
-                                          !((Boolean) aMarketTestData[16]));
+                                          (Integer) aMarketTestData[14],
+                                          (Long) aMarketTestData[15],
+                                          (Boolean) aMarketTestData[16]);
       newEl.setup(charSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }
@@ -416,30 +427,37 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
     }
 
     // Check old historic data
+    // Note that historic updates only modify a select set of fields:
+    // price
+    // volume remaining
+    // issued
+    // escrow
+    // state
     for (int i = 0; i < historicMarketTestData.length; i++) {
       MarketOrder nextEl = oldEls.get(i + marketTestData.length);
       Assert.assertEquals(testTime, nextEl.getLifeEnd());
       Assert.assertEquals((long) (Long) historicMarketTestData[i][0], nextEl.getOrderID());
       Assert.assertEquals(1, nextEl.getWalletDivision());
-      Assert.assertEquals(!((Boolean) historicMarketTestData[i][2]), nextEl.isBid());
+      Assert.assertEquals((Boolean) historicMarketTestData[i][2], nextEl.isBid());
       Assert.assertEquals(0, nextEl.getCharID());
-      Assert.assertEquals((Integer) historicMarketTestData[i][4] + 1, nextEl.getDuration());
+      Assert.assertEquals((int) (Integer) historicMarketTestData[i][4], nextEl.getDuration());
       Assert.assertEquals(((BigDecimal) historicMarketTestData[i][5]).add(BigDecimal.ONE), nextEl.getEscrow());
       Assert.assertEquals((Long) historicMarketTestData[i][6] + 1, nextEl.getIssued());
-      Assert.assertEquals((Integer) historicMarketTestData[i][7] + 1, nextEl.getMinVolume());
+      Assert.assertEquals((int) (Integer) historicMarketTestData[i][7], nextEl.getMinVolume());
       Assert.assertEquals(GetCharactersCharacterIdOrders200Ok.StateEnum.OPEN.toString(), nextEl.getOrderState());
       Assert.assertEquals(((BigDecimal) historicMarketTestData[i][9]).add(BigDecimal.ONE), nextEl.getPrice());
       Assert.assertEquals(historicMarketTestData[i][10].toString(), nextEl.getOrderRange());
-      Assert.assertEquals((Integer) historicMarketTestData[i][11] + 1, nextEl.getTypeID());
-      Assert.assertEquals((Integer) historicMarketTestData[i][12] + 1, nextEl.getVolEntered());
+      Assert.assertEquals((int) (Integer) historicMarketTestData[i][11], nextEl.getTypeID());
+      Assert.assertEquals((int) (Integer) historicMarketTestData[i][12], nextEl.getVolEntered());
       Assert.assertEquals((Integer) historicMarketTestData[i][13] + 1, nextEl.getVolRemaining());
-      Assert.assertEquals((Integer) historicMarketTestData[i][14] + 1, nextEl.getRegionID());
-      Assert.assertEquals((Long) historicMarketTestData[i][15] + 1, nextEl.getLocationID());
-      Assert.assertEquals(!((Boolean) historicMarketTestData[i][16]), nextEl.isCorp());
+      Assert.assertEquals((int) (Integer) historicMarketTestData[i][14], nextEl.getRegionID());
+      Assert.assertEquals((long) (Long) historicMarketTestData[i][15], nextEl.getLocationID());
+      Assert.assertEquals((Boolean) historicMarketTestData[i][16], nextEl.isCorp());
     }
 
     // Verify updates which will also verify that all old alliances were properly end of life
-    verifyDataUpdate();
+    // Historic orders should also be updated
+    verifyDataUpdate(true);
 
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
