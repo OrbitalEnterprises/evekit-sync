@@ -82,39 +82,55 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
   protected void processServerData(long time, ESIAccountServerResult<OrderSet> data,
                                    List<CachedData> updates) throws IOException {
     // Add and record orders
-    if (data.getData().liveOrders != null)
-      for (GetCharactersCharacterIdOrders200Ok next : data.getData().liveOrders) {
-        MarketOrder nextOrder = new MarketOrder(next.getOrderId(), 1, next.getIsBuyOrder(), 0, next.getDuration(),
-                                                BigDecimal.valueOf(next.getEscrow())
-                                                          .setScale(2, RoundingMode.HALF_UP),
-                                                next.getIssued()
-                                                    .getMillis(), next.getMinVolume(),
-                                                next.getState()
-                                                    .toString(), BigDecimal.valueOf(next.getPrice())
-                                                                           .setScale(2, RoundingMode.HALF_UP),
-                                                next.getRange()
-                                                    .toString(), next.getTypeId(), next.getVolumeTotal(),
-                                                next.getVolumeRemain(),
-                                                next.getRegionId(), next.getLocationId(), next.getIsCorp());
-        updates.add(nextOrder);
-      }
+    for (GetCharactersCharacterIdOrders200Ok next : data.getData().liveOrders) {
+      MarketOrder nextOrder = new MarketOrder(next.getOrderId(), 1, next.getIsBuyOrder(), 0, next.getDuration(),
+                                              BigDecimal.valueOf(next.getEscrow())
+                                                        .setScale(2, RoundingMode.HALF_UP),
+                                              next.getIssued()
+                                                  .getMillis(), next.getMinVolume(),
+                                              next.getState()
+                                                  .toString(), BigDecimal.valueOf(next.getPrice())
+                                                                         .setScale(2, RoundingMode.HALF_UP),
+                                              next.getRange()
+                                                  .toString(), next.getTypeId(), next.getVolumeTotal(),
+                                              next.getVolumeRemain(),
+                                              next.getRegionId(), next.getLocationId(), next.getIsCorp());
+      updates.add(nextOrder);
+    }
 
-    if (data.getData().historicalOrders != null)
-      for (GetCharactersCharacterIdOrdersHistory200Ok next : data.getData().historicalOrders) {
-        MarketOrder nextOrder = new MarketOrder(next.getOrderId(), 1, next.getIsBuyOrder(), 0, next.getDuration(),
-                                                BigDecimal.valueOf(next.getEscrow())
-                                                          .setScale(2, RoundingMode.HALF_UP),
-                                                next.getIssued()
-                                                    .getMillis(), next.getMinVolume(),
-                                                next.getState()
-                                                    .toString(), BigDecimal.valueOf(next.getPrice())
-                                                                           .setScale(2, RoundingMode.HALF_UP),
-                                                next.getRange()
-                                                    .toString(), next.getTypeId(), next.getVolumeTotal(),
-                                                next.getVolumeRemain(),
-                                                next.getRegionId(), next.getLocationId(), next.getIsCorporation());
-        updates.add(nextOrder);
+    for (GetCharactersCharacterIdOrdersHistory200Ok next : data.getData().historicalOrders) {
+      // Only process order if we've already recorded this order.  This is necessary in order to account
+      // for optional fields.
+      MarketOrder existing = MarketOrder.get(account, time, next.getOrderId());
+      if (existing != null) {
+        if (next.getPrice() != existing.getPrice().doubleValue() ||
+            next.getVolumeRemain() != existing.getVolRemaining() ||
+            next.getIssued().getMillis() != existing.getIssued() ||
+            (next.getEscrow() != null && next.getEscrow() != existing.getEscrow().doubleValue()) ||
+            !next.getState().toString().equals(existing.getOrderState())) {
+          MarketOrder nextOrder = new MarketOrder(existing.getOrderID(),
+                                                  1,
+                                                  existing.isBid(),
+                                                  0,
+                                                  existing.getDuration(),
+                                                  next.getEscrow() == null ? existing.getEscrow() : BigDecimal.valueOf(next.getEscrow())
+                                                                                                              .setScale(2, RoundingMode.HALF_UP),
+                                                  next.getIssued().getMillis(),
+                                                  existing.getMinVolume(),
+                                                  next.getState().toString(),
+                                                  BigDecimal.valueOf(next.getPrice())
+                                                            .setScale(2, RoundingMode.HALF_UP),
+                                                  existing.getOrderRange(),
+                                                  existing.getTypeID(),
+                                                  existing.getVolEntered(),
+                                                  next.getVolumeRemain(),
+                                                  existing.getRegionID(),
+                                                  existing.getLocationID(),
+                                                  existing.isCorp());
+          updates.add(nextOrder);
+        }
       }
+    }
 
   }
 
