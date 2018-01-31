@@ -88,39 +88,41 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
                                    ESIAccountServerResult<OrderSet> data,
                                    List<CachedData> updates) throws IOException {
     // Add and record orders
-    for (GetCorporationsCorporationIdOrders200Ok next : data.getData().liveOrders) {
-      MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
-                                              next.getDuration(),
-                                              BigDecimal.valueOf(next.getEscrow())
-                                                        .setScale(2, RoundingMode.HALF_UP),
-                                              next.getIssued()
-                                                  .getMillis(), next.getMinVolume(),
-                                              next.getState()
-                                                  .toString(), BigDecimal.valueOf(next.getPrice())
-                                                                         .setScale(2, RoundingMode.HALF_UP),
-                                              next.getRange()
-                                                  .toString(), next.getTypeId(), next.getVolumeTotal(),
-                                              next.getVolumeRemain(),
-                                              next.getRegionId(), next.getLocationId(), true);
-      updates.add(nextOrder);
-    }
+    if (data.getData().liveOrders != null)
+      for (GetCorporationsCorporationIdOrders200Ok next : data.getData().liveOrders) {
+        MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
+                                                next.getDuration(),
+                                                BigDecimal.valueOf(next.getEscrow())
+                                                          .setScale(2, RoundingMode.HALF_UP),
+                                                next.getIssued()
+                                                    .getMillis(), next.getMinVolume(),
+                                                next.getState()
+                                                    .toString(), BigDecimal.valueOf(next.getPrice())
+                                                                           .setScale(2, RoundingMode.HALF_UP),
+                                                next.getRange()
+                                                    .toString(), next.getTypeId(), next.getVolumeTotal(),
+                                                next.getVolumeRemain(),
+                                                next.getRegionId(), next.getLocationId(), true);
+        updates.add(nextOrder);
+      }
 
-    for (GetCorporationsCorporationIdOrdersHistory200Ok next : data.getData().historicalOrders) {
-      MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
-                                              next.getDuration(),
-                                              BigDecimal.valueOf(next.getEscrow())
-                                                        .setScale(2, RoundingMode.HALF_UP),
-                                              next.getIssued()
-                                                  .getMillis(), next.getMinVolume(),
-                                              next.getState()
-                                                  .toString(), BigDecimal.valueOf(next.getPrice())
-                                                                         .setScale(2, RoundingMode.HALF_UP),
-                                              next.getRange()
-                                                  .toString(), next.getTypeId(), next.getVolumeTotal(),
-                                              next.getVolumeRemain(),
-                                              next.getRegionId(), next.getLocationId(), true);
-      updates.add(nextOrder);
-    }
+    if (data.getData().historicalOrders != null)
+      for (GetCorporationsCorporationIdOrdersHistory200Ok next : data.getData().historicalOrders) {
+        MarketOrder nextOrder = new MarketOrder(next.getOrderId(), next.getWalletDivision(), next.getIsBuyOrder(), 0,
+                                                next.getDuration(),
+                                                BigDecimal.valueOf(next.getEscrow())
+                                                          .setScale(2, RoundingMode.HALF_UP),
+                                                next.getIssued()
+                                                    .getMillis(), next.getMinVolume(),
+                                                next.getState()
+                                                    .toString(), BigDecimal.valueOf(next.getPrice())
+                                                                           .setScale(2, RoundingMode.HALF_UP),
+                                                next.getRange()
+                                                    .toString(), next.getTypeId(), next.getVolumeTotal(),
+                                                next.getVolumeRemain(),
+                                                next.getRegionId(), next.getLocationId(), true);
+        updates.add(nextOrder);
+      }
 
   }
 
