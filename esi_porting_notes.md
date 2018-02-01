@@ -52,7 +52,7 @@ Each change can be in one of the following states:
   * **pending** [PlanetaryRoute](#planetaryroute)
   * **beta** [ResearchAgent](#researchagent)
 * Corporation Model Changes
-  * **pending** [ContainerLog](#containerlog)
+  * **dev** [ContainerLog](#containerlog)
   * **pending** [CorporationMedal](#corporationmedal)
   * **pending** [CorporationMemberMedal](#corporationmembermedal)
   * **pending** [CorporationSheet](#corporationsheet)
@@ -143,6 +143,46 @@ researchStartDateDate (generated) | researchStartDateDate (generated) | *N/A* | 
 ## Corporation Model Changes
 
 ### ContainerLog
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/containers/logs/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+logTime | logTime | logged\_at |
+action | action | action | Now an enumerated type, see conversion notes below.
+actorID | characterID | character\_id | Name changed in ESI.
+actorName | (deleted) | *N/A* | ESI expects lookup from `actorID`
+flag | (deleted) | *N/A* | Removed in favor of `location\_flag`.  See conversion notes below.
+*N/A* | locationFlag | location\_flag | Now an enumerated type.  See convrersion notes below.
+itemID | containerID | container\_id | Name appears to have changed in the ESI.
+itemTypeID | containerTypeID | container\_type\_id | Name appears to have changed in the ESI.
+locationID | locationID | location\_id |
+newConfiguration | newConfiguration | new\_config\_bitmask | Note that this is optional (nullable).
+oldConfiguration | oldConfiguration | old\_config\_bitmask | Note that this is optional (nullable).
+passwordType | passwordType | password\_type | Now an enumerated type, see conversion notes below.  May be null.
+quantity | quantity | quantity |
+typeID | typeID | type\_id |
+
+#### Historic Conversion Notes
+* `action` is now an enumerated type which will be converted as follows:
+  * `Add` becomes `add`
+  * `Assemble` becomes `assemble`
+  * `Configure` becomes `configure`
+  * `Enter Password` becomes `enter_password`
+  * `Lock` becomes `lock`
+  * `Move` becomes `move`
+  * `Repackage` becomes `repackage`
+  * `Set Name` becomes `set_name`
+  * `Set Password` becomes `set_password`
+  * `Unlock` becomes `unlock`
+* `locationFlag` will be populated from `flag` using [this conversion table](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/location_flag.py).
+* `passwordType` is now an enumerated type which will be converted as follows:
+  * **null** - unchanged
+  * `Config` becomes `config`
+  * `General` becomes `general`
+
 ### Corporation
 ### CorporationMedal
 ### CorporationMemberMedal
