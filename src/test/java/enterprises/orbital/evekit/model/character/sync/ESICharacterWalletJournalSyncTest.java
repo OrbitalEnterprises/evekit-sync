@@ -290,6 +290,7 @@ public class ESICharacterWalletJournalSyncTest extends SyncTestBase {
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
+  @SuppressWarnings("Duplicates")
   @Test
   public void testSyncUpdateExisting() throws Exception {
     setupOkMock();

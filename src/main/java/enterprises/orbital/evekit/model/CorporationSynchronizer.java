@@ -740,34 +740,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTAINERLOG, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationContainerLogSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationContainerLogSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationContainerLogSync.syncCorporationContainerLog(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTAINERLOG, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationContainerLogSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationContainerLogSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationContainerLogSync.syncCorporationContainerLog(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERSECURITYLOG, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(
