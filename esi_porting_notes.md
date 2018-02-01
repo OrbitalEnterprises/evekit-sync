@@ -159,8 +159,8 @@ flag | (deleted) | *N/A* | Removed in favor of `location\_flag`.  See conversion
 itemID | containerID | container\_id | Name appears to have changed in the ESI.
 itemTypeID | containerTypeID | container\_type\_id | Name appears to have changed in the ESI.
 locationID | locationID | location\_id |
-newConfiguration | newConfiguration | new\_config\_bitmask | Note that this is optional (nullable).
-oldConfiguration | oldConfiguration | old\_config\_bitmask | Note that this is optional (nullable).
+newConfiguration | newConfiguration | new\_config\_bitmask | 
+oldConfiguration | oldConfiguration | old\_config\_bitmask | 
 passwordType | passwordType | password\_type | Now an enumerated type, see conversion notes below.  May be null.
 quantity | quantity | quantity |
 typeID | typeID | type\_id |
