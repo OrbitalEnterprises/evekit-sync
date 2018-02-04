@@ -70,8 +70,34 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   // List of endpoints we should skip during synchronization (separate with '|')
   public static final String PROP_EXCLUDE_SYNC = "enterprises.orbital.evekit.account.exclude_sync";
 
+  // Simple interface for overriding the cache creator.
+  public interface SDECacheCreator {
+    SDECache createCache();
+  }
+
+  // Cache creator.  Can be overridden for testing.
+  private static SDECacheCreator sdeCacheCreator;
+
+  // Shared cache for SDE data
+  private static SDECache sdeCache;
+
   // Account to be synchronized
   protected SynchronizedEveAccount account;
+
+  public static void setCacheCreator(SDECacheCreator creator) {
+    synchronized (AbstractESIAccountSync.class) {
+      sdeCacheCreator = creator;
+    }
+  }
+
+  protected SDECache getSDECache() {
+    synchronized (AbstractESIAccountSync.class) {
+      if (sdeCache == null) {
+        sdeCache = sdeCacheCreator == null ? new StandardSDECache() : sdeCacheCreator.createCache();
+      }
+      return sdeCache;
+    }
+  }
 
   /**
    * All synchronizer instances must be initialized with the account they will sync.

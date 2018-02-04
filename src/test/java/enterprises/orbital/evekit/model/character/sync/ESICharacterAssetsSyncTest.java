@@ -12,6 +12,9 @@ import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Asset;
 import enterprises.orbital.evekit.model.common.Location;
+import enterprises.orbital.evekit.sde.client.model.InvCategory;
+import enterprises.orbital.evekit.sde.client.model.InvGroup;
+import enterprises.orbital.evekit.sde.client.model.InvType;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -20,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +36,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
   // Local mocks and other objects
   private ESIAccountClientProvider mockServer;
   private AssetsApi mockEndpoint;
+  private SDECache mockCache;
   private long testTime = 1238L;
 
   private static Object[][] assetsTestData;
@@ -61,7 +66,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
           locationFlagLen)];
       assetsTestData[i][4] = TestBase.getRandomInt();
       assetsTestData[i][5] = TestBase.getRandomInt();
-      assetsTestData[i][6] = TestBase.getRandomBoolean();
+      assetsTestData[i][6] = true;
       assetsTestData[i][7] = TestBase.getRandomText(50);
     }
 
@@ -84,6 +89,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
     pages = new int[pageCount];
     for (int i = pageCount - 1; i >= 0; i--)
       pages[i] = size - (pageCount - 1 - i) * (size / pageCount);
+
   }
 
   @Override
@@ -117,6 +123,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
                                                         .executeUpdate();
                              });
     OrbitalProperties.setTimeGenerator(null);
+    AbstractESIAccountSync.setCacheCreator(null);
     super.teardown();
   }
 
@@ -211,6 +218,36 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getAssetsApi())
             .andReturn(mockEndpoint);
+    // Install a mock SDE cache
+    mockCache = EasyMock.createMock(SDECache.class);
+    InvType dummyType = new InvType();
+    dummyType.setTypeID(1234);
+    dummyType.setGroupID(5678);
+    dummyType.setTypeName("dummyType");
+    dummyType.setDescription("dummy");
+    dummyType.setMass(1234D);
+    dummyType.setVolume(1234D);
+    dummyType.setCapacity(10D);
+    dummyType.setPortionSize(123);
+    dummyType.setRaceID(123);
+    dummyType.setBasePrice(BigDecimal.ONE);
+    dummyType.setMarketGroupID(1234);
+    dummyType.setIconID(1234);
+    dummyType.setSoundID(1234);
+    dummyType.setGraphicID(1234);
+    InvGroup dummyGroup = new InvGroup();
+    dummyGroup.setGroupID(1234);
+    dummyGroup.setCategoryID(1234);
+    dummyGroup.setGroupName("Dummy Container");
+    dummyGroup.setIconID(1234);
+    InvCategory dummyCategory = new InvCategory();
+    dummyCategory.setCategoryID(1234);
+    dummyCategory.setCategoryName("Ship");
+    dummyCategory.setIconID(1234);
+    EasyMock.expect(mockCache.getType(EasyMock.anyInt())).andReturn(dummyType).anyTimes();
+    EasyMock.expect(mockCache.getGroup(EasyMock.anyInt())).andReturn(dummyGroup).anyTimes();
+    EasyMock.expect(mockCache.getCategory(EasyMock.anyInt())).andReturn(dummyCategory).anyTimes();
+    AbstractESIAccountSync.setCacheCreator(() -> mockCache);
   }
 
   private void verifyDataUpdate() throws Exception {
@@ -265,12 +302,12 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
   @Test
   public void testSyncUpdate() throws Exception {
     setupOkMock();
-    EasyMock.replay(mockServer, mockEndpoint);
+    EasyMock.replay(mockServer, mockEndpoint, mockCache);
 
     // Perform the sync
     ESICharacterAssetsSync sync = new ESICharacterAssetsSync(charSyncAccount);
     sync.synch(mockServer);
-    EasyMock.verify(mockServer, mockEndpoint);
+    EasyMock.verify(mockServer, mockEndpoint, mockCache);
 
     // Verify updated properly
     verifyDataUpdate();
@@ -293,7 +330,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
   @Test
   public void testSyncUpdateExisting() throws Exception {
     setupOkMock();
-    EasyMock.replay(mockServer, mockEndpoint);
+    EasyMock.replay(mockServer, mockEndpoint, mockCache);
 
     // Populate existing
     //
@@ -330,7 +367,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
     // Perform the sync
     ESICharacterAssetsSync sync = new ESICharacterAssetsSync(charSyncAccount);
     sync.synch(mockServer);
-    EasyMock.verify(mockServer, mockEndpoint);
+    EasyMock.verify(mockServer, mockEndpoint, mockCache);
 
     // Verify old objects were evolved properly
     List<Asset> oldEls = AbstractESIAccountSync.retrieveAll(testTime - 1, (long contid, AttributeSelector at) ->

@@ -12,6 +12,9 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Asset;
 import enterprises.orbital.evekit.model.common.Location;
+import enterprises.orbital.evekit.sde.client.model.InvCategory;
+import enterprises.orbital.evekit.sde.client.model.InvGroup;
+import enterprises.orbital.evekit.sde.client.model.InvType;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 
@@ -94,12 +97,41 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
                                                                        DEF_LOCATION_BATCH_SIZE);
     resultData.assetLocations = new ArrayList<>();
     resultData.assetNames = new ArrayList<>();
-    for (int i = 0; i < resultData.assets.size(); ) {
-      List<Long> itemBatch =
-          resultData.assets.subList(i, Math.min(i + BATCH_SIZE, resultData.assets.size()))
-                           .stream()
-                           .map(GetCharactersCharacterIdAssets200Ok::getItemId)
-                           .collect(Collectors.toList());
+    for (int i = 0; i < resultData.assets.size(); i += BATCH_SIZE) {
+      // Filter assets to containers and ships which are singletons.  These are the only
+      // assets for which location or name can currently be retrieved.
+      List<Long> itemBatch = new ArrayList<>();
+      for (GetCharactersCharacterIdAssets200Ok nextAsset : resultData.assets.subList(i, Math.min(i + BATCH_SIZE, resultData.assets.size()))) {
+        // Asset must be:
+        // 1) a singleton
+        // 2) a ship (categoryName = "Ship") or a container (groupName ends with "Container")
+        if (!nextAsset.getIsSingleton())
+          continue;
+        try {
+          InvType assetType = getSDECache().getType(nextAsset.getTypeId());
+          if (assetType == null) {
+            log.warning(getContext() + " Asset type can not be resolved for asset type: " + nextAsset.getTypeId());
+            continue;
+          }
+          InvGroup assetGroup = getSDECache().getGroup(assetType.getGroupID());
+          if (assetGroup == null) {
+            log.warning(getContext() + " Asset group can not be resolved for asset type: " + nextAsset.getTypeId());
+            continue;
+          }
+          InvCategory assetCategory = getSDECache().getCategory(assetGroup.getCategoryID());
+          if (assetCategory == null) {
+            log.warning(getContext() + " Asset category can not be resolved for asset type: " + nextAsset.getTypeId());
+            continue;
+          }
+          if (assetCategory.getCategoryName().equals("Ship") ||
+              assetGroup.getGroupName().endsWith("Container"))
+            itemBatch.add(nextAsset.getItemId());
+        } catch (enterprises.orbital.evekit.sde.client.invoker.ApiException e) {
+          log.log(Level.WARNING, getContext() + " SDE Api error while trying to resolve type information, skipping asset: " + nextAsset.getItemId(), e);
+          e.printStackTrace();
+        }
+      }
+      if (itemBatch.isEmpty()) continue;
       try {
         retrieveLocationBatch(apiInstance, itemBatch, resultData.assetLocations, resultData.assetNames);
       } catch (ApiException e) {
@@ -133,7 +165,6 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
           log.log(Level.FINE, getContext() + " Giving up on resolving batch " + itemBatch + ":", e);
         }
       }
-      i += BATCH_SIZE;
     }
     return new ESIAccountServerResult<>(expiry, resultData);
   }
