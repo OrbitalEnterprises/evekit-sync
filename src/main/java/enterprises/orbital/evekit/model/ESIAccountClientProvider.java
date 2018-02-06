@@ -25,4 +25,6 @@ public interface ESIAccountClientProvider {
   IndustryApi getIndustryApi();
 
   ContractsApi getContractsApi();
+
+  LocationApi getLocationApi();
 }
