@@ -77,7 +77,7 @@ Each change can be in one of the following states:
   * **N/A** [AccountStatus](#accountstatus)
   * **beta** [Asset](#asset)
   * **beta** [Blueprint](#blueprint)
-  * **pending** [Bookmark](#bookmark)
+  * **dev** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
   * **pending** [ContactLabel](#contactlabel)
   * **beta** [Contract](#contract)
@@ -298,6 +298,35 @@ materialEfficiency | materialEfficiency | material_efficiency |
 runs | runs | runs | 
 
 ### Bookmark
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/bookmarks/`
+* `/characters/{character_id}/bookmarks/folders/`
+* `/corporations/{corporation_id}/bookmarks/`
+* `/corporations/{corporation_id}/bookmarks/folders/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+folderID | folderID | folder\_id |
+folderName | folderName | name | This field populated from the folders endpoint.
+folderCreatorID | folderCreatorID | creator\_id | This field populated from the folders endpoint.  ESI does not populate this field for characters, in which case EveKit sets the value to the character ID.  For corporations, this field is optional and will be set to 0 if not populated by ESI.
+bookmarkID | bookmarkID | bookmark\_id |
+bookmarkCreatorID | bookmarkCreatorID | creator\_id | 
+created | created | created |
+itemID | itemID | item\_id | This field is populated from the optional `item` field.  If not present, the value is set to 0.
+typeID | typeID | type\_id | This field is populated from the optional `item` field.  If not present, the value is set to 0.
+locationID | locationID | location\_id |
+x | x | x | This field is populated from the optional `coordinates` field.  If not present, the value is set to 0.
+y | y | y | This field is populated from the optional `coordinates` field.  If not present, the value is set to 0.
+z | z | z | This field is populated from the optional `coordinates` field.  If not present, the value is set to 0.
+memo | memo | label | The XML API called this field `memo`.  We've retained the name but the data is now populated by the ESI `label` field.
+note | note | notes |
+
+#### Synchronization Notes
+
+The ESI splits bookmark data into two endpoints versus the XML API which only used a single endpoint.  We call both ESI endpoints during synchronization and populate a single `Bookmark` model just as we did using the XML API.
+
 ### Contact
 ### ContactLabel
 ### Contract
