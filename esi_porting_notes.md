@@ -52,7 +52,7 @@ Each change can be in one of the following states:
   * **pending** [PlanetaryRoute](#planetaryroute)
   * **beta** [ResearchAgent](#researchagent)
 * Corporation Model Changes
-  * **dev** [ContainerLog](#containerlog)
+  * **beta** [ContainerLog](#containerlog)
   * **pending** [CorporationMedal](#corporationmedal)
   * **pending** [CorporationMemberMedal](#corporationmembermedal)
   * **pending** [CorporationSheet](#corporationsheet)
@@ -85,10 +85,10 @@ Each change can be in one of the following states:
   * **beta** [ContractItem](#contractitem)
   * **pending** [FacWarStats](#facwarstats)
   * **beta** [IndustryJob](#industryjob)
-  * **pending** [Kill](#kill)
-  * **pending** [KillAttacker](#killattacker)
-  * **pending** [KillItem](#killitem)
-  * **pending** [KillVictim](#killvictim)
+  * **dev** [Kill](#kill)
+  * **dev** [KillAttacker](#killattacker)
+  * **dev** [KillItem](#killitem)
+  * **dev** [KillVictim](#killvictim)
   * **beta** [Location](#location)
   * **beta** [MarketOrder](#marketorder)
   * **beta** [Standing](#standing)
@@ -462,9 +462,136 @@ successfulRuns | successfulRuns | successful\_runs |
 * Historic `status` will be mapped to the enumerated type using [this table](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/industry_job_status.py).
 
 ### Kill
+
+ESI endpoint(s):
+
+* `/killmails/{killmail_id}/{killmail_hash}/`
+* `/characters/{character_id}/killmails/recent/`
+* `/corporations/{corporation_id}/killmails/recent/`
+
+**Note:** All of the kill models are populated at the same time during synchronziation since the data is returned by a single ESI endpoint (`/killmails`)  
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+killID | killID | killmail\_id | Type changes from long to int.
+killTime | killTime | killmail\_time |
+moonID | moonID | moon\_id | Optional in ESI.  EveKit will populate with 0 if not present.
+solarSystemID | solarSystemID | solar\_system\_id |
+*N/A* | warID | war\_id | A new int field in the ESI.  Not present in the XML API.
+
+#### Synchronization Notes
+
+Two calls are necessary for this population:
+
+1. The `killmails/recent` endpoint retrieves a list of recent killmails and their hashes.
+2. The `/killmails` endpoint retrieves detailed killmail information by hash.
+
 ### KillAttacker
+
+ESI endpoint(s):
+
+* `/killmails/{killmail_id}/{killmail_hash}/`
+* `/characters/{character_id}/killmails/recent/`
+* `/corporations/{corporation_id}/killmails/recent/`
+
+**Note:** All of the kill models are populated at the same time during synchronziation since the data is returned by a single ESI endpoint (`/killmails`)  
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+killID | killID | *N/A* | Not in ESI.  Populated by EveKit for schema purposes.  Type change from long to int.
+attackerCharacterID | attackerCharacterID | character\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+allianceID | allianceID | alliance\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+allianceName | (deleted) | *N/A* | ESI expects lookup from `allianceID`.
+attackerCharacterName | (deleted) | *N/A* | ESI expects lookup from `attackerCharacterID`.
+attackerCorporationID | attackerCorporationID | corporation\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+attackerCorporationName | (deleeted) | *N/A* | ESI expects lookup from `attackerCorporationID`.
+damageDone | damageDone | damage\_done |
+factionID | factionID | faction\_id | Optional in ESI, set to 0 if not populated.
+factionName | (deleted) | *N/A*| ESI expects lookup from `factionID`.
+securityStatus | securityStatus | security\_status | Type change from double to float.
+shipTypeID | shipTypeID | ship\_type\_id | Optional in ESI, set to 0 if not populated.
+weaponTypeID | weaponTypeID | weapon\_type\_id | Optional in ESI, set to 0 if not populated.
+finalBlow |finalBlow | final\_blow |
+
+#### Synchronization Notes
+
+Two calls are necessary for this population:
+
+1. The `killmails/recent` endpoint retrieves a list of recent killmails and their hashes.
+2. The `/killmails` endpoint retrieves detailed killmail information by hash.
+
+Attacker data is a structured contained within the killmail report.
+
 ### KillItem
+
+* `/killmails/{killmail_id}/{killmail_hash}/`
+* `/characters/{character_id}/killmails/recent/`
+* `/corporations/{corporation_id}/killmails/recent/`
+
+**Note:** All of the kill models are populated at the same time during synchronziation since the data is returned by a single ESI endpoint (`/killmails`)  
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+killID | killID | *N/A* | Not in ESI.  Populated by EveKit for schema purposes.  Type change from long to int.
+typeID | typeID | item\_type\_id |
+flag | flag | flag |
+qtyDestroyed | qtyDestroyed | quantity\_destroyed | Optional in ESI, set to 0 if not populated.  Type change from int to long.
+qtyDropped | qtyDropped | quantity\_dropped | Optional in ESI, set to 0 if not populated.  Type change from int to long.
+singleton | singleton | singleton | Type change from boolean to int.  See historic conversion notes below.
+sequence | sequence | *N/A* | This is an artifical field we introduce to enumerate kill items since otherwise there is no way to uniquely identify to kill items with the same stats.
+containerSequence | containerSequence | *N/A* | This is an artifical field we introduce to record the hierarchy of kill items (e.g. which kill items are contained in others).  If the value is -1, then this is a "top level" kill item, otherwise the value gives the sequence number of the parent kill item.
+
+#### Synchronization Notes
+
+Two calls are necessary for this population:
+
+1. The `killmails/recent` endpoint retrieves a list of recent killmails and their hashes.
+2. The `/killmails` endpoint retrieves detailed killmail information by hash.
+
+Attacker data is a structured contained within the killmail report.
+
+#### Historic Conversion Notes
+
+Historic EveKit data incorrectly treated singleton as a boolean value.  This should actually be an integer which historically can only havc the values "0" or "2" (blueprint copy).  We'll convert historic false values to "0" and historic true values to "2".
+
 ### KillVictim
+
+* `/killmails/{killmail_id}/{killmail_hash}/`
+* `/characters/{character_id}/killmails/recent/`
+* `/corporations/{corporation_id}/killmails/recent/`
+
+**Note:** All of the kill models are populated at the same time during synchronziation since the data is returned by a single ESI endpoint (`/killmails`)  
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+killID | killID | *N/A* | Not in ESI.  Populated by EveKit for schema purposes.  Type change from long to int.
+allianceID | allianceID | alliance\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+allianceName | (deleted) | *N/A* | ESI expects lookup from `allianceID`
+killCharacterID | killCharacterID | character\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+killCharacterName | (deleted) | *N/A* | ESI expects lookup from `killCharacterID`
+killCorporationID | killCorporationID | corporation\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+killCorporationName | (deleted) | *N/A* | ESI expects lookup from `killCorporationID`
+damageTaken | damageTaken | damage\_taken | Type change from long to int.
+factionID | factionID | faction\_id | Optional in ESI, set to 0 if not populated.  Type change from long to int.
+factionName | (deleted) | *N/A* | ESI expects lookup from `factionID`
+shipTypeID | shipTypeID | ship\_type\_id |
+*N/A* | x | position.x | Optional in ESI, set to 0 if not populated.  Type is double.
+*N/A* | y | position.y | Optional in ESI, set to 0 if not populated.  Type is double.
+*N/A* | z | position.z | Optional in ESI, set to 0 if not populated.  Type is double.
+
+#### Synchronization Notes
+
+Two calls are necessary for this population:
+
+1. The `killmails/recent` endpoint retrieves a list of recent killmails and their hashes.
+2. The `/killmails` endpoint retrieves detailed killmail information by hash.
+
+Attacker data is a structured contained within the killmail report.
+
+#### Historic Conversion Notes
+
+Position fields are new in the ESI and will be set to 0 for historic kill data.
+
 ### Location
 
 ESI endpoint(s):
