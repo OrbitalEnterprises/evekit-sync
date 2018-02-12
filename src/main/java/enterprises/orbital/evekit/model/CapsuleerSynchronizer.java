@@ -425,31 +425,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
 //        return CharacterBlueprintsSync.syncCharacterBlueprints(syncTime, syncAccount, syncUtil, charRequest);
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_BOOKMARKS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterBookmarksSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterBookmarksSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterBookmarksSync.syncBookmarks(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_BOOKMARKS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterBookmarksSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterBookmarksSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterBookmarksSync.syncBookmarks(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTRACTS, new CharStateHandler() {
 //      @Override
 //      public SyncStatus exclude(
@@ -600,31 +600,31 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
 //        return CharacterIndustryJobsHistorySync.syncCharacterIndustryJobsHistory(syncTime, syncAccount, syncUtil, charRequest);
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_KILLLOG, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterKillLogSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterKillLogSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterKillLogSync.syncCharacterKillLog(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_KILLLOG, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterKillLogSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterKillLogSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterKillLogSync.syncCharacterKillLog(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CHAR_LOCATIONS, new CharStateHandler() {
 //      @Override
 //      public SyncStatus exclude(

@@ -27,4 +27,8 @@ public interface ESIAccountClientProvider {
   ContractsApi getContractsApi();
 
   LocationApi getLocationApi();
+
+  BookmarksApi getBookmarksApi();
+
+  KillmailsApi getKillmailsApi();
 }
