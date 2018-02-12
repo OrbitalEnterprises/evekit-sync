@@ -77,7 +77,7 @@ Each change can be in one of the following states:
   * **N/A** [AccountStatus](#accountstatus)
   * **beta** [Asset](#asset)
   * **beta** [Blueprint](#blueprint)
-  * **dev** [Bookmark](#bookmark)
+  * **beta** [Bookmark](#bookmark)
   * **pending** [Contact](#contact)
   * **pending** [ContactLabel](#contactlabel)
   * **beta** [Contract](#contract)
@@ -85,10 +85,10 @@ Each change can be in one of the following states:
   * **beta** [ContractItem](#contractitem)
   * **pending** [FacWarStats](#facwarstats)
   * **beta** [IndustryJob](#industryjob)
-  * **dev** [Kill](#kill)
-  * **dev** [KillAttacker](#killattacker)
-  * **dev** [KillItem](#killitem)
-  * **dev** [KillVictim](#killvictim)
+  * **beta** [Kill](#kill)
+  * **beta** [KillAttacker](#killattacker)
+  * **beta** [KillItem](#killitem)
+  * **beta** [KillVictim](#killvictim)
   * **beta** [Location](#location)
   * **beta** [MarketOrder](#marketorder)
   * **beta** [Standing](#standing)
@@ -476,7 +476,7 @@ Old Model Field | New Model Field | ESI Field | Notes
 killID | killID | killmail\_id | Type changes from long to int.
 killTime | killTime | killmail\_time |
 moonID | moonID | moon\_id | Optional in ESI.  EveKit will populate with 0 if not present.
-solarSystemID | solarSystemID | solar\_system\_id |
+solarSystemID | solarSystemID | solar\_system\_id | Type changes from long to int.
 *N/A* | warID | war\_id | A new int field in the ESI.  Not present in the XML API.
 
 #### Synchronization Notes
