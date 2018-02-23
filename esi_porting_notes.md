@@ -26,25 +26,30 @@ Each change can be in one of the following states:
   * **pending** [UpcomingCalendarEvent](#upcomingcalendarevent)
   * **pending** [CalendarEventAttendee](#calendareventattendee)
   * **pending** [CharacterContactNotification](#charactercontactnotification)
+  * **beta** [CharacterLocation](#characterlocation) (new)
   * **pending** [CharacterMailMessage](#charactermailmessage)
   * **pending** [CharacterMailMessageBody](#charactermailmessagebody)
   * **pending** [CharacterMedal](#charactermedal)
   * **pending** [CharacterNotification](#characternotification)
   * **pending** [CharacterNotificationBody](#characternotificationbody)
+  * **beta** [CharacterOnline](#characteronline) (new)
   * **pending** [CharacterRole](#characterrole)
-  * **pending** [CharacterSheet](#charactersheet)
-  * **pending** [CharacterSheetBalance](#charactersheetbalance)
-  * **pending** [CharacterSheetClone](#charactersheetclone)
-  * **pending** [CharacterSheetJump](#charactersheetjump)
-  * **pending** [CharacterSkill](#characterskill)
-  * **pending** [CharacterSkillInTraining](#characterskillintraining)
-  * **pending** [SkillInQueue](#skillinqueue)
+  * **dev** [CharacterSheet](#charactersheet)
+  * **dev** [CharacterSheetAttributes](#charactersheetattributes) (new)
+  * **N/A** [CharacterSheetBalance](#charactersheetbalance)
+  * **dev** [CharacterSheetClone](#charactersheetclone)
+  * **dev** [CharacterSheetJump](#charactersheetjump)
+  * **dev** [CharacterSheetSkillPoints](#charactersheetskillpoints) (new)
+  * **beta** [CharacterShip](#charactership) (new)
+  * **dev** [CharacterSkill](#characterskill)
+  * **N/A** [CharacterSkillInTraining](#characterskillintraining)
+  * **dev** [SkillInQueue](#skillinqueue)
   * **pending** [CharacterTitle](#charactertitle)
   * **pending** [ChatChannel](#chatchannel)
   * **pending** [ChatChannelMember](#chatchannelmember)
-  * **pending** [Implant](#implant)
-  * **pending** [JumpClone](#jumpclone)
-  * **pending** [JumpCloneImplant](#jumpcloneimplant)
+  * **dev** [Implant](#implant)
+  * **dev** [JumpClone](#jumpclone)
+  * **dev** [JumpCloneImplant](#jumpcloneimplant)
   * **pending** [MailingList](#mailinglist)
   * **pending** [PlanetaryColony](#planetarycolony)
   * **pending** [PlanetaryLink](#planetarylink)
@@ -100,25 +105,246 @@ Each change can be in one of the following states:
 ### UpcomingCalendarEvent
 ### CalendarEventAttendee
 ### CharacterContactNotification
+
+### CharacterLocation (new)
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/location/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | solarSystemID | solar\_system\_id |
+*N/A* | stationID | station\_id |
+*N/A* | structureID | structure\_id |
+
 ### CharacterMailMessage
 ### CharacterMailMessageBody
 ### CharacterMedal
 ### CharacterNotification
 ### CharacterNotificationBody
+
+### CharacterOnline (new)
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/online/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | online | online |
+*N/A* | lastLogin | last\_login |
+*N/A* | lastLogout | last\_logout |
+*N/A* | logins | logins |
+
 ### CharacterRole
 ### CharacterSheet
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/` - no scope required
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+characterID | characterID | *N/A* | Never changes and will be copied from SynchronizedEveAccount.
+name | name | name | From `/characters/{character_id}/`
+corporationID | corporationID | corporation\_id | From `/characters/{character_id}/`.  Type change from long to int. 
+corporationName | (deleted) | *N/A* | ESI expects lookup from `corporationID`.
+*N/A* | raceID | race\_id | From `/characters/{character_id}/`.  Replaces `race`.  Type is int.
+race | (deleted) | *N/A* | ESI expects lookup from `raceID`.
+doB | doB | birthday | From `/characters/{character_id}/`
+bloodlineID | bloodlineID | bloodline\_id | From `/characters/{character_id}/`
+bloodline | (deleted) | *N/A* | ESI expects lookup from `bloodlineID`.
+ancestryID | ancestryID | ancestry\_id | From `/characters/{character_id}/`
+ancestry | (deleted) | *N/A* | ESI expects lookup from `ancestryID`.
+gender | gender | gender | Now an enumerated type with conversion `Male = male` and `Female = female`.
+allianceName | (deleted) | *N/A* | ESI expects lookup from `allianceID`
+allianceID | allianceID | alliance\_id | From `/characters/{character_id}/`.  Type change from long to int.
+factionName | (deleted) | *N/A* | ESI expects lookup from `factionID`
+factionID | factionID | faction\_id | From `/characters/{character_id}/`.  Type change from long to int.
+*N/A* | description | description | From `/characters/{character_id}/`.  Type is string.
+*N/A* | securityStatus | security\_status | From `/characters/{character_id}/`.  Type is float.
+intelligence | (deleted) | *N/A* | Moved to `CharacterSheetAttributes`.
+memory	     | (deleted)	    | *N/A*	   | Moved to `CharacterSheetAttributes`.
+charisma     | (deleted)     | *N/A*     | Moved to `CharacterSheetAttributes`.
+perception   | (deleted)   | *N/A*   | Moved to `CharacterSheetAttributes`.
+willpower    | (deleted)    | *N/A*    | Moved to `CharacterSheetAttributes`.
+homeStationID | (deleted) | *N/A* | Moved to `CharacterSheetClone`.
+lastRespecDate | (deleted) | *N/A* | Moved to `CharacterSheetAttributes` as `lastRemapDate`.
+lastTimedRespec | (deleted) | *N/A* | Moved to `CharacterSheetAttributes` as `accruedRemapCooldownDate`.
+freeRespecs | (deleted) | *N/A* | Moved to `CharacterSheetAttributes` as `bonusRemaps`.
+remoteStationDate | (deleted) | *N/A* | Moved to `CharacterSheetClone`.
+freeSkillPoints | (deleted) | *N/A* | Moved to `CharacterSheetSkillPoints`.
+
+#### Historic Conversion Notes
+
+* `gender` case conversion, `Male = male` and `Female = female`
+
+### CharacterSheetAttributes (new)
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/attributes/` - requires esi-skills.read\_skills.v1
+
+#### General Notes
+
+This model replaces the attributes portion of the character sheet since these fields are retrieved through a new endpoint.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | intelligence | intelligence | Moved from `CharacterSheet`
+*N/A*	     | memory	    | memory	   | Moved from `CharacterSheet`
+*N/A*     | charisma     | charisma     | Moved from `CharacterSheet`
+*N/A*   | perception   | perception   | Moved from `CharacterSheet`
+*N/A*    | willpower    | willpower    | Moved from `CharacterSheet`
+*N/A* | lastRemapDate | last\_remap\_date | Moved from `CharacterSheet`
+*N/A* | accruedRemapCooldownDate | accrued\_remap\_cooldown\_date | Moved from `CharacterSheet`
+*N/A* | bonusRemaps | bonus\_remaps | Moved from `CharacterSheet`
+
 ### CharacterSheetBalance
+
+Removed.  Replaced by `AccountBalance`.
+
 ### CharacterSheetClone
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/clones/` - requires esi-clones.read\_clones.v1
+
+#### General Notes
+
+We've augmented this model to include information that we used to track as part of the character sheet.
+We'll now update this information as part of updating the clones endpoint.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+cloneJumpDate | cloneJumpDate | last\_clone\_jump\_date |
+*N/A* | homeStationID | location\_id | Moved from `CharacterSheet`
+*N/A* | homeStationType | location\_type | String type (from enumerated)
+*N/A* | lastStationChangeDate | last\_station\_change\_date |
+
 ### CharacterSheetJump
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/fatigue/` - esi-characters.read\_fatigue.v1
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+jumpActivation | jumpActivation | last\_jump\_date |
+jumpFatigue | jumpFatigue | jump\_fatigue\_expire\_date |
+jumpLastUpdate | jumpLastUpdate | last\_update\_date |
+
+### CharacterSheetSkillPoints (new)
+
+* `/characters/{character_id}/skills/` - requires esi-skills.read\_skills.v1
+
+#### General Notes
+
+This is a new model which holds character skill point information, some of which was
+previously stored in `CharacterSheet`.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | totalSkillPoints | total\_sp | Type is long.
+*N/A* | unallocatedSkillPoints | unallocated\_sp | Moved from `CharacterSheet`.  Type change from long to int.
+
+### CharacterShip (new)
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/ship/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | shipTypeID | ship\_type\_id |
+*N/A* | shipItemID | ship\_item\_id |
+*N/A* | shipName | ship\_name |
+
 ### CharacterSkill
+
+* `/characters/{character_id}/skills/` - requires esi-skills.read\_skills.v1
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+typeID | typeID | skill\_id |
+level | (deleted) | *N/A* | Copied to `trainedSkillLevel`.
+skillpoints | skillpoints | skillpoints\_in\_skill |
+published | (deleted) | *N/A* | No longer in ESI.
+*N/A* | trainedSkillLevel | trained\_skill\_level |
+*N/A* | activeSkillLevel | active\_skill\_level |
+
+#### Historic Conversion Notes
+
+Due to alpha clones, a character may not have access to all the levels it has trained.  The ESI exposes
+this disinction by reporting both a "trained skill level", which is the highest level trained on
+an account, versus an "active skill level" which is the highest level the character may use
+based on their clone status.
+
+For historic data, we remove the old `level` field and copy it to the `trainedSkillLevel` field.  We will initiall set `activeSkillLevel` to
+`trainedSkillLevel`.  This will be updated on future syncs according
+to the actual state of the character.  We have no way to determine
+the proper historic setting for this field.
+
 ### CharacterSkillInTraining
+
+Removed.  Can be inferred from `SkillInQueue`.
+
 ### SkillInQueue
+
+* `/characters/{character_id}/skillqueue/` - requires esi-skills.read\_skillqueue.v1
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+endSP | endSP | level\_end\_sp |
+endTime | endTime | finish\_date |
+level | level | finished\_level |
+queuePosition | queuePosition | queue\_position |
+startSP | startSP | level\_start\_sp |
+startTime | startTime | start\_date |
+typeID | typeID | skill\_id |
+*N/A* | trainingStartSP | training\_start\_sp | New in ESI.  Type is int.
+
 ### CharacterTitle
 ### ChatChannel
 ### ChatChannelMember
 ### Implant
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/implants/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+typeID | typeID | id | ESI returns results as an array of type IDs.
+typeName | (deleted) | *N/A* | ESI expects lookup from `typeID`
+
 ### JumpClone
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/clones/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+jumpCloneID | jumpCloneID | jump\_clone\_id |
+typeID | (deleted) | *N/A* | Not present in ESI.
+locationID | locationID | location\_id |
+cloneName | cloneName | name |
+*N/A* | locationType | location\_type | New enumerated field.
+
 ### JumpCloneImplant
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/clones/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+jumpCloneID | jumpCloneID | *N/A* | Inserted by EveKit as a foreign key for the JumpClone table.
+typeID | typeID | *N/A* | Implant array value from ESI clones endpoint.
+typeName | (deleted) | *N/A* | ESI expects lookup from `typeID`.
+
 ### MailingList
 ### PlanetaryColony
 ### PlanetaryLink
