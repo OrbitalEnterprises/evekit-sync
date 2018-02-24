@@ -179,6 +179,7 @@ freeSkillPoints | (deleted) | *N/A* | Moved to `CharacterSheetSkillPoints`.
 #### Historic Conversion Notes
 
 * `gender` case conversion, `Male = male` and `Female = female`
+*  We can't preserve `homeStationID` and `remoteStationDate` as part of the update.  These fields will be updated the first time a sync occurs after the ESI port.
 
 ### CharacterSheetAttributes (new)
 
@@ -281,7 +282,7 @@ this disinction by reporting both a "trained skill level", which is the highest 
 an account, versus an "active skill level" which is the highest level the character may use
 based on their clone status.
 
-For historic data, we remove the old `level` field and copy it to the `trainedSkillLevel` field.  We will initiall set `activeSkillLevel` to
+For historic data, we remove the old `level` field and copy it to the `trainedSkillLevel` field.  We will initially set `activeSkillLevel` to
 `trainedSkillLevel`.  This will be updated on future syncs according
 to the actual state of the character.  We have no way to determine
 the proper historic setting for this field.
