@@ -31,4 +31,8 @@ public interface ESIAccountClientProvider {
   BookmarksApi getBookmarksApi();
 
   KillmailsApi getKillmailsApi();
+
+  ClonesApi getClonesApi();
+
+  SkillsApi getSkillsApi();
 }
