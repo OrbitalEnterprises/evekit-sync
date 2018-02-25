@@ -473,10 +473,12 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
       ESIEndpointSyncTracker.finishTracker(tracker);
 
       // Exit without scheduling if:
+      // - account no longer has credentials
       // - account no longer has required scopes
       // - owning user is no longer active.
       // - endpoint is now excluded
-      if ((endpoint().getScope() != null && !account.hasScope(endpoint().getScope().getName())) ||
+      if (account.getEveCharacterID() == -1 ||
+          (endpoint().getScope() != null && !account.hasScope(endpoint().getScope().getName())) ||
           !account.getUserAccount().isActive() ||
           getExcludedEndpoints().contains(endpoint())) {
         log.fine(getContext() + " conditions not satisfied, not scheduling a future sync");
