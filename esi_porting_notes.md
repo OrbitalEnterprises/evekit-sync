@@ -27,30 +27,31 @@ Each change can be in one of the following states:
   * **pending** [CalendarEventAttendee](#calendareventattendee)
   * **pending** [CharacterContactNotification](#charactercontactnotification)
   * **beta** [CharacterLocation](#characterlocation) (new)
-  * **pending** [CharacterMailMessage](#charactermailmessage)
-  * **pending** [CharacterMailMessageBody](#charactermailmessagebody)
+  * **dev** [CharacterMailMessage](#charactermailmessage)
+  * **dev** [CharacterMailMessageBody](#charactermailmessagebody)
   * **pending** [CharacterMedal](#charactermedal)
   * **pending** [CharacterNotification](#characternotification)
   * **pending** [CharacterNotificationBody](#characternotificationbody)
   * **beta** [CharacterOnline](#characteronline) (new)
   * **pending** [CharacterRole](#characterrole)
-  * **dev** [CharacterSheet](#charactersheet)
-  * **dev** [CharacterSheetAttributes](#charactersheetattributes) (new)
+  * **beta** [CharacterSheet](#charactersheet)
+  * **beta** [CharacterSheetAttributes](#charactersheetattributes) (new)
   * **N/A** [CharacterSheetBalance](#charactersheetbalance)
-  * **dev** [CharacterSheetClone](#charactersheetclone)
-  * **dev** [CharacterSheetJump](#charactersheetjump)
-  * **dev** [CharacterSheetSkillPoints](#charactersheetskillpoints) (new)
+  * **beta** [CharacterSheetClone](#charactersheetclone)
+  * **beta** [CharacterSheetJump](#charactersheetjump)
+  * **beta** [CharacterSheetSkillPoints](#charactersheetskillpoints) (new)
   * **beta** [CharacterShip](#charactership) (new)
-  * **dev** [CharacterSkill](#characterskill)
+  * **beta** [CharacterSkill](#characterskill)
   * **N/A** [CharacterSkillInTraining](#characterskillintraining)
-  * **dev** [SkillInQueue](#skillinqueue)
+  * **beta** [SkillInQueue](#skillinqueue)
   * **pending** [CharacterTitle](#charactertitle)
   * **pending** [ChatChannel](#chatchannel)
   * **pending** [ChatChannelMember](#chatchannelmember)
-  * **dev** [Implant](#implant)
-  * **dev** [JumpClone](#jumpclone)
-  * **dev** [JumpCloneImplant](#jumpcloneimplant)
-  * **pending** [MailingList](#mailinglist)
+  * **beta** [Implant](#implant)
+  * **beta** [JumpClone](#jumpclone)
+  * **beta** [JumpCloneImplant](#jumpcloneimplant)
+  * **dev** [MailingList](#mailinglist)
+  * **dev** [MailLabel](#maillabel) (new)
   * **pending** [PlanetaryColony](#planetarycolony)
   * **pending** [PlanetaryLink](#planetarylink)
   * **pending** [PlanetaryPin](#planetarypin)
@@ -119,7 +120,99 @@ Old Model Field | New Model Field | ESI Field | Notes
 *N/A* | structureID | structure\_id |
 
 ### CharacterMailMessage
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/mail/`
+* `/characters/{character_id}/mail/{mail_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+messageID | messageID | mail_id | 
+senderID | senderID | from | 
+senderName | (deleted) | *N/A* | ESI expects lookup from senderID
+title | title | subject |
+msgRead | msgRead | is_read |
+sentDate | sentDate | timestamp |
+toCharacterID | (deleted) | *N/A* | Moved to `recipients` element collection
+toCorpOrAllianceID | (deleted) | *N/A* | Moved to `recipients` element collection
+toListID | (deleted) | *N/A* | Moved to `recipients` element collection
+senderTypeID | (deleted) | *N/A* | ESI does not record this information.
+*N/A* | recipients | recipients | Element collection of recipient data.
+*N/A* | labels | labels | Element collection of labels.
+*N/A* | body | body | We combine header and message into a single model since we synchronize these values at the same time.
+
+#### Historic Conversion Notes
+
+##### Recipients
+
+Recipient data must be copied from the old recipient fields to a new recipient
+collection.  Likewise, a new `labels` collection is now also used (not present
+in XML API).  Finally, the previous recipient element collections can be deleted.
+
+The two new tables are created as follows:
+
+```sql
+CREATE TABLE `mail_message_recipient` (
+       `mail_cid` BIGINT(20) NOT NULL,
+       `recipientType` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `recipientID` INT(11) NOT NULL,
+       KEY `mail_cid_index` (`mail_cid`),
+       CONSTRAINT `mail_cid_fk` FOREIGN KEY (`mail_cid`) REFERENCES `evekit_data_character_mail_message` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+and
+
+```sql
+CREATE TABLE `mail_message_label` (
+       `mail_cid` BIGINT(20) NOT NULL,
+       `labelID` INT(11) NOT NULL,
+       KEY `mail_cid_index` (`mail_cid`),
+       CONSTRAINT `mail_cid_fk` FOREIGN KEY (`mail_cid`) REFERENCES `evekit_data_character_mail_message` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+The two tables which can be deleted are:
+
+`charactermailmessage_tocharacterid`
+`charactermailmessage_tolistid`
+
+During the conversion, the new element collection tables must be created first and populated from
+`charactermailmessage_tocharacterid` and `charactermailmessage_tolistid`.  After this is done,
+the old collections can be deleted.  Population can proceed as follows:
+
+```sql
+-- Copy over corp or alliance destinations
+INSERT `mail_message_recipient` (mail_cid, recipientType, recipientID)
+SELECT cid, 'corporation', toCorpOrAllianceID FROM `evekit_data_character_mail_message`;
+
+-- Copy over character recipients
+INSERT `mail_message_recipient` (mail_cid, recipientType, recipientID)
+SELECT CharacterMailMessage_cid, 'character', toCharacterID from `charactermailmessage_tocharacterid`;
+
+-- Copy over mailing list recipients
+INSERT `mail_message_recipient` (mail_cid, recipientType, recipientID)
+SELECT CharacterMailMessage_cid, 'mailing_list', toListID from 'charactermailmessage_tolistid';
+```
+
+##### Message Bodies
+
+Since we synchronize both headers and bodies at the same time, we now collect both values
+into a single model object.  Once the schema is updated, we simply copy over the body values
+from existing mail messages as follows:
+
+```sql
+-- NOTE: this works because mail bodies are immutable and messageIDs are globally unique
+UPDATE `evekit_data_character_mail_message` AS a, `evekit_data_character_mail_message_body` AS b
+SET a.body = b.body
+WHERE a.messageID = b.messageID;
+```
+
 ### CharacterMailMessageBody
+
+Not used with the ESI.  Can be dropped once schema updates have been made for CharacterMailMessage.
+
 ### CharacterMedal
 ### CharacterNotification
 ### CharacterNotificationBody
@@ -347,6 +440,29 @@ typeID | typeID | *N/A* | Implant array value from ESI clones endpoint.
 typeName | (deleted) | *N/A* | ESI expects lookup from `typeID`.
 
 ### MailingList
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/mail/lists/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+displayName | displayName | name |
+listID | listID | mailing\_list\_id | Type change from long to int
+
+### MailLabel (new)
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/mail/labels/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | unreadCount | unread\_count | Integer field (optional)
+*N/A* | labelID | label\_id | Integer field (optional?)
+*N/A* | name | name | String field (optional)
+*N/A* | color | color | String field (optional, source is enumerated)
+
 ### PlanetaryColony
 ### PlanetaryLink
 ### PlanetaryPin
@@ -967,3 +1083,4 @@ clientTypeID | (deleted) | *N/A* | ESI has no analog, not clear what this was us
 characterID | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
 characterName | (deleted) | *N/A* | Bogus field left over from earlier version, will be removed.
 dateDate (generated) | dateDate (generated) | *N/A* | This is a convenient string representation of the date field, rendered for human readability.
+
