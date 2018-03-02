@@ -42,7 +42,6 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "Capsuleer");
     CachedData.cleanup(toDelete, "CharacterContactNotification");
     CachedData.cleanup(toDelete, "CharacterMailMessage");
-    CachedData.cleanup(toDelete, "CharacterMailMessageBody");
     CachedData.cleanup(toDelete, "CharacterMedal");
     CachedData.cleanup(toDelete, "CharacterNotification");
     CachedData.cleanup(toDelete, "CharacterNotificationBody");
@@ -63,6 +62,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "JumpClone");
     CachedData.cleanup(toDelete, "JumpCloneImplant");
     CachedData.cleanup(toDelete, "MailingList");
+    CachedData.cleanup(toDelete, "MailLabel");
     CachedData.cleanup(toDelete, "PlanetaryColony");
     CachedData.cleanup(toDelete, "PlanetaryLink");
     CachedData.cleanup(toDelete, "PlanetaryPin");

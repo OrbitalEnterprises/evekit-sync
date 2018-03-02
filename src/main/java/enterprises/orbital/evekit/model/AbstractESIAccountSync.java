@@ -524,6 +524,11 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     return value.doubleValue();
   }
 
+  public static boolean nullSafeBoolean(Boolean value, boolean def) {
+    if (value == null) return def;
+    return value.booleanValue();
+  }
+
   public static String nullSafeEnum(Enum<?> value, String def) {
     return value == null ? def : value.toString();
   }

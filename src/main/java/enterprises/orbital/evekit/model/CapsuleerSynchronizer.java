@@ -650,81 +650,81 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
 //        return CharacterLocationsSync.syncCharacterLocations(syncTime, syncAccount, syncUtil, charRequest);
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILMESSAGES, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterMailMessageSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterMailMessageSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterMailMessageSync.syncMailMessages(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILBODIES, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterMailMessageBodiesSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterMailMessageBodiesSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterMailMessageBodiesSync.syncMailMessageBodies(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILINGLISTS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterMailingListSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterMailingListSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterMailingListSync.syncMailingLists(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILMESSAGES, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterMailMessageSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterMailMessageSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterMailMessageSync.syncMailMessages(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILBODIES, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterMailMessageBodiesSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterMailMessageBodiesSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterMailMessageBodiesSync.syncMailMessageBodies(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MAILINGLISTS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterMailingListSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterMailingListSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterMailingListSync.syncMailingLists(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CHAR_MARKETORDERS, new CharStateHandler() {
 //      @Override
 //      public SyncStatus exclude(

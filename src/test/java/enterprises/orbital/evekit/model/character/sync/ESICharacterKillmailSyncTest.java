@@ -22,7 +22,7 @@ import org.junit.Test;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ESICharacterKillmaillSyncTest extends SyncTestBase {
+public class ESICharacterKillmailSyncTest extends SyncTestBase {
 
   // Local mocks and other objects
   private ESIAccountClientProvider mockServer;
