@@ -27,8 +27,8 @@ Each change can be in one of the following states:
   * **pending** [CalendarEventAttendee](#calendareventattendee)
   * **pending** [CharacterContactNotification](#charactercontactnotification)
   * **beta** [CharacterLocation](#characterlocation) (new)
-  * **dev** [CharacterMailMessage](#charactermailmessage)
-  * **dev** [CharacterMailMessageBody](#charactermailmessagebody)
+  * **beta** [CharacterMailMessage](#charactermailmessage)
+  * **N/A** [CharacterMailMessageBody](#charactermailmessagebody)
   * **pending** [CharacterMedal](#charactermedal)
   * **pending** [CharacterNotification](#characternotification)
   * **pending** [CharacterNotificationBody](#characternotificationbody)
@@ -50,8 +50,8 @@ Each change can be in one of the following states:
   * **beta** [Implant](#implant)
   * **beta** [JumpClone](#jumpclone)
   * **beta** [JumpCloneImplant](#jumpcloneimplant)
-  * **dev** [MailingList](#mailinglist)
-  * **dev** [MailLabel](#maillabel) (new)
+  * **beta** [MailingList](#mailinglist)
+  * **beta** [MailLabel](#maillabel) (new)
   * **pending** [PlanetaryColony](#planetarycolony)
   * **pending** [PlanetaryLink](#planetarylink)
   * **pending** [PlanetaryPin](#planetarypin)
@@ -84,8 +84,8 @@ Each change can be in one of the following states:
   * **beta** [Asset](#asset)
   * **beta** [Blueprint](#blueprint)
   * **beta** [Bookmark](#bookmark)
-  * **pending** [Contact](#contact)
-  * **pending** [ContactLabel](#contactlabel)
+  * **beta** [Contact](#contact)
+  * **beta** [ContactLabel](#contactlabel)
   * **beta** [Contract](#contract)
   * **beta** [ContractBid](#contractbid)
   * **beta** [ContractItem](#contractitem)
@@ -671,7 +671,58 @@ note | note | notes |
 The ESI splits bookmark data into two endpoints versus the XML API which only used a single endpoint.  We call both ESI endpoints during synchronization and populate a single `Bookmark` model just as we did using the XML API.
 
 ### Contact
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/contacts/`
+* `/corporations/{corporation_id}/contacts/`
+* `/alliances/{alliance_id}/contacts/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+list | list | *N/A* | EveKit injected field, one of "character", "corporation" or "alliance".
+contactID | contactID | contact\_id |
+contactName | (deleted) | *N/A* | ESI expects lookup from `contact\_id`
+standing | standing | standing | Type change from double to float.
+contactTypeID | (deleted) | *N/A* | Replaced by `contactType`.
+*N/A* | contactType | contact\_type | Enumerated type which replaces `contactTypeID`.
+inWatchlist | inWatchlist | is\_watched | Only valid for character and corporation contact list. 
+*N/A* | isBlocked | is\_blocked | Only valid for character contact list.
+labelMask | (deleted) | *N/A* | Replaced by `labelID`.
+*N/A* | labelID | label\_id | Replaces `labelMask`.  See conversion notes below.
+
+#### Historic Conversion Notes
+
+* `contactType` is populated from `contactTypeID` as follows:
+```sql
+UPDATE `evekit_data_contact` SET `contactType` = 'corporation' WHERE `contactTypeID` = 2;
+UPDATE `evekit_data_contact` SET `contactType` = 'character' WHERE `contactTypeID` BETWEEN 1373 AND 1386;
+UPDATE `evekit_data_contact` SET `contactType` = 'alliance' WHERE `contactTypeID` = 16159;
+```
+
+* `labelID` is set from `labelMask` as a simple column rename.
+
+* in `list` we change "corporate" to "corporation"
+```sql
+UPDATE `evekit_data_contact` SET `list` = 'corporation' WHERE `list` = 'corporate';
+```
+
 ### ContactLabel
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/contacts/labels/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+list | list | *N/A* | EveKit injected field, one of "character" or "corporation".
+labelID | labelID | label\_id |
+name | name | label\_name |
+
+#### Historic Conversion Notes
+
+* in `list` we change "corporate" to "corporation"
+
 ### Contract
 
 ESI endpoint(s):
