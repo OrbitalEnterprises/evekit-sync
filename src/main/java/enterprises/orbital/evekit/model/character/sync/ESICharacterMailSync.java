@@ -46,7 +46,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         (item instanceof MailingList) ||
         (item instanceof MailLabel);
 
-    CachedData existing = null;
+    CachedData existing;
     if (item instanceof CharacterMailMessage) {
       existing = CharacterMailMessage.get(account, time, ((CharacterMailMessage) item).getMessageID());
     } else if (item instanceof MailingList) {
@@ -171,14 +171,19 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
                                                .map(x -> new MailMessageRecipient(x.getRecipientType()
                                                                                    .toString(), x.getRecipientId()))
                                                .collect(Collectors.toSet());
-      updates.add(new CharacterMailMessage(nullSafeLong(nm.getMailId(), 0L),
-                                           nullSafeInteger(nm.getFrom(), 0),
-                                           nullSafeDateTime(nm.getTimestamp(), new DateTime(new Date(0L))).getMillis(),
-                                           nm.getSubject(),
-                                           nullSafeBoolean(nm.getIsRead(), false),
-                                           labels,
-                                           recipients,
-                                           body.getBody()));
+      CharacterMailMessage newm = new CharacterMailMessage(nullSafeLong(nm.getMailId(), 0L),
+                                                           nullSafeInteger(nm.getFrom(), 0),
+                                                           nullSafeDateTime(nm.getTimestamp(),
+                                                                            new DateTime(new Date(0L))).getMillis(),
+                                                           nm.getSubject(),
+                                                           nullSafeBoolean(nm.getIsRead(), false),
+                                                           labels,
+                                                           recipients,
+                                                           body.getBody());
+      // Pre-filter to avoid holding the lock for a long time in the transaction
+      CharacterMailMessage existing = CharacterMailMessage.get(account, time, newm.getMessageID());
+      if (existing == null || !existing.equivalent(newm))
+        updates.add(newm);
     }
 
     // Assemble mailing lists

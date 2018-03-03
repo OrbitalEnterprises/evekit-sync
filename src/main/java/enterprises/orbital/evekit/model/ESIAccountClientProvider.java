@@ -37,4 +37,6 @@ public interface ESIAccountClientProvider {
   SkillsApi getSkillsApi();
 
   MailApi getMailApi();
+
+  ContactsApi getContactsApi();
 }
