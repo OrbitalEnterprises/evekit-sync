@@ -432,34 +432,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_FACWARSTATS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationFacWarStatsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationFacWarStatsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationFacWarStatsSync.syncFacWarStats(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_FACWARSTATS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationFacWarStatsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationFacWarStatsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationFacWarStatsSync.syncFacWarStats(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CORP_INDUSTRYJOBS, new CorpStateHandler() {
 //      @Override
 //      public SyncStatus exclude(

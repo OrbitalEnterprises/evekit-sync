@@ -39,4 +39,6 @@ public interface ESIAccountClientProvider {
   MailApi getMailApi();
 
   ContactsApi getContactsApi();
+
+  FactionWarfareApi getFactionWarfareApi();
 }
