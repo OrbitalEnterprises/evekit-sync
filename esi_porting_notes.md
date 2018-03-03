@@ -89,7 +89,7 @@ Each change can be in one of the following states:
   * **beta** [Contract](#contract)
   * **beta** [ContractBid](#contractbid)
   * **beta** [ContractItem](#contractitem)
-  * **pending** [FacWarStats](#facwarstats)
+  * **beta** [FacWarStats](#facwarstats)
   * **beta** [IndustryJob](#industryjob)
   * **beta** [Kill](#kill)
   * **beta** [KillAttacker](#killattacker)
@@ -814,6 +814,27 @@ singleton | singleton | is\_singleton |
 included | included | is\_included |
 
 ### FacWarStats
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/fw/stats/`
+* `/corporations/{corporation_id}/fw/stats/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+currentRank | currentRank | current\_rank | characters only
+enlisted | enlisted | enlisted\_on |
+factionID | factionID | faction\_id | 
+factionName | (deleted) | *N/A* | ESI expects lookup from `factionID`
+highestRank | highestRank | highest\_rank | characters only 
+killsLastWeek | killsLastWeek | kills.lastWeek |
+killsTotal | killsTotal | kills.total |
+killsYesterday | killsYesterday | kills.yesterday |
+pilots | pilots | pilots | corporation only
+victoryPointsLastWeek | victoryPointsLastWeek | victoryPoints.lastWeek |
+victoryPointsTotal | victoryPointsTotal | victoryPoints.total |
+victoryPointsYesterday | victoryPointsYesterday | victoryPoints.yesterday |
+
 ### IndustryJob
 
 ESI endpoint(s):
