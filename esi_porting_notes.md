@@ -52,10 +52,10 @@ Each change can be in one of the following states:
   * **beta** [JumpCloneImplant](#jumpcloneimplant)
   * **beta** [MailingList](#mailinglist)
   * **beta** [MailLabel](#maillabel) (new)
-  * **pending** [PlanetaryColony](#planetarycolony)
-  * **pending** [PlanetaryLink](#planetarylink)
-  * **pending** [PlanetaryPin](#planetarypin)
-  * **pending** [PlanetaryRoute](#planetaryroute)
+  * **beta** [PlanetaryColony](#planetarycolony)
+  * **beta** [PlanetaryLink](#planetarylink)
+  * **beta** [PlanetaryPin](#planetarypin)
+  * **beta** [PlanetaryRoute](#planetaryroute)
   * **beta** [ResearchAgent](#researchagent)
 * Corporation Model Changes
   * **beta** [ContainerLog](#containerlog)
@@ -464,9 +464,174 @@ Old Model Field | New Model Field | ESI Field | Notes
 *N/A* | color | color | String field (optional, source is enumerated)
 
 ### PlanetaryColony
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/planets/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+planetID | planetID | planet\_id | Type change from long to int.
+solarSystemID | solarSystemID | solar\_system\_id |
+solarSystemName | (deleted) | *N/A* | ESI expects lookup from `solarSystemID`.
+planetName | (deleted) | *N/A* | ESI expects lookup from `planetID`.
+planetTypeID | (deleted) | *N/A* | Replaced by enumerated type `planetType`.
+planetTypeName | (deleted) | *N/A* | Renamed to `planetType`.
+*N/A* | planetType | planet\_type | Renamed from `planetTypeName`.  See conversion notes below.
+ownerID | ownerID | owner\_id | Type change from long to int.
+ownerName | (deleted) | *N/A* | ESI expects lookup from `ownerID`.
+lastUpdate | lastUpdate | last\_update |
+upgradeLevel | upgradeLevel | upgrade\_level |
+numberOfPins | numberOfPins | num\_pins |
+
+#### Historic Conversion Notes
+
+* `planetTypeName` will be renamed to `planetType`.  This requires the following conversion:
+```sql
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'temperate' WHERE `planetType` = 'Planet(Temperate)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'barren' WHERE `planetType` = 'Planet(Barren)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'oceanic' WHERE `planetType` = 'Planet(Oceanic)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'ice' WHERE `planetType` = 'Planet(Ice)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'gas' WHERE `planetType` = 'Planet(Gas)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'lava' WHERE `planetType` = 'Planet(Lava)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'storm' WHERE `planetType` = 'Planet(Storm)';
+UPDATE `evekit_data_planetary_colory` SET `planetType` = 'plasma' WHERE `planetType` = 'Planet(Plasma)';
+```
+
 ### PlanetaryLink
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/planets/{planet_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+planetID | planetID | *N/A* | EveKit injected field, type change from long to int.
+sourcePinID | sourcePinID | source\_pin\_id |
+destinationPinID | destinationPinID | destination\_pin\_id |
+linkLevel | linkLevel | link\_level |
+
 ### PlanetaryPin
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/planets/{planet_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+planetID | planetID | *N/A* | EveKit injected field, type change from long to int.
+pinID | pinID | pin\_id |
+typeID | typeID | type\_id |
+typeName | (deleted) | *N/A* | ESI expects lookup from `typeID`.
+schematicID | schematicID | schematic\_id |
+lastLaunchTime | (deleted) | *N/A* | Renamed to `lastCycleStart`.
+*N/A* | lastCycleStart | last\_cycle\_start | Renamed from `lastLaunchTime`.
+cycleTime | cycleTime | extractor\_details.cycle\_time |
+quantityPerCycle | quantityPerCycle | extractor\_details.qty\_per\_cycle |
+installTime | installTime | install\_time |
+expiryTime | expiryTime | expiry\_time |
+contentTypeID | (deleted) | *N/A* | Renamed to `productTypeID`.
+*N/A* | productTypeID | extractor\_details.product\_type\_id | Renamed from `contentTypeID`.
+contentTypeName | (deleted) | *N/A* | ESI expects lookup from `productTypeID`.
+contentQuantity | (deleted) | *N/A* | No real analog, replaced by `contents` array.
+longitude | longitude | longitude | Type change from double to float.
+latitude | latitude | latitude | Type change from double to float.
+*N/A* | headRadius | extractor\_details.head\_radius | 
+*N/A* | heads | extractor\_details.heads | Set of new `PlanetaryPinHead` embeddable object.
+*N/A* | contents | contents | Set of new `PlanetaryPinContent` embeddable object.
+
+#### New Embeddable Classes
+
+```java
+public class PlanetaryPinHead {
+  int headID;
+  float latitude;
+  float longitude;
+}
+```
+
+```sql
+CREATE TABLE `planet_pin_head` (
+       `planet_pin_cid` BIGINT(20) NOT NULL,
+       `headID` INT(11) NOT NULL,
+       `latitude` FLOAT NOT NULL,
+       `longitude` FLOAT NOT NULL,
+       KEY `planet_pin_head_cid_index` (`planet_pin_cid`),
+       CONSTRAINT `planet_pin_head_fk` FOREIGN KEY (`planet_pin_cid`) REFERENCES `evekit_data_planetary_pin` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+```java
+public class PlanetaryPinContent {
+  int typeID;
+  long amount;
+}
+```
+
+```sql
+CREATE TABLE `planet_pin_content` (
+       `planet_pin_cid` BIGINT(20) NOT NULL,
+       `typeID` INT(11) NOT NULL,
+       `amount` BIGINT(20) NOT NULL,
+       KEY `planet_pin_content_cid_index` (`planet_pin_cid`),
+       CONSTRAINT `planet_pin_content_fk` FOREIGN KEY (`planet_pin_cid`) REFERENCES `evekit_data_planetary_pin` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### PlanetaryRoute
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/planets/{planet_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+planetID | planetID | *N/A* | EveKit injected field, type change from long to int.
+routeID | routeID | route\_id |
+sourcePinID | sourcePinID | source\_pin\_id |
+destinationPinID | destinationPinID | destination\_pin\_id |
+contentTypeID | contentTypeID | content\_type\_id |
+contentTypeName | (deleted) | *N/A* | ESI expects lookup from `contentTypeID`.
+quantity | quantity | quantity | Type change from int to float.
+waypoint1 | (deleted) | *N/A* | Removed in favor of waypoints list.
+waypoint2 | (deleted) | *N/A* | Removed in favor of waypoints list.
+waypoint3 | (deleted) | *N/A* | Removed in favor of waypoints list.
+waypoint4 | (deleted) | *N/A* | Removed in favor of waypoints list.
+waypoint5 | (deleted) | *N/A* | Removed in favor of waypoints list.
+*N/A* | waypoints | waypoints | List of waypoint IDs (ordered).
+
+#### New Embeddable Classes
+
+* Waypoints is a native list of long values requiring the following table:
+```
+
+```sql
+CREATE TABLE `planet_route_waypoint` (
+       `planet_route_cid` BIGINT(20) NOT NULL,
+       `waypointID` BIGINT(20) NOT NULL,
+       KEY `planet_pin_head_cid_index` (`planet_pin_cid`),
+       CONSTRAINT `planet_pin_head_fk` FOREIGN KEY (`planet_pin_cid`) REFERENCES `evekit_data_planetary_pin` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+#### Historic Conversion Notes
+
+Once the `planet_route_waypoint` table is created, historic waypoints can be populated.  This should be done before
+removing `waypoint1` through `waypoint5`:
+
+```sql
+INSERT INTO `planet_route_waypoint` FROM (planet_route_cid, waypointID)
+SELECT cid, waypoint1 FROM `evekit_data_planetary_route`;
+INSERT INTO `planet_route_waypoint` FROM (planet_route_cid, waypointID)
+SELECT cid, waypoint2 FROM `evekit_data_planetary_route`;
+INSERT INTO `planet_route_waypoint` FROM (planet_route_cid, waypointID)
+SELECT cid, waypoint3 FROM `evekit_data_planetary_route`;
+INSERT INTO `planet_route_waypoint` FROM (planet_route_cid, waypointID)
+SELECT cid, waypoint4 FROM `evekit_data_planetary_route`;
+INSERT INTO `planet_route_waypoint` FROM (planet_route_cid, waypointID)
+SELECT cid, waypoint5 FROM `evekit_data_planetary_route`;
+```
+
 ### ResearchAgent
 
 ESI endpoint(s):
