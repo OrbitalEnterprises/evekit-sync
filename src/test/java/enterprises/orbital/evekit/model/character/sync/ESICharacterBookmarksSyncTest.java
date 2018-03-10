@@ -39,7 +39,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
   private static int[] bookmarksPages;
 
   static {
-    // Bookmark folders test data
+    // Bookmark planets test data
     // 0 int folderID
     // 1 String name
     // 2 int folderCreatorID - always set to character ID
@@ -131,7 +131,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
     for (int i = 0; i < bookmarksTestData.length; i++)
       bookmarksTestData[i][2] = (int) charSyncAccount.getEveCharacterID();
 
-    // Setup folders mock calls
+    // Setup planets mock calls
     List<GetCharactersCharacterIdBookmarksFolders200Ok> foldersList =
         Arrays.stream(foldersTestData)
               .map(x -> {

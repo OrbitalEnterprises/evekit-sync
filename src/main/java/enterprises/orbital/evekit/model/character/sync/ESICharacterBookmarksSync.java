@@ -87,7 +87,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
   protected void processServerData(long time,
                                    ESIAccountServerResult<BookmarkData> data,
                                    List<CachedData> updates) throws IOException {
-    // Map bookmark folders, then build bookmark objects
+    // Map bookmark planets, then build bookmark objects
     Map<Integer, GetCharactersCharacterIdBookmarksFolders200Ok> folderMap = data.getData().folders.stream()
                                                                                                   .collect(
                                                                                                       Collectors.toMap(
