@@ -133,7 +133,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
         resultData.eventInfo.put(next.getEventId(), eventResponse.getData());
       } catch (ApiException | IOException e) {
         // Skip this event, try to make progress with what is left
-        log.log(Level.FINE, "Skipping failed event " + next, e);
+        log.log(Level.FINE, getContext() + " Skipping failed event " + next, e);
       }
     }
 
