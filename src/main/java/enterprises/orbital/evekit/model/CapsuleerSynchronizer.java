@@ -300,56 +300,56 @@ public class CapsuleerSynchronizer extends AbstractSynchronizer {
 //        return CharacterAssetsSync.syncAssets(syncTime, syncAccount, syncUtil, charRequest);
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_UPCOMINGCALENDAREVENTS, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterUpcomingCalendarEventsSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterUpcomingCalendarEventsSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterUpcomingCalendarEventsSync.syncUpcomingCalendarEvents(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CALENDAREVENTATTENDEES, new CharStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CharacterCalendarEventAttendeeSync.exclude(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CharacterCalendarEventAttendeeSync.notAllowed(syncAccount, syncUtil);
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICharacterAPI charRequest,
-                             IAccountAPI acctRequest) {
-        return CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(syncTime, syncAccount, syncUtil, charRequest);
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_UPCOMINGCALENDAREVENTS, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterUpcomingCalendarEventsSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterUpcomingCalendarEventsSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterUpcomingCalendarEventsSync.syncUpcomingCalendarEvents(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CALENDAREVENTATTENDEES, new CharStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CharacterCalendarEventAttendeeSync.exclude(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CharacterCalendarEventAttendeeSync.notAllowed(syncAccount, syncUtil);
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICharacterAPI charRequest,
+//                             IAccountAPI acctRequest) {
+//        return CharacterCalendarEventAttendeeSync.syncCalendarEventAttendees(syncTime, syncAccount, syncUtil, charRequest);
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CHAR_CONTACTLIST, new CharStateHandler() {
 //      @Override
 //      public SyncStatus exclude(

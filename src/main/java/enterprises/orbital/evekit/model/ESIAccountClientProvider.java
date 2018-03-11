@@ -43,4 +43,6 @@ public interface ESIAccountClientProvider {
   FactionWarfareApi getFactionWarfareApi();
 
   PlanetaryInteractionApi getPlanetaryInteractionApi();
+
+  CalendarApi getCalendarApi();
 }
