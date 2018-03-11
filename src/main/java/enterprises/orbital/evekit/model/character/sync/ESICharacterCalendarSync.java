@@ -110,21 +110,27 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
         checkCommonProblems(eventResponse);
         expiry = Math.max(expiry, extractExpiry(eventResponse, OrbitalProperties.getCurrentTime() + maxDelay()));
 
-        ESIThrottle.throttle(endpoint().name(), account);
-        ApiResponse<List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok>> attendeesResponse = apiInstance.getCharactersCharacterIdCalendarEventIdAttendeesWithHttpInfo(
-            (int) account.getEveCharacterID(),
-            next.getEventId(),
-            null,
-            accessToken(),
-            null,
-            null);
-        checkCommonProblems(attendeesResponse);
-        expiry = Math.max(expiry, extractExpiry(attendeesResponse, OrbitalProperties.getCurrentTime() + maxDelay()));
+        // "Not found" is common for attendee lists so safely eat those exceptions
+        try {
+          ESIThrottle.throttle(endpoint().name(), account);
+          ApiResponse<List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok>> attendeesResponse = apiInstance.getCharactersCharacterIdCalendarEventIdAttendeesWithHttpInfo(
+              (int) account.getEveCharacterID(),
+              next.getEventId(),
+              null,
+              accessToken(),
+              null,
+              null);
+          checkCommonProblems(attendeesResponse);
+          expiry = Math.max(expiry, extractExpiry(attendeesResponse, OrbitalProperties.getCurrentTime() + maxDelay()));
+          resultData.attendees.put(next.getEventId(), attendeesResponse.getData());
+        } catch (ApiException f) {
+          // Possibly an exception we expect so carry on.
+          log.log(Level.FINE, getContext() + " Ignoring attendee list retrieval exception " + next, f);
+        }
 
         // If we succeed then record event, event info and attendee list
         resultData.events.add(next);
         resultData.eventInfo.put(next.getEventId(), eventResponse.getData());
-        resultData.attendees.put(next.getEventId(), attendeesResponse.getData());
       } catch (ApiException | IOException e) {
         // Skip this event, try to make progress with what is left
         log.log(Level.FINE, "Skipping failed event " + next, e);
@@ -162,14 +168,16 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
       ));
       seenEvents.add(info.getEventId());
 
-      List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok> attendees = data.getData().attendees.get(
-          nm.getEventId());
-      for (GetCharactersCharacterIdCalendarEventIdAttendees200Ok a : attendees) {
-        updates.add(new CalendarEventAttendee(nm.getEventId(),
-                                              a.getCharacterId(),
-                                              a.getEventResponse()
-                                               .toString()));
-        seenAttendees.add(Pair.of(nm.getEventId(), a.getCharacterId()));
+      if (data.getData().attendees.containsKey(nm.getEventId())) {
+        List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok> attendees = data.getData().attendees.get(
+            nm.getEventId());
+        for (GetCharactersCharacterIdCalendarEventIdAttendees200Ok a : attendees) {
+          updates.add(new CalendarEventAttendee(nm.getEventId(),
+                                                a.getCharacterId(),
+                                                a.getEventResponse()
+                                                 .toString()));
+          seenAttendees.add(Pair.of(nm.getEventId(), a.getCharacterId()));
+        }
       }
     }
 
