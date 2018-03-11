@@ -23,8 +23,8 @@ Each change can be in one of the following states:
 ## Index
 
 * Character Model Changes
-  * **pending** [UpcomingCalendarEvent](#upcomingcalendarevent)
-  * **pending** [CalendarEventAttendee](#calendareventattendee)
+  * **beta** [UpcomingCalendarEvent](#upcomingcalendarevent)
+  * **beta** [CalendarEventAttendee](#calendareventattendee)
   * **pending** [CharacterContactNotification](#charactercontactnotification)
   * **beta** [CharacterLocation](#characterlocation) (new)
   * **beta** [CharacterMailMessage](#charactermailmessage)
@@ -104,7 +104,70 @@ Each change can be in one of the following states:
 ## Character Model Changes
 
 ### UpcomingCalendarEvent
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/calendar/`
+* `/characters/{character_id}/calendar/{event_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+duration | duration | duration |
+eventDate | eventDate | event\_date |
+eventID | eventID | event\_id | Change type from long to int.
+eventText | eventText | text |
+eventTitle | eventTitle | title |
+ownerID | ownerID | owner\_id | Change type from long to int.
+ownerName | ownerName | owner\_name |
+response | response | event\_response | Now an enumerated type stored as a string.
+important | (deleted) | *N/A* | Renamed to `importance`.
+*N/A* | importance | importance | Renamed from `important`, with true equal to 1.  Type is int. 
+ownerTypeID | (deleted) | *N/A* | Converted to enumerated type `ownerType`.  See conversion notes below.
+*N/A* | ownerType | owner\_type | Converted from `ownerTypeID`.  Now an enumerated type stored as a string.
+
+#### Historic Conversion Notes
+
+* `response` is now an enumerated type storead as a string.  The old response field should be converted as follows:
+
+```sql
+UPDATE `evekit_data_upcoming_calendar_event` SET response = 'declined' WHERE response = 'Declined';
+UPDATE `evekit_data_upcoming_calendar_event` SET response = 'not_responded' WHERE response = 'Undecided';
+UPDATE `evekit_data_upcoming_calendar_event` SET response = 'accepted' WHERE response = 'Accepted';
+UPDATE `evekit_data_upcoming_calendar_event` SET response = 'tentative' WHERE response = 'Tentative';
+```
+
+* `ownerTypeID` is now an enumerated type stored as a string.  We can convert the existing values as follows:
+
+```sql
+UPDATE `evekit_data_upcoming_calendar_event` SET ownerType = 'eve_server' WHERE ownerTypeID = 0;
+UPDATE `evekit_data_upcoming_calendar_event` SET ownerType = 'corporation' WHERE ownerTypeID = 2;
+UPDATE `evekit_data_upcoming_calendar_event` SET ownerType = 'faction' WHERE ownerTypeID = 30;
+UPDATE `evekit_data_upcoming_calendar_event` SET ownerType = 'character' WHERE ownerTypeID in (1373,1374,1375,1376,1377,1378,1379,1380,1381,1382,1383,1384,1385,1386,34574);
+UPDATE `evekit_data_upcoming_calendar_event` SET ownerType = 'alliance' WHERE ownerTypeID = 16159;
+```
+
 ### CalendarEventAttendee
+
+* `/characters/{character_id}/calendar/{event_id}/attendees/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+eventID | eventID | *N/A* | Injected by EveKit.  Change type from long to int.
+characterID | characterID | character\_id | Change type from long to int.
+characterName | (deleted) | *N/A* | ESI expects lookup from character ID.
+response | response | event\_response | Now an enumerated type stored as a string.
+
+#### Historic Conversion Notes
+
+* `response` is now an enumerated type storead as a string.  The old response field should be converted as follows:
+
+```sql
+UPDATE `evekit_data_calendar_event_attendee` SET response = 'declined' WHERE response = 'Declined';
+UPDATE `evekit_data_calendar_event_attendee` SET response = 'not_responded' WHERE response = 'Undecided';
+UPDATE `evekit_data_calendar_event_attendee` SET response = 'accepted' WHERE response = 'Accepted';
+UPDATE `evekit_data_calendar_event_attendee` SET response = 'tentative' WHERE response = 'Tentative';
+```
+
 ### CharacterContactNotification
 
 ### CharacterLocation (new)
