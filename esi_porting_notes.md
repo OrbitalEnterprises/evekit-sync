@@ -25,15 +25,16 @@ Each change can be in one of the following states:
 * Character Model Changes
   * **beta** [UpcomingCalendarEvent](#upcomingcalendarevent)
   * **beta** [CalendarEventAttendee](#calendareventattendee)
-  * **pending** [CharacterContactNotification](#charactercontactnotification)
+  * **beta** [CharacterContactNotification](#charactercontactnotification)
   * **beta** [CharacterLocation](#characterlocation) (new)
   * **beta** [CharacterMailMessage](#charactermailmessage)
   * **N/A** [CharacterMailMessageBody](#charactermailmessagebody)
-  * **pending** [CharacterMedal](#charactermedal)
-  * **pending** [CharacterNotification](#characternotification)
-  * **pending** [CharacterNotificationBody](#characternotificationbody)
+  * **beta** [CharacterMedal](#charactermedal)
+  * **beta** [CharacterMedalGraphic](#charactermedalgraphic) (new)
+  * **beta** [CharacterNotification](#characternotification)
+  * **beta** [CharacterNotificationBody](#characternotificationbody)
   * **beta** [CharacterOnline](#characteronline) (new)
-  * **pending** [CharacterRole](#characterrole)
+  * **beta** [CharacterRole](#characterrole)
   * **beta** [CharacterSheet](#charactersheet)
   * **beta** [CharacterSheetAttributes](#charactersheetattributes) (new)
   * **N/A** [CharacterSheetBalance](#charactersheetbalance)
@@ -44,9 +45,9 @@ Each change can be in one of the following states:
   * **beta** [CharacterSkill](#characterskill)
   * **N/A** [CharacterSkillInTraining](#characterskillintraining)
   * **beta** [SkillInQueue](#skillinqueue)
-  * **pending** [CharacterTitle](#charactertitle)
-  * **pending** [ChatChannel](#chatchannel)
-  * **pending** [ChatChannelMember](#chatchannelmember)
+  * **beta** [CharacterTitle](#charactertitle)
+  * **beta** [ChatChannel](#chatchannel)
+  * **beta** [ChatChannelMember](#chatchannelmember)
   * **beta** [Implant](#implant)
   * **beta** [JumpClone](#jumpclone)
   * **beta** [JumpCloneImplant](#jumpcloneimplant)
@@ -170,6 +171,17 @@ UPDATE `evekit_data_calendar_event_attendee` SET response = 'tentative' WHERE re
 
 ### CharacterContactNotification
 
+* `/characters/{character_id}/notifications/contacts/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+notificationID | notificationID | notification\_id | Change type from long to int.
+senderID | senderID | sender\_character\_id | Change type from long to int.
+senderName | (deleted) | *N/A* | ESI expects lookup from `senderID`.
+sentDate | sentDate | send\_date |
+*N/A* | standingLevel | standing\_level | New field introduced by ESI.  Type is float.
+messageData | messageData | message |
+
 ### CharacterLocation (new)
 
 ESI endpoint(s):
@@ -277,8 +289,273 @@ WHERE a.messageID = b.messageID;
 Not used with the ESI.  Can be dropped once schema updates have been made for CharacterMailMessage.
 
 ### CharacterMedal
+
+* `/characters/{character_id}/medals/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+description | description | description |
+medalID | medalID | medal\_id |
+title | title | title |
+corporationID | corporationID | corporation\_id | Change type from long to int.
+issued | issued | date |
+issuerID | issuerID | issuer\_id | Change type from long to int.
+reason | reason | reason |
+status | status | status | Now an enumerated type stored as a string.
+
+### CharacterMedalGraphic (new)
+
+* `/characters/{character_id}/medals/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | medalID | *N/A* | Inserted by EveKit.  Integer type.
+*N/A* | issued | *N/A* | Inserted by EveKit.  Long type.
+*N/A* | part | part | Integer type.
+*N/A* | layer | layer | Integer type.
+*N/A* | graphic | graphic | String type.
+*N/A* | color | color | Integer type.
+
+```sql
+CREATE TABLE `evekit_data_character_medal_graphic` (
+       `cid` BIGINT(20) NOT NULL,
+       `medalID` INT(11) NOT NULL,
+       `issued` BIGINT(20) NOT NULL,
+       `part` INT(11) NOT NULL,
+       `layer` INT(11) NOT NULL,
+       `graphic` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `color` INT(11) NOT NULL,
+       PRIMARY KEY (`cid`),
+       KEY `medalIDGraphicIndex` (`medalID`),
+       KEY `issuedGraphicIndex` (`issued`),
+       CONSTRAINT `character_medal_graphic_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### CharacterNotification
+
+* `/characters/{character_id}/notifications/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+notificationID | notificationID | notification\_id |
+typeID | (deleted) | *N/A* | Replaced with `type`.  See conversion notes below.
+*N/A* | type | type | Enumerated field replacing `typeID`.
+senderID | senderID | sender\_id | Change type from long to int.
+*N/A* | senderType | sender\_type | Enumerated field.
+sentDate | sentDate | timestamp |
+msgRead | msgRead | is\_read |
+text | text | text |
+
+#### Historic Conversion Notes
+
+##### Sender Types
+
+There is no easy mapping from `senderID` to `senderType` so these will be left as null in historic data.
+
+##### Notification Types
+
+Notification types are set from `typeID` using the data [here](https://github.com/ccpgames/eve-glue/blob/master/eve_glue/notification_type.py).  Specifically:
+
+```sql
+UPDATE `evekit_data_character_notification` SET type = 'OldLscMessages' WHERE typeID = 1;
+UPDATE `evekit_data_character_notification` SET type = 'CharTerminationMsg' WHERE typeID = 2;
+UPDATE `evekit_data_character_notification` SET type = 'CharMedalMsg' WHERE typeID = 3;
+UPDATE `evekit_data_character_notification` SET type = 'AllMaintenanceBillMsg' WHERE typeID = 4;
+UPDATE `evekit_data_character_notification` SET type = 'AllWarDeclaredMsg' WHERE typeID = 5;
+UPDATE `evekit_data_character_notification` SET type = 'AllWarSurrenderMsg' WHERE typeID = 6;
+UPDATE `evekit_data_character_notification` SET type = 'AllWarRetractedMsg' WHERE typeID = 7;
+UPDATE `evekit_data_character_notification` SET type = 'AllWarInvalidatedMsg' WHERE typeID = 8;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAllBillMsg' WHERE typeID = 10;
+UPDATE `evekit_data_character_notification` SET type = 'BillOutOfMoneyMsg' WHERE typeID = 11;
+UPDATE `evekit_data_character_notification` SET type = 'BillPaidCorpAllMsg' WHERE typeID = 13;
+UPDATE `evekit_data_character_notification` SET type = 'BountyClaimMsg' WHERE typeID = 14;
+UPDATE `evekit_data_character_notification` SET type = 'CloneActivationMsg' WHERE typeID = 15;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAppNewMsg' WHERE typeID = 16;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAppRejectMsg' WHERE typeID = 17;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAppAcceptMsg' WHERE typeID = 18;
+UPDATE `evekit_data_character_notification` SET type = 'CorpTaxChangeMsg' WHERE typeID = 19;
+UPDATE `evekit_data_character_notification` SET type = 'CorpNewsMsg' WHERE typeID = 20;
+UPDATE `evekit_data_character_notification` SET type = 'CharLeftCorpMsg' WHERE typeID = 21;
+UPDATE `evekit_data_character_notification` SET type = 'CorpNewCEOMsg' WHERE typeID = 22;
+UPDATE `evekit_data_character_notification` SET type = 'CorpDividendMsg' WHERE typeID = 23;
+UPDATE `evekit_data_character_notification` SET type = 'CorpVoteMsg' WHERE typeID = 25;
+UPDATE `evekit_data_character_notification` SET type = 'CorpVoteCEORevokedMsg' WHERE typeID = 26;
+UPDATE `evekit_data_character_notification` SET type = 'CorpWarDeclaredMsg' WHERE typeID = 27;
+UPDATE `evekit_data_character_notification` SET type = 'CorpWarFightingLegalMsg' WHERE typeID = 28;
+UPDATE `evekit_data_character_notification` SET type = 'CorpWarSurrenderMsg' WHERE typeID = 29;
+UPDATE `evekit_data_character_notification` SET type = 'CorpWarRetractedMsg' WHERE typeID = 30;
+UPDATE `evekit_data_character_notification` SET type = 'CorpWarInvalidatedMsg' WHERE typeID = 31;
+UPDATE `evekit_data_character_notification` SET type = 'ContainerPasswordMsg' WHERE typeID = 32;
+UPDATE `evekit_data_character_notification` SET type = 'CustomsMsg' WHERE typeID = 33;
+UPDATE `evekit_data_character_notification` SET type = 'InsuranceFirstShipMsg' WHERE typeID = 34;
+UPDATE `evekit_data_character_notification` SET type = 'InsurancePayoutMsg' WHERE typeID = 35;
+UPDATE `evekit_data_character_notification` SET type = 'InsuranceInvalidatedMsg' WHERE typeID = 36;
+UPDATE `evekit_data_character_notification` SET type = 'SovCorpClaimFailMsg' WHERE typeID = 38;
+UPDATE `evekit_data_character_notification` SET type = 'SovCorpBillLateMsg' WHERE typeID = 40;
+UPDATE `evekit_data_character_notification` SET type = 'SovAllClaimLostMsg' WHERE typeID = 41;
+UPDATE `evekit_data_character_notification` SET type = 'SovAllClaimAquiredMsg' WHERE typeID = 43;
+UPDATE `evekit_data_character_notification` SET type = 'AllAnchoringMsg' WHERE typeID = 45;
+UPDATE `evekit_data_character_notification` SET type = 'AllStructVulnerableMsg' WHERE typeID = 46;
+UPDATE `evekit_data_character_notification` SET type = 'AllStrucInvulnerableMsg' WHERE typeID = 47;
+UPDATE `evekit_data_character_notification` SET type = 'SovDisruptorMsg' WHERE typeID = 48;
+UPDATE `evekit_data_character_notification` SET type = 'CorpStructLostMsg' WHERE typeID = 49;
+UPDATE `evekit_data_character_notification` SET type = 'CorpOfficeExpirationMsg' WHERE typeID = 50;
+UPDATE `evekit_data_character_notification` SET type = 'CloneRevokedMsg1' WHERE typeID = 51;
+UPDATE `evekit_data_character_notification` SET type = 'CloneMovedMsg' WHERE typeID = 52;
+UPDATE `evekit_data_character_notification` SET type = 'CloneRevokedMsg2' WHERE typeID = 53;
+UPDATE `evekit_data_character_notification` SET type = 'InsuranceExpirationMsg' WHERE typeID = 54;
+UPDATE `evekit_data_character_notification` SET type = 'InsuranceIssuedMsg' WHERE typeID = 55;
+UPDATE `evekit_data_character_notification` SET type = 'JumpCloneDeletedMsg1' WHERE typeID = 56;
+UPDATE `evekit_data_character_notification` SET type = 'JumpCloneDeletedMsg2' WHERE typeID = 57;
+UPDATE `evekit_data_character_notification` SET type = 'FWCorpJoinMsg' WHERE typeID = 58;
+UPDATE `evekit_data_character_notification` SET type = 'FWCorpLeaveMsg' WHERE typeID = 59;
+UPDATE `evekit_data_character_notification` SET type = 'FWCorpKickMsg' WHERE typeID = 60;
+UPDATE `evekit_data_character_notification` SET type = 'FWCharKickMsg' WHERE typeID = 61;
+UPDATE `evekit_data_character_notification` SET type = 'FWCorpWarningMsg' WHERE typeID = 62;
+UPDATE `evekit_data_character_notification` SET type = 'FWCharWarningMsg' WHERE typeID = 63;
+UPDATE `evekit_data_character_notification` SET type = 'FWCharRankLossMsg' WHERE typeID = 64;
+UPDATE `evekit_data_character_notification` SET type = 'FWCharRankGainMsg' WHERE typeID = 65;
+UPDATE `evekit_data_character_notification` SET type = 'TransactionReversalMsg' WHERE typeID = 67;
+UPDATE `evekit_data_character_notification` SET type = 'ReimbursementMsg' WHERE typeID = 68;
+UPDATE `evekit_data_character_notification` SET type = 'LocateCharMsg' WHERE typeID = 69;
+UPDATE `evekit_data_character_notification` SET type = 'ResearchMissionAvailableMsg' WHERE typeID = 70;
+UPDATE `evekit_data_character_notification` SET type = 'MissionOfferExpirationMsg' WHERE typeID = 71;
+UPDATE `evekit_data_character_notification` SET type = 'MissionTimeoutMsg' WHERE typeID = 72;
+UPDATE `evekit_data_character_notification` SET type = 'StoryLineMissionAvailableMsg' WHERE typeID = 73;
+UPDATE `evekit_data_character_notification` SET type = 'TutorialMsg' WHERE typeID = 74;
+UPDATE `evekit_data_character_notification` SET type = 'TowerAlertMsg' WHERE typeID = 75;
+UPDATE `evekit_data_character_notification` SET type = 'TowerResourceAlertMsg' WHERE typeID = 76;
+UPDATE `evekit_data_character_notification` SET type = 'StationAggressionMsg1' WHERE typeID = 77;
+UPDATE `evekit_data_character_notification` SET type = 'StationStateChangeMsg' WHERE typeID = 78;
+UPDATE `evekit_data_character_notification` SET type = 'StationConquerMsg' WHERE typeID = 79;
+UPDATE `evekit_data_character_notification` SET type = 'StationAggressionMsg2' WHERE typeID = 80;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarCorpJoinRequestMsg' WHERE typeID = 81;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarCorpLeaveRequestMsg' WHERE typeID = 82;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarCorpJoinWithdrawMsg' WHERE typeID = 83;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarCorpLeaveWithdrawMsg' WHERE typeID = 84;
+UPDATE `evekit_data_character_notification` SET type = 'CorpLiquidationMsg' WHERE typeID = 85;
+UPDATE `evekit_data_character_notification` SET type = 'SovereigntyTCUDamageMsg' WHERE typeID = 86;
+UPDATE `evekit_data_character_notification` SET type = 'SovereigntySBUDamageMsg' WHERE typeID = 87;
+UPDATE `evekit_data_character_notification` SET type = 'SovereigntyIHDamageMsg' WHERE typeID = 88;
+UPDATE `evekit_data_character_notification` SET type = 'ContactAdd' WHERE typeID = 89;
+UPDATE `evekit_data_character_notification` SET type = 'ContactEdit' WHERE typeID = 90;
+UPDATE `evekit_data_character_notification` SET type = 'IncursionCompletedMsg' WHERE typeID = 91;
+UPDATE `evekit_data_character_notification` SET type = 'CorpKicked' WHERE typeID = 92;
+UPDATE `evekit_data_character_notification` SET type = 'OrbitalAttacked' WHERE typeID = 93;
+UPDATE `evekit_data_character_notification` SET type = 'OrbitalReinforced' WHERE typeID = 94;
+UPDATE `evekit_data_character_notification` SET type = 'OwnershipTransferred' WHERE typeID = 95;
+UPDATE `evekit_data_character_notification` SET type = 'FWAllianceWarningMsg' WHERE typeID = 96;
+UPDATE `evekit_data_character_notification` SET type = 'FWAllianceKickMsg' WHERE typeID = 97;
+UPDATE `evekit_data_character_notification` SET type = 'AllWarCorpJoinedAllianceMsg' WHERE typeID = 98;
+UPDATE `evekit_data_character_notification` SET type = 'AllyJoinedWarDefenderMsg' WHERE typeID = 99;
+UPDATE `evekit_data_character_notification` SET type = 'AllyJoinedWarAggressorMsg' WHERE typeID = 100;
+UPDATE `evekit_data_character_notification` SET type = 'AllyJoinedWarAllyMsg' WHERE typeID = 101;
+UPDATE `evekit_data_character_notification` SET type = 'MercOfferedNegotiationMsg' WHERE typeID = 102;
+UPDATE `evekit_data_character_notification` SET type = 'WarSurrenderOfferMsg' WHERE typeID = 103;
+UPDATE `evekit_data_character_notification` SET type = 'WarSurrenderDeclinedMsg' WHERE typeID = 104;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarLPPayoutKill' WHERE typeID = 105;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarLPPayoutEvent' WHERE typeID = 106;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarLPDisqualifiedEvent' WHERE typeID = 107;
+UPDATE `evekit_data_character_notification` SET type = 'FacWarLPDisqualifiedKill' WHERE typeID = 108;
+UPDATE `evekit_data_character_notification` SET type = 'AllyContractCancelled' WHERE typeID = 109;
+UPDATE `evekit_data_character_notification` SET type = 'WarAllyOfferDeclinedMsg' WHERE typeID = 110;
+UPDATE `evekit_data_character_notification` SET type = 'BountyYourBountyClaimed' WHERE typeID = 111;
+UPDATE `evekit_data_character_notification` SET type = 'BountyPlacedChar' WHERE typeID = 112;
+UPDATE `evekit_data_character_notification` SET type = 'BountyPlacedCorp' WHERE typeID = 113;
+UPDATE `evekit_data_character_notification` SET type = 'BountyPlacedAlliance' WHERE typeID = 114;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightAvailable' WHERE typeID = 115;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightAvailableOpen' WHERE typeID = 116;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightEarned' WHERE typeID = 117;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightUsed' WHERE typeID = 118;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightUnavailable' WHERE typeID = 119;
+UPDATE `evekit_data_character_notification` SET type = 'KillRightUnavailableOpen' WHERE typeID = 120;
+UPDATE `evekit_data_character_notification` SET type = 'DeclareWar' WHERE typeID = 121;
+UPDATE `evekit_data_character_notification` SET type = 'OfferedSurrender' WHERE typeID = 122;
+UPDATE `evekit_data_character_notification` SET type = 'AcceptedSurrender' WHERE typeID = 123;
+UPDATE `evekit_data_character_notification` SET type = 'MadeWarMutual' WHERE typeID = 124;
+UPDATE `evekit_data_character_notification` SET type = 'RetractsWar' WHERE typeID = 125;
+UPDATE `evekit_data_character_notification` SET type = 'OfferedToAlly' WHERE typeID = 126;
+UPDATE `evekit_data_character_notification` SET type = 'AcceptedAlly' WHERE typeID = 127;
+UPDATE `evekit_data_character_notification` SET type = 'CharAppAcceptMsg' WHERE typeID = 128;
+UPDATE `evekit_data_character_notification` SET type = 'CharAppRejectMsg' WHERE typeID = 129;
+UPDATE `evekit_data_character_notification` SET type = 'CharAppWithdrawMsg' WHERE typeID = 130;
+UPDATE `evekit_data_character_notification` SET type = 'DustAppAcceptedMsg' WHERE typeID = 131;
+UPDATE `evekit_data_character_notification` SET type = 'DistrictAttacked' WHERE typeID = 132;
+UPDATE `evekit_data_character_notification` SET type = 'BattlePunishFriendlyFire' WHERE typeID = 133;
+UPDATE `evekit_data_character_notification` SET type = 'BountyESSTaken' WHERE typeID = 134;
+UPDATE `evekit_data_character_notification` SET type = 'BountyESSShared' WHERE typeID = 135;
+UPDATE `evekit_data_character_notification` SET type = 'IndustryTeamAuctionWon' WHERE typeID = 136;
+UPDATE `evekit_data_character_notification` SET type = 'IndustryTeamAuctionLost' WHERE typeID = 137;
+UPDATE `evekit_data_character_notification` SET type = 'CloneActivationMsg2' WHERE typeID = 138;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAppInvitedMsg' WHERE typeID = 139;
+UPDATE `evekit_data_character_notification` SET type = 'KillReportVictim' WHERE typeID = 140;
+UPDATE `evekit_data_character_notification` SET type = 'KillReportFinalBlow' WHERE typeID = 141;
+UPDATE `evekit_data_character_notification` SET type = 'CorpAppRejectCustomMsg' WHERE typeID = 142;
+UPDATE `evekit_data_character_notification` SET type = 'CorpFriendlyFireEnableTimerStarted' WHERE typeID = 143;
+UPDATE `evekit_data_character_notification` SET type = 'CorpFriendlyFireDisableTimerStarted' WHERE typeID = 144;
+UPDATE `evekit_data_character_notification` SET type = 'CorpFriendlyFireEnableTimerCompleted' WHERE typeID = 145;
+UPDATE `evekit_data_character_notification` SET type = 'CorpFriendlyFireDisableTimerCompleted' WHERE typeID = 146;
+UPDATE `evekit_data_character_notification` SET type = 'EntosisCaptureStarted' WHERE typeID = 147;
+UPDATE `evekit_data_character_notification` SET type = 'StationServiceEnabled' WHERE typeID = 148;
+UPDATE `evekit_data_character_notification` SET type = 'StationServiceDisabled' WHERE typeID = 149;
+UPDATE `evekit_data_character_notification` SET type = 'InfrastructureHubBillAboutToExpire' WHERE typeID = 152;
+UPDATE `evekit_data_character_notification` SET type = 'SovStructureReinforced' WHERE typeID = 160;
+UPDATE `evekit_data_character_notification` SET type = 'SovCommandNodeEventStarted' WHERE typeID = 161;
+UPDATE `evekit_data_character_notification` SET type = 'SovStructureDestroyed' WHERE typeID = 162;
+UPDATE `evekit_data_character_notification` SET type = 'SovStationEnteredFreeport' WHERE typeID = 163;
+UPDATE `evekit_data_character_notification` SET type = 'IHubDestroyedByBillFailure' WHERE typeID = 164;
+UPDATE `evekit_data_character_notification` SET type = 'AllianceCapitalChanged' WHERE typeID = 165;
+UPDATE `evekit_data_character_notification` SET type = 'BuddyConnectContactAdd' WHERE typeID = 166;
+UPDATE `evekit_data_character_notification` SET type = 'SovStructureSelfDestructRequested' WHERE typeID = 167;
+UPDATE `evekit_data_character_notification` SET type = 'SovStructureSelfDestructCancel' WHERE typeID = 168;
+UPDATE `evekit_data_character_notification` SET type = 'SovStructureSelfDestructFinished' WHERE typeID = 169;
+UPDATE `evekit_data_character_notification` SET type = 'StructureFuelAlert' WHERE typeID = 181;
+UPDATE `evekit_data_character_notification` SET type = 'StructureAnchoring' WHERE typeID = 182;
+UPDATE `evekit_data_character_notification` SET type = 'StructureUnanchoring' WHERE typeID = 183;
+UPDATE `evekit_data_character_notification` SET type = 'StructureUnderAttack' WHERE typeID = 184;
+UPDATE `evekit_data_character_notification` SET type = 'StructureOnline' WHERE typeID = 185;
+UPDATE `evekit_data_character_notification` SET type = 'StructureLostShields' WHERE typeID = 186;
+UPDATE `evekit_data_character_notification` SET type = 'StructureLostArmor' WHERE typeID = 187;
+UPDATE `evekit_data_character_notification` SET type = 'StructureDestroyed' WHERE typeID = 188;
+UPDATE `evekit_data_character_notification` SET type = 'StructureServicesOffline' WHERE typeID = 198;
+UPDATE `evekit_data_character_notification` SET type = 'StructureItemsDelivered' WHERE typeID = 199;
+UPDATE `evekit_data_character_notification` SET type = 'SeasonalChallengeCompleted' WHERE typeID = 200;
+UPDATE `evekit_data_character_notification` SET type = 'StructureCourierContractChanged' WHERE typeID = 201;
+UPDATE `evekit_data_character_notification` SET type = 'OperationFinished' WHERE typeID = 1012;
+UPDATE `evekit_data_character_notification` SET type = 'GiftReceived' WHERE typeID = 1022;
+UPDATE `evekit_data_character_notification` SET type = 'GameTimeReceived' WHERE typeID = 1030;
+UPDATE `evekit_data_character_notification` SET type = 'GameTimeSent' WHERE typeID = 1031;
+UPDATE `evekit_data_character_notification` SET type = 'GameTimeAdded' WHERE typeID = 1032;
+UPDATE `evekit_data_character_notification` SET type = 'NPCStandingsLost' WHERE typeID = 3001;
+UPDATE `evekit_data_character_notification` SET type = 'NPCStandingsGained' WHERE typeID = 3002;
+UPDATE `evekit_data_character_notification` SET type = 'MoonminingExtractionCancelled' WHERE typeID = 203;
+UPDATE `evekit_data_character_notification` SET type = 'MoonminingExtractionFinished' WHERE typeID = 204;
+UPDATE `evekit_data_character_notification` SET type = 'MoonminingLaserFired' WHERE typeID = 205;
+UPDATE `evekit_data_character_notification` SET type = 'MoonminingAutomaticFracture' WHERE typeID = 206;
+UPDATE `evekit_data_character_notification` SET type = 'MoonminingExtractionStarted' =  202
+UPDATE `evekit_data_character_notification` SET type = 'StructureWentLowPower' WHERE typeID = 207;
+UPDATE `evekit_data_character_notification` SET type = 'StructureWentHighPower' WHERE typeID = 208;
+UPDATE `evekit_data_character_notification` SET type = 'StructuresReinforcementChanged' WHERE typeID = 209;
+```
+
+##### Notification Bodies
+
+Since we synchronize both headers and bodies at the same time, we now collect both values
+into a single model object.  Once the schema is updated, we simply copy over the body values
+from existing notifications as follows:
+
+```sql
+UPDATE `evekit_data_character_notification` AS a, `evekit_data_character_notification_body` AS b
+SET a.text = b.text
+WHERE a.notificationID = b.notificationID;
+```
+
+Once this transfer is complete, the notifications bodies table can be deleted.
+
 ### CharacterNotificationBody
+
+Not used with the ESI.  Can be dropped once schema updates have been made for CharacterMailMessage.
 
 ### CharacterOnline (new)
 
@@ -294,6 +571,74 @@ Old Model Field | New Model Field | ESI Field | Notes
 *N/A* | logins | logins |
 
 ### CharacterRole
+
+ESI endpoint(s):
+
+* `/characters/{character_id}/roles/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+roleCategory | roleCategory | *N/A* | Artificial field to distinguish between role type.  One of: CORPORATION, CORPORATION\_AT\_HQ, CORPORATION\_AT\_BASE and CORPORATION\_AT\_OTHER.
+roleID | (deleted) | *N/A* | Not provided by ESI.  Extraneous.
+roleName | roleName | roles, roles\_at\_hq, roles\_at\_base, roles\_at\_other | Enumerated types stored as a string by EveKit.  See conversion guide below.
+
+#### Historic Conversion Notes
+
+* Role names have changed to enumerated fields and will be converted as follows:
+
+```sql
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_1' WHERE roleName = 'roleAccountTake1';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_2' WHERE roleName = 'roleAccountTake2';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_3' WHERE roleName = 'roleAccountTake3';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_4' WHERE roleName = 'roleAccountTake4';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_5' WHERE roleName = 'roleAccountTake5';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_6' WHERE roleName = 'roleAccountTake6';
+UPDATE `evekit_data_character_role` SET roleName = 'Account_Take_7' WHERE roleName = 'roleAccountTake7';
+UPDATE `evekit_data_character_role` SET roleName = 'Accountant' WHERE roleName = 'roleAccountant';
+UPDATE `evekit_data_character_role` SET roleName = 'Auditor' WHERE roleName = 'roleAuditor';
+UPDATE `evekit_data_character_role` SET roleName = 'Communications_Officer' WHERE roleName = 'roleCommunicationsOfficer';
+UPDATE `evekit_data_character_role` SET roleName = 'Config_Equipment' WHERE roleName = 'roleConfigEquipment';
+UPDATE `evekit_data_character_role` SET roleName = 'Config_Starbase_Equipment' WHERE roleName = 'roleConfigStarbaseEquipment';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_1' WHERE roleName = 'roleContainerTake1';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_2' WHERE roleName = 'roleContainerTake2';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_3' WHERE roleName = 'roleContainerTake3';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_4' WHERE roleName = 'roleContainerTake4';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_5' WHERE roleName = 'roleContainerTake5';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_6' WHERE roleName = 'roleContainerTake6';
+UPDATE `evekit_data_character_role` SET roleName = 'Container_Take_7' WHERE roleName = 'roleContainerTake7';
+UPDATE `evekit_data_character_role` SET roleName = 'Contract_Manager' WHERE roleName = 'roleContractManager';
+UPDATE `evekit_data_character_role` SET roleName = 'Diplomat' WHERE roleName = 'roleDiplomat';
+UPDATE `evekit_data_character_role` SET roleName = 'Director' WHERE roleName = 'roleDirector';
+UPDATE `evekit_data_character_role` SET roleName = 'Factory_Manager' WHERE roleName = 'roleFactoryManager';
+UPDATE `evekit_data_character_role` SET roleName = 'Fitting_Manager' WHERE roleName = 'roleFittingManager';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_1' WHERE roleName = 'roleHangarQuery1';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_2' WHERE roleName = 'roleHangarQuery2';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_3' WHERE roleName = 'roleHangarQuery3';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_4' WHERE roleName = 'roleHangarQuery4';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_5' WHERE roleName = 'roleHangarQuery5';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_6' WHERE roleName = 'roleHangarQuery6';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Query_7' WHERE roleName = 'roleHangarQuery7';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_1' WHERE roleName = 'roleHangarTake1';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_2' WHERE roleName = 'roleHangarTake2';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_3' WHERE roleName = 'roleHangarTake3';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_4' WHERE roleName = 'roleHangarTake4';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_5' WHERE roleName = 'roleHangarTake5';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_6' WHERE roleName = 'roleHangarTake6';
+UPDATE `evekit_data_character_role` SET roleName = 'Hangar_Take_7' WHERE roleName = 'roleHangarTake7';
+UPDATE `evekit_data_character_role` SET roleName = 'Junior_Accountant' WHERE roleName = 'roleJuniorAccountant';
+UPDATE `evekit_data_character_role` SET roleName = 'Personnel_Manager' WHERE roleName = 'rolePersonnelManager';
+UPDATE `evekit_data_character_role` SET roleName = 'Rent_Factory_Facility' WHERE roleName = 'roleRentFactoryFacility';
+UPDATE `evekit_data_character_role` SET roleName = 'Rent_Office' WHERE roleName = 'roleRentOffice';
+UPDATE `evekit_data_character_role` SET roleName = 'Rent_Research_Facility' WHERE roleName = 'roleRentResearchFacility';
+UPDATE `evekit_data_character_role` SET roleName = 'Security_Officer' WHERE roleName = 'roleSecurityOfficer';
+UPDATE `evekit_data_character_role` SET roleName = 'Starbase_Defense_Operator' WHERE roleName = 'roleStarbaseDefenseOperator';
+UPDATE `evekit_data_character_role` SET roleName = 'Starbase_Fuel_Technician' WHERE roleName = 'roleStarbaseFuelTechnician';
+UPDATE `evekit_data_character_role` SET roleName = 'Station_Manager' WHERE roleName = 'roleStationManager';
+UPDATE `evekit_data_character_role` SET roleName = 'Terrestrial_Combat_Officer' WHERE roleName = 'roleTerrestrialCombatOfficer';
+UPDATE `evekit_data_character_role` SET roleName = 'Terrestrial_Logistics_Officer' WHERE roleName = 'roleTerrestrialLogisticsOfficer';
+UPDATE `evekit_data_character_role` SET roleName = 'Trader' WHERE roleName = 'roleTrader';
+```
+
 ### CharacterSheet
 
 ESI endpoint(s):
@@ -463,8 +808,52 @@ typeID | typeID | skill\_id |
 *N/A* | trainingStartSP | training\_start\_sp | New in ESI.  Type is int.
 
 ### CharacterTitle
+
+* `/characters/{character_id}/titles/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+titleID | titleID | title\_id | Change type from long to int.
+titleName | titleName | name 
+
 ### ChatChannel
+
+* `/characters/{character_id}/chat_channels/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+channelID | channelID | channel\_id | Change type from long to int.
+ownerID | ownerID | owner\_id | Change type from long to int.
+ownerName | (deleted) | *N/A* | ESI expects lookup from `ownerID`.
+displayName | displayName | name |
+comparisonKey | comparisonKey | comparison\_key |
+hasPassword | hasPassword | has\_password |
+motd | motd | motd |
+
 ### ChatChannelMember
+
+* `/characters/{character_id}/chat_channels/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+channelID | channelID | *N/A* | Inserted by EveKit.  Change type from long to int.
+category | category | *N/A* | Inserted by EveKit.  One of 'allowed', 'blocked', 'muted' or 'operator'.
+accessorID | accessorID | accessor\_id | Change type from long to int.  Available on all categories.
+accessorName | (deleted) | *N/A* | ESI expects lookup from `accessorID`.
+*N/A* | accessorType | accessor\_type | Enumerated type giving the type of accessor (character, corporation or alliance).
+untilWhen | untilWhen | end\_at |
+reason | reason | reason |
+
+#### Historic Conversion Notes
+
+* The `accessorType` will not be populated historically on day one as it will take substantial
+effort to resolve all missing accessor IDs.  We will do this incrementally after the main switchover to ESI.
+* In `category`, change "operators" to "operator":
+
+```sql
+UPDATE `evekit_data_chatchannel_member` SET category = 'operator' WHERE category = 'operators';
+```
+
 ### Implant
 
 ESI endpoint(s):
