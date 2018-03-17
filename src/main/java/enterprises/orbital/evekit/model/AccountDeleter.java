@@ -43,8 +43,8 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "CharacterContactNotification");
     CachedData.cleanup(toDelete, "CharacterMailMessage");
     CachedData.cleanup(toDelete, "CharacterMedal");
+    CachedData.cleanup(toDelete, "CharacterMedalGraphic");
     CachedData.cleanup(toDelete, "CharacterNotification");
-    CachedData.cleanup(toDelete, "CharacterNotificationBody");
     CachedData.cleanup(toDelete, "CharacterRole");
     CachedData.cleanup(toDelete, "CharacterLocation");
     CachedData.cleanup(toDelete, "CharacterShip");
