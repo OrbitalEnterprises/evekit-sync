@@ -60,17 +60,19 @@ Each change can be in one of the following states:
   * **beta** [ResearchAgent](#researchagent)
 * Corporation Model Changes
   * **beta** [ContainerLog](#containerlog)
-  * **pending** [CorporationMedal](#corporationmedal)
-  * **pending** [CorporationMemberMedal](#corporationmembermedal)
-  * **pending** [CorporationSheet](#corporationsheet)
+  * **beta** [CorporationMedal](#corporationmedal)
+  * **beta** [CorporationMemberMedal](#corporationmembermedal)
+  * **beta** [CorporationSheet](#corporationsheet)
   * **pending** [CorporationTitle](#corporationtitle)
   * **pending** [CustomsOffice](#customsoffice)
   * **pending** [Division](#division)
   * **pending** [Facility](#facility)
   * **pending** [Fuel](#fuel)
+  * **beta** [MemberLimit](#memberlimit) (new)
   * **pending** [MemberSecurity](#membersecurity)
   * **pending** [MemberSecurityLog](#membersecuritylog)
-  * **pending** [MemberTracking](#membertracking)
+  * **pending** [MemberTitle](#membertitle) (new)
+  * **beta** [MemberTracking](#membertracking)
   * **pending** [Outpost](#outpost)
   * **pending** [OutpostServiceDetail](#outpostservicedetail)
   * **pending** [Role](#role)
@@ -1145,16 +1147,155 @@ typeID | typeID | type\_id |
 
 ### Corporation
 ### CorporationMedal
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/medals/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+medalID | medalID | medal\_id |
+description | description | description |
+title | title | title |
+created | created | created |
+creatorID | creatorID | creator\_id | Change type from long to int.
+
 ### CorporationMemberMedal
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/medals/issued/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+medalID | medalID | medal\_id |
+characterID | characterID | character\_id | Change type from long to int.
+issued | issued | issued_at |
+issuerID | issuerID | issuer\_id | Change type from long to int.
+reason | reason | reason |
+status | status | status | Now an enumerated type stored as a string.
+
 ### CorporationSheet
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/`
+* `/corporations/{corporation_id}/icons/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+allianceID | allianceID | alliance\_id | Change type from long to int.
+allianceName | (deleted) | *N/A* | ESI expects lookup from `allianceID`.
+ceoID | ceoID | ceo\_id | Change type from long to int.
+ceoName | (deleted) | *N/A* | ESI expects lookup from `ceoID`.
+corporationID | corporationID | *N/A* | Pulled from the synchronized EVE account.
+corporationName | corporationName | name |
+description | description | description |
+logoColor1 | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoColor2 | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoColor3 | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoGraphicID | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoShape1 | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoShape2 | (deleted) | *N/A* | Removed in favor of icon URLs.
+logoShape3 | (deleted) | *N/A* | Removed in favor of icon URLs.
+memberCount | memberCount | member\_count |
+memberLimit | (deleted) | *N/A* | Moved to the new `MemberLimit` model.  See conversion notes.
+shares | shares | shares | Change type from int to long.
+stationID | stationID | home\_station\_id | Change type from long to int.
+stationName | (deleted) | *N/A* | ESI expects lookup from `stationID`.
+taxRate | taxRate | tax\_rate | Change type from double to float.
+ticker | ticker | ticker |
+url | url | url |
+*N/A* | dateFounded | date\_founded | Founding date.  Type is long.
+*N/A* | creatorID | creator\_id | Type is int.
+*N/A* | factionID | faction\_id | Type is int.
+*N/A* | px64x64 | px64x64 | Type is string.
+*N/A* | px128x128 | px128x128 | Type is string.
+*N/A* | px256x256 | px256x256 | Type is string.
+
+#### Historic Conversion Notes
+
+* `memberLimit` is moved to the new `MemberLimit` model.  This data won't be populated
+historically.  We'll start tracking member limits on the first ESI sync.
+* There is no easy conversion for the local color and shape fields so these will not be populated historically.  Instead, we'll rely on the new icon URL fields going forward.
+
 ### CorporationTitle
 ### CustomsOffice
 ### Division
 ### Facility
 ### Fuel
+### MemberLimit (new) 
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/members/limit/`
+
+This model is updated as part of `MemberTracking` is it requires the same authorization.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | limit | *N/A* | ESI result is a simple int32.
+
+```sql
+CREATE TABLE `evekit_data_corporation_member_limit` (
+       `cid` BIGINT(20) NOT NULL,
+       `memberLimit` INT(11) NOT NULL,
+       PRIMARY KEY (`cid`),
+       CONSTRAINT `corporation_member_limit_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### MemberSecurity
+
+Member security is now divided into three models as follows:
+
+1. MemberSecurity - lists the roles associated with characters in the corporation.
+2. CorporationTitle - named collection of roles that can be assigned to a character.
+3. MemberTitle - lists the title IDs associated with a character.
+
 ### MemberSecurityLog
+### MemberTitle (new) 
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/members/titles/` (esi-corporations.read\_titles.v1)
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | characterID | character\_id | 
+
+```sql
+CREATE TABLE `evekit_data_corporation_member_title` (
+       `cid` BIGINT(20) NOT NULL,
+       `titleID` INT(11) NOT NULL,
+       PRIMARY KEY (`cid`),
+       CONSTRAINT `corporation_member_title_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### MemberTracking
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/membertracking/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+characterID | characterID | character\_id | Change type from long to int.
+base | (deleted) | *N/A* | ESI expects lookup from `baseID`.
+baseID | baseID | base\_id | Change type from long to int.
+grantableRoles | (deleted) | Now only stored in `MemberSecurity`.
+location | (deleted) | *N/A* | ESI expects lookup from `locationID`.
+locationID | locationID | location\_id |
+logoffDateTime | logoffDateTime | logoff\_date |
+logonDateTime | logonDateTime | logon\_date |
+name | (deleted) | *N/A* | ESI expects lookup from `characterID`.
+roles | (deleted) | *N/A* | Now only stored in `MemberSecurity`.
+shipType | (deleted) | *N/A* | ESI expects lookup from `shipTypeID`.
+shipTypeID | shipTypeID | ship\_type |
+startDateTime | startDateTime | start\_date |
+title | (deleted) | *N/A* | Moved to new `MemberTitle` model.
+
 ### Outpost
 ### OutpostServiceDetail
 ### Role
