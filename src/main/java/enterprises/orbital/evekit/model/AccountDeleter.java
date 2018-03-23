@@ -101,6 +101,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "Division");
     CachedData.cleanup(toDelete, "Facility");
     CachedData.cleanup(toDelete, "Fuel");
+    CachedData.cleanup(toDelete, "MemberLimit");
     CachedData.cleanup(toDelete, "MemberSecurity");
     CachedData.cleanup(toDelete, "MemberSecurityLog");
     CachedData.cleanup(toDelete, "MemberTracking");

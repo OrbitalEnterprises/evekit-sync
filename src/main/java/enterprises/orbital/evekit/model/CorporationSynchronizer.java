@@ -180,34 +180,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 //
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPSHEET, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationSheetSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationSheetSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationSheetSync.syncCorporationSheet(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPSHEET, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationSheetSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationSheetSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationSheetSync.syncCorporationSheet(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CORP_CONTACTLIST, new CorpStateHandler() {
 //      @Override
 //      public SyncStatus exclude(
@@ -600,34 +600,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 //
 //      }
 //    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERMEDALS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationMemberMedalsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationMemberMedalsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationMemberMedalsSync.syncCorporationMemberMedals(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERMEDALS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationMemberMedalsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationMemberMedalsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationMemberMedalsSync.syncCorporationMemberMedals(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
 //    supportedFeatures.put(SynchronizationState.SYNC_CORP_STANDINGS, new CorpStateHandler() {
 //      @Override
 //      public SyncStatus exclude(
@@ -796,62 +796,62 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERTRACKING, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationMemberTrackingSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationMemberTrackingSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationMemberTrackingSync.syncCorporationMemberTracking(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPMEDALS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationMedalsSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationMedalsSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationMedalsSync.syncCorporationMedals(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_MEMBERTRACKING, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationMemberTrackingSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationMemberTrackingSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationMemberTrackingSync.syncCorporationMemberTracking(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_CORPMEDALS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationMedalsSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationMedalsSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationMedalsSync.syncCorporationMedals(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_OUTPOSTLIST, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(

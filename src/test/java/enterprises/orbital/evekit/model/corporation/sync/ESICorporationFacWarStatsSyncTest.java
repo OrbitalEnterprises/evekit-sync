@@ -3,13 +3,12 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.FactionWarfareApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdFwStatsKills;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdFwStatsOk;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdFwStatsVictoryPoints;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdFwStatsKills;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdFwStatsOk;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdFwStatsVictoryPoints;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
-import enterprises.orbital.evekit.model.character.sync.ESICharacterFacWarStatsSync;
 import enterprises.orbital.evekit.model.common.FacWarStats;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
@@ -29,7 +28,7 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
   private ESIAccountClientProvider mockServer;
   private FactionWarfareApi mockEndpoint;
   private long testTime = 1238L;
-  private GetCharactersCharacterIdFwStatsOk testSheet;
+  private GetCorporationsCorporationIdFwStatsOk testSheet;
 
   @Override
   @Before
@@ -37,7 +36,7 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_FACTION_WAR, 1234L);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_FACTION_WAR, 1234L);
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);
@@ -60,14 +59,12 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
 
   // Mock up server interface
   private void setupOkMock() throws Exception {
-    testSheet = new GetCharactersCharacterIdFwStatsOk();
+    testSheet = new GetCorporationsCorporationIdFwStatsOk();
     testSheet.setFactionId(TestBase.getRandomInt());
     testSheet.setEnlistedOn(new DateTime(new Date(TestBase.getRandomLong())));
-    testSheet.setCurrentRank(TestBase.getRandomInt());
-    testSheet.setHighestRank(TestBase.getRandomInt());
-    GetCharactersCharacterIdFwStatsKills kills = new GetCharactersCharacterIdFwStatsKills();
+    GetCorporationsCorporationIdFwStatsKills kills = new GetCorporationsCorporationIdFwStatsKills();
     testSheet.setKills(kills);
-    GetCharactersCharacterIdFwStatsVictoryPoints victoryPoints = new GetCharactersCharacterIdFwStatsVictoryPoints();
+    GetCorporationsCorporationIdFwStatsVictoryPoints victoryPoints = new GetCorporationsCorporationIdFwStatsVictoryPoints();
     testSheet.setVictoryPoints(victoryPoints);
     kills.setLastWeek(TestBase.getRandomInt());
     kills.setTotal(TestBase.getRandomInt());
@@ -77,10 +74,10 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     victoryPoints.setYesterday(TestBase.getRandomInt());
 
     Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
-    ApiResponse<GetCharactersCharacterIdFwStatsOk> apir = new ApiResponse<>(200, headers, testSheet);
+    ApiResponse<GetCorporationsCorporationIdFwStatsOk> apir = new ApiResponse<>(200, headers, testSheet);
     mockEndpoint = EasyMock.createMock(FactionWarfareApi.class);
-    EasyMock.expect(mockEndpoint.getCharactersCharacterIdFwStatsWithHttpInfo(
-        EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+    EasyMock.expect(mockEndpoint.getCorporationsCorporationIdFwStatsWithHttpInfo(
+        EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
         EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
@@ -97,23 +94,19 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     EasyMock.replay(mockServer, mockEndpoint);
 
     // Perform the sync
-    ESICharacterFacWarStatsSync sync = new ESICharacterFacWarStatsSync(charSyncAccount);
+    ESICorporationFacWarStatsSync sync = new ESICorporationFacWarStatsSync(corpSyncAccount);
     sync.synch(mockServer);
     EasyMock.verify(mockServer, mockEndpoint);
 
     // Verify updated properly
-    FacWarStats result = FacWarStats.get(charSyncAccount, testTime);
+    FacWarStats result = FacWarStats.get(corpSyncAccount, testTime);
     Assert.assertEquals(testTime, result.getLifeStart());
     Assert.assertEquals(Long.MAX_VALUE, result.getLifeEnd());
 
-    Assert.assertEquals(testSheet.getCurrentRank()
-                                 .intValue(), result.getCurrentRank());
     Assert.assertEquals(testSheet.getEnlistedOn()
                                  .getMillis(), result.getEnlisted());
     Assert.assertEquals(testSheet.getFactionId()
                                  .intValue(), result.getFactionID());
-    Assert.assertEquals(testSheet.getHighestRank()
-                                 .intValue(), result.getHighestRank());
     Assert.assertEquals(testSheet.getKills()
                                  .getLastWeek()
                                  .intValue(), result.getKillsLastWeek());
@@ -135,8 +128,8 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
                                  .intValue(), result.getVictoryPointsYesterday());
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
-                                                                                         ESISyncEndpoint.CHAR_FACTION_WAR);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount,
+                                                                                         ESISyncEndpoint.CORP_FACTION_WAR);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
@@ -144,7 +137,7 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     Assert.assertEquals(testTime, syncTracker.getSyncEnd());
 
     // Verify new tracker was created with next sync time
-    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_FACTION_WAR);
+    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_FACTION_WAR);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
@@ -155,11 +148,11 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     EasyMock.replay(mockServer, mockEndpoint);
 
     // Populate existing
-    FacWarStats existing = new FacWarStats(testSheet.getCurrentRank() + 1,
+    FacWarStats existing = new FacWarStats(0,
                                            testSheet.getEnlistedOn()
                                                     .getMillis() + 1L,
                                            testSheet.getFactionId() + 1,
-                                           testSheet.getHighestRank() + 1,
+                                           0,
                                            testSheet.getKills()
                                                     .getLastWeek() + 1,
                                            testSheet.getKills()
@@ -173,24 +166,22 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
                                                     .getTotal() + 1,
                                            testSheet.getVictoryPoints()
                                                     .getYesterday() + 1);
-    existing.setup(charSyncAccount, testTime - 1);
+    existing.setup(corpSyncAccount, testTime - 1);
     CachedData.update(existing);
 
     // Perform the sync
-    ESICharacterFacWarStatsSync sync = new ESICharacterFacWarStatsSync(charSyncAccount);
+    ESICorporationFacWarStatsSync sync = new ESICorporationFacWarStatsSync(corpSyncAccount);
     sync.synch(mockServer);
     EasyMock.verify(mockServer, mockEndpoint);
 
     // Verify old object was evolved properly
-    FacWarStats result = FacWarStats.get(charSyncAccount, testTime - 1);
+    FacWarStats result = FacWarStats.get(corpSyncAccount, testTime - 1);
     Assert.assertEquals(testTime - 1, result.getLifeStart());
     Assert.assertEquals(testTime, result.getLifeEnd());
 
-    Assert.assertEquals(testSheet.getCurrentRank() + 1, result.getCurrentRank());
     Assert.assertEquals(testSheet.getEnlistedOn()
                                  .getMillis() + 1L, result.getEnlisted());
     Assert.assertEquals(testSheet.getFactionId() + 1, result.getFactionID());
-    Assert.assertEquals(testSheet.getHighestRank() + 1, result.getHighestRank());
     Assert.assertEquals(testSheet.getKills()
                                  .getLastWeek() + 1, result.getKillsLastWeek());
     Assert.assertEquals(testSheet.getKills()
@@ -206,18 +197,14 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
                                  .getYesterday() + 1, result.getVictoryPointsYesterday());
 
     // Verify updated properly
-    result = FacWarStats.get(charSyncAccount, testTime);
+    result = FacWarStats.get(corpSyncAccount, testTime);
     Assert.assertEquals(testTime, result.getLifeStart());
     Assert.assertEquals(Long.MAX_VALUE, result.getLifeEnd());
 
-    Assert.assertEquals(testSheet.getCurrentRank()
-                                 .intValue(), result.getCurrentRank());
     Assert.assertEquals(testSheet.getEnlistedOn()
                                  .getMillis(), result.getEnlisted());
     Assert.assertEquals(testSheet.getFactionId()
                                  .intValue(), result.getFactionID());
-    Assert.assertEquals(testSheet.getHighestRank()
-                                 .intValue(), result.getHighestRank());
     Assert.assertEquals(testSheet.getKills()
                                  .getLastWeek()
                                  .intValue(), result.getKillsLastWeek());
@@ -239,8 +226,8 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
                                  .intValue(), result.getVictoryPointsYesterday());
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
-                                                                                         ESISyncEndpoint.CHAR_FACTION_WAR);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount,
+                                                                                         ESISyncEndpoint.CORP_FACTION_WAR);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
@@ -248,7 +235,7 @@ public class ESICorporationFacWarStatsSyncTest extends SyncTestBase {
     Assert.assertEquals(testTime, syncTracker.getSyncEnd());
 
     // Verify new tracker was created with next sync time
-    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_FACTION_WAR);
+    syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_FACTION_WAR);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
