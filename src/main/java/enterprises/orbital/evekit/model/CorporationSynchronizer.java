@@ -908,34 +908,34 @@ public class CorporationSynchronizer extends AbstractSynchronizer {
 
       }
     });
-    supportedFeatures.put(SynchronizationState.SYNC_CORP_SHAREHOLDERS, new CorpStateHandler() {
-      @Override
-      public SyncStatus exclude(
-                                SynchronizedEveAccount syncAccount,
-                                SynchronizerUtil syncUtil) {
-        return CorporationShareholdersSync.exclude(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus notAllowed(
-                                   SynchronizedEveAccount syncAccount,
-                                   SynchronizerUtil syncUtil) {
-        return CorporationShareholdersSync.notAllowed(syncAccount, syncUtil);
-
-      }
-
-      @Override
-      public SyncStatus sync(
-                             long syncTime,
-                             SynchronizedEveAccount syncAccount,
-                             SynchronizerUtil syncUtil,
-                             ICorporationAPI corpRequest,
-                             IAccountAPI acctRequest) {
-        return CorporationShareholdersSync.syncShareholders(syncTime, syncAccount, syncUtil, corpRequest);
-
-      }
-    });
+//    supportedFeatures.put(SynchronizationState.SYNC_CORP_SHAREHOLDERS, new CorpStateHandler() {
+//      @Override
+//      public SyncStatus exclude(
+//                                SynchronizedEveAccount syncAccount,
+//                                SynchronizerUtil syncUtil) {
+//        return CorporationShareholdersSync.exclude(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus notAllowed(
+//                                   SynchronizedEveAccount syncAccount,
+//                                   SynchronizerUtil syncUtil) {
+//        return CorporationShareholdersSync.notAllowed(syncAccount, syncUtil);
+//
+//      }
+//
+//      @Override
+//      public SyncStatus sync(
+//                             long syncTime,
+//                             SynchronizedEveAccount syncAccount,
+//                             SynchronizerUtil syncUtil,
+//                             ICorporationAPI corpRequest,
+//                             IAccountAPI acctRequest) {
+//        return CorporationShareholdersSync.syncShareholders(syncTime, syncAccount, syncUtil, corpRequest);
+//
+//      }
+//    });
     supportedFeatures.put(SynchronizationState.SYNC_CORP_STARBASELIST, new CorpStateHandler() {
       @Override
       public SyncStatus exclude(
