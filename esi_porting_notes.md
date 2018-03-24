@@ -65,7 +65,7 @@ Each change can be in one of the following states:
   * **beta** [CorporationSheet](#corporationsheet)
   * **pending** [CorporationTitle](#corporationtitle)
   * **pending** [CustomsOffice](#customsoffice)
-  * **pending** [Division](#division)
+  * **beta** [Division](#division)
   * **pending** [Facility](#facility)
   * **pending** [Fuel](#fuel)
   * **beta** [MemberLimit](#memberlimit) (new)
@@ -78,7 +78,7 @@ Each change can be in one of the following states:
   * **pending** [Role](#role)
   * **pending** [SecurityRole](#securityrole)
   * **pending** [SecurityTitle](#securitytitle)
-  * **pending** [Shareholder](#shareholder)
+  * **beta** [Shareholder](#shareholder)
   * **pending** [Starbase](#starbase)
   * **pending** [StarbaseDetail](#starbasedetail)
 * Common Model Changes
@@ -1222,6 +1222,31 @@ historically.  We'll start tracking member limits on the first ESI sync.
 ### CorporationTitle
 ### CustomsOffice
 ### Division
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/divisions/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+wallet | wallet | *N/A* | Boolean field inserted by EveKit to distinguish wallet and hangar divisions.
+accountKey | (deleted) | *N/A* | Renamed to `division` and modified according to the conversion notes below.
+*N/A* | division | division | Division from 1 to 7.  Historic data converted from `accountKey`.
+description | (deleted) | *N/A* | Renamed to `name`.
+*N/A* | name | name | Renamed from `description`.
+
+#### Historic Conversion Notes
+
+* DUST divisions will be removed as follows:
+```sql
+DELETE FROM evekit_data_division WHERE division > 1006;
+```
+
+* `accountKey` has been renamed to `division` and must be adjusted according to the following update:
+```sql
+UPDATE `evekit_data_division` SET division = division - 1000 + 1;
+```
+
 ### Facility
 ### Fuel
 ### MemberLimit (new) 
@@ -1302,6 +1327,29 @@ title | (deleted) | *N/A* | Moved to new `MemberTitle` model.
 ### SecurityRole
 ### SecurityTitle
 ### Shareholder
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/shareholders/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+shareholderID | shareholderID | shareholder\_id | Change type from long to int.
+isCorporation | (deleted) | *N/A* | Now represented by `shareholderType`.  See conversion notes.
+*N/A* | shareholderType | shareholder\_type | Enumerated type which captures `isCorporation`.
+shareholderCorporationID | (deleted) | *N/A* | Removed.  Can be inferred from `shareholderID` and `shareholderType`.
+shareholderCorporationName | (deleted) | *N/A* | ESI expects lookup from appropriate ID.
+shareholderName | (deleted) | *N/A* | ESI expects lookup from `shareholderID`.
+shares | shares | share\_count | Change type from int to long.
+
+#### Historic Conversion Notes
+
+* `shareholderType` should be populated from `isCorporationType` before that field is removed as follows:
+```sql
+UPDATE `evekit_data_shareholder` SET `shareholderType` = 'character' WHERE `isCorporation` = 0;
+UPDATE `evekit_data_shareholder` SET `shareholderType` = 'corporation' WHERE `isCorporation` = 1;
+```
+
 ### Starbase
 ### StarbaseDetail
 
