@@ -63,21 +63,25 @@ Each change can be in one of the following states:
   * **beta** [CorporationMedal](#corporationmedal)
   * **beta** [CorporationMemberMedal](#corporationmembermedal)
   * **beta** [CorporationSheet](#corporationsheet)
-  * **pending** [CorporationTitle](#corporationtitle)
+  * **beta** [CorporationTitle](#corporationtitle)
+  * **beta** [CorporationTitleRole](#corporationtitlerole) (new)
   * **pending** [CustomsOffice](#customsoffice)
   * **beta** [Division](#division)
   * **pending** [Facility](#facility)
   * **pending** [Fuel](#fuel)
+  * **beta** [Member](#member) (new)
   * **beta** [MemberLimit](#memberlimit) (new)
-  * **pending** [MemberSecurity](#membersecurity)
-  * **pending** [MemberSecurityLog](#membersecuritylog)
-  * **pending** [MemberTitle](#membertitle) (new)
+  * **beta** [MemberRole](#memberrole) (new)
+  * **beta** [MemberRoleHistory](#memberolehistory) (new)
+  * **N/A** [MemberSecurity](#membersecurity)
+  * **N/A** [MemberSecurityLog](#membersecuritylog)
+  * **beta** [MemberTitle](#membertitle) (new)
   * **beta** [MemberTracking](#membertracking)
   * **pending** [Outpost](#outpost)
   * **pending** [OutpostServiceDetail](#outpostservicedetail)
-  * **pending** [Role](#role)
-  * **pending** [SecurityRole](#securityrole)
-  * **pending** [SecurityTitle](#securitytitle)
+  * **N/A** [Role](#role)
+  * **N/A** [SecurityRole](#securityrole)
+  * **N/A** [SecurityTitle](#securitytitle)
   * **beta** [Shareholder](#shareholder)
   * **pending** [Starbase](#starbase)
   * **pending** [StarbaseDetail](#starbasedetail)
@@ -1220,6 +1224,56 @@ historically.  We'll start tracking member limits on the first ESI sync.
 * There is no easy conversion for the local color and shape fields so these will not be populated historically.  Instead, we'll rely on the new icon URL fields going forward.
 
 ### CorporationTitle
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/titles/`
+
+This model is now refactored so that role information is flatted and stored separately.
+As a result, we only show the new fields and do not attempt to document the mapping from the
+old model fields to the new model fields.  All previous data will be overwritten when the move
+to ESI occurs.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | titleID | title\_id | Type int.
+*N/A* | titleName | name | Type String.
+
+### CorporationTitleRole (new)
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/titles/`
+
+This model is updated at the same time as `CorporationTitle` and holds the role information
+associated with each defined title.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | titleID | *N/A* | Inserted by EveKit.  Type int.
+*N/A* | roleName | *N/A* | Type String.
+*N/A* | grantable | *N/A* | Type boolean.
+*N/A* | atHQ | *N/A* | Type boolean.
+*N/A* | atBase | *N/A* | Type boolean.
+*N/A* | atOther | *N/A* | Type boolean.
+
+This table should be created as follows:
+
+```sql
+CREATE TABLE `evekit_data_corporation_title_role` (
+       `cid` BIGINT(20) NOT NULL,
+       `titleID` INT(11) NOT NULL,
+       `roleName` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `grantable` INT(1) NOT NULL,
+       `atHQ` INT(1) NOT NULL,
+       `atBase` INT(1) NOT NULL,
+       `atOther` INT(1) NOT NULL,
+       PRIMARY KEY (`cid`),
+       KEY `titleRoleTitleIDIndex` (`titleID`),
+       CONSTRAINT `corporation_title_role_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### CustomsOffice
 ### Division
 
@@ -1249,6 +1303,27 @@ UPDATE `evekit_data_division` SET division = division - 1000 + 1;
 
 ### Facility
 ### Fuel
+
+### Member (new)
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/members/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | characterID | *N/A* | Type int.
+
+```sql
+CREATE TABLE `evekit_data_corporation_member` (
+       `cid` BIGINT(20) NOT NULL,
+       `characterID` INT(11) NOT NULL,
+       PRIMARY KEY (`cid`),
+       KEY `corporationMemberCharacterIDIndex` (`characterID`),
+       CONSTRAINT `corporation_member_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### MemberLimit (new) 
 
 ESI endpoint(s):
@@ -1270,15 +1345,79 @@ CREATE TABLE `evekit_data_corporation_member_limit` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
+### MemberRole (new) 
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/roles/`
+
+This model replaces `MemberSecurity`.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | characterID | *N/A* | Type int.
+*N/A* | roleName | *N/A* | Type String.
+*N/A* | grantable | *N/A* | Type boolean.
+*N/A* | atHQ | *N/A* | Type boolean.
+*N/A* | atBase | *N/A* | Type boolean.
+*N/A* | atOther | *N/A* | Type boolean.
+
+```sql
+CREATE TABLE `evekit_data_corporation_member_role` (
+       `cid` BIGINT(20) NOT NULL,
+       `characterID` INT(11) NOT NULL,
+       `roleName` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `grantable` INT(1) NOT NULL,
+       `atHQ` INT(1) NOT NULL,
+       `atBase` INT(1) NOT NULL,
+       `atOther` INT(1) NOT NULL,
+       PRIMARY KEY (`cid`),
+       KEY `corporationMemberRoleCharacterIDIndex` (`characterID`),
+       CONSTRAINT `corporation_member_role_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
+### MemberRoleHistory (new) 
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/roles/history/`
+
+This model replaces `MemberSecurityLog`.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+*N/A* | characterID | *N/A* | Type int.
+*N/A* | changedAt | *N/A* | Type long.
+*N/A* | issuerID | *N/A* | Type int.
+*N/A* | roleType | *N/A* | Type String.
+*N/A* | roleName | *N/A* | Type String.
+*N/A* | old | *N/A* | Type boolean.
+
+```sql
+CREATE TABLE `evekit_data_corporation_member_role_history` (
+       `cid` BIGINT(20) NOT NULL,
+       `characterID` INT(11) NOT NULL,
+       `changedAt` BIGINT(20) NOT NULL,
+       `issuerID` INT(11) NOT NULL,
+       `roleType` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `roleName` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+       `old` INT(1) NOT NULL,
+       PRIMARY KEY (`cid`),
+       KEY `corporationMemberRoleHistoryCharacterIDIndex` (`characterID`),
+       KEY `corporationMemberRoleHistoryChangeIndex` (`changedAt`),
+       CONSTRAINT `corporation_member_role_history_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
+
 ### MemberSecurity
 
-Member security is now divided into three models as follows:
-
-1. MemberSecurity - lists the roles associated with characters in the corporation.
-2. CorporationTitle - named collection of roles that can be assigned to a character.
-3. MemberTitle - lists the title IDs associated with a character.
+This model is now replaced by `MemberRole` and will be removed.
 
 ### MemberSecurityLog
+
+This model is now replaced by `MemberRoleHistory` and will be removed.
+
 ### MemberTitle (new) 
 
 ESI endpoint(s):
@@ -1287,13 +1426,16 @@ ESI endpoint(s):
 
 Old Model Field | New Model Field | ESI Field | Notes
 ---|---|---|---
-*N/A* | characterID | character\_id | 
+*N/A* | characterID | *N/A* | Type int.
+*N/A* | titleID | *N/A* | Type int.
 
 ```sql
 CREATE TABLE `evekit_data_corporation_member_title` (
        `cid` BIGINT(20) NOT NULL,
+       `characterID` INT(11) NOT NULL,
        `titleID` INT(11) NOT NULL,
        PRIMARY KEY (`cid`),
+       KEY `memberTitleCharacterIDIndex` (`characterID`),
        CONSTRAINT `corporation_member_title_fk` FOREIGN KEY (`cid`) REFERENCES `evekit_cached_data` (`cid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
@@ -1324,8 +1466,17 @@ title | (deleted) | *N/A* | Moved to new `MemberTitle` model.
 ### Outpost
 ### OutpostServiceDetail
 ### Role
+
+This model is no longer needed and will be removed.
+
 ### SecurityRole
+
+This model is no longer needed and will be removed.
+
 ### SecurityTitle
+
+This model is no longer needed and will be removed.
+
 ### Shareholder
 
 ESI endpoint(s):
