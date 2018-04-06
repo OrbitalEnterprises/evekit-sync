@@ -65,10 +65,10 @@ Each change can be in one of the following states:
   * **beta** [CorporationSheet](#corporationsheet)
   * **beta** [CorporationTitle](#corporationtitle)
   * **beta** [CorporationTitleRole](#corporationtitlerole) (new)
-  * **pending** [CustomsOffice](#customsoffice)
+  * **beta** [CustomsOffice](#customsoffice)
   * **beta** [Division](#division)
-  * **pending** [Facility](#facility)
-  * **pending** [Fuel](#fuel)
+  * **beta** [Facility](#facility)
+  * **beta** [Fuel](#fuel)
   * **beta** [Member](#member) (new)
   * **beta** [MemberLimit](#memberlimit) (new)
   * **beta** [MemberRole](#memberrole) (new)
@@ -77,14 +77,14 @@ Each change can be in one of the following states:
   * **N/A** [MemberSecurityLog](#membersecuritylog)
   * **beta** [MemberTitle](#membertitle) (new)
   * **beta** [MemberTracking](#membertracking)
-  * **pending** [Outpost](#outpost)
-  * **pending** [OutpostServiceDetail](#outpostservicedetail)
+  * **N/A** [Outpost](#outpost)
+  * **N/A** [OutpostServiceDetail](#outpostservicedetail)
   * **N/A** [Role](#role)
   * **N/A** [SecurityRole](#securityrole)
   * **N/A** [SecurityTitle](#securitytitle)
   * **beta** [Shareholder](#shareholder)
-  * **pending** [Starbase](#starbase)
-  * **pending** [StarbaseDetail](#starbasedetail)
+  * **beta** [Starbase](#starbase)
+  * **N/A** [StarbaseDetail](#starbasedetail)
 * Common Model Changes
   * **beta** [AccountBalance](#accountbalance)
   * **N/A** [AccountStatus](#accountstatus)
@@ -1275,6 +1275,46 @@ CREATE TABLE `evekit_data_corporation_title_role` (
 ```
 
 ### CustomsOffice
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/customs_offices/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+itemID | officeID | office\_id | Change name to `officeID`.
+solarSystemID | solarSystemID | system\_id |
+solarSystemName | (deleted) | *N/A* | ESI expects lookup from `solarSystemID`.
+reinforceHour | (deleted) | *N/A* | Replaced by `reinforceExitStart` and `reinforceExitEnd`.
+*N/A* | reinforceExitStart | reinforce\_exit\_start | Type is int.
+*N/A* | reinforceExitEnd | reinforce\_exit\_end | Type is int.
+allowAlliance | allowAlliance | allow\_alliance\_access |
+allowStandings | allowStandings | allow\_access\_with\_standings |
+standingLevel | standingLevel | stading\_level | Changed to an enumerated type stored as string.  No historical conversion.
+taxRateAlliance | taxRateAlliance | alliance\_tax\_rate | Change type to float.
+taxRateCorp | taxRateCorp | corporation\_tax\_rate | Change type to float.
+taxRateStandingHigh | taxRateStandingExcellent | excellent\_standing\_tax\_rate | Name change.  Change type to float.
+taxRateStandingGood | taxRateStandingGood | good\_standing\_tax\_rate | Change type to float.
+taxRateStandingNeutral | taxRateStandingNeutral | neutral\_standing\_tax\_rate | Change type to float.
+taxRateStandingBad | taxRateStandingBad | bad\_standing\_tax\_rate | Change type to float.
+taxRateStandingHorrible | taxRateStandingTerrible | terrible\_standing\_tax\_rate | Name change.  Change type to float.
+
+#### Conversion Notes
+
+Note that index name must change from `itemIDIndex` to `officeIDIndex`.
+
+#### Historic Conversion Notes
+
+* `standingLevel` can be mapped from the historic value to the new value as follows:
+
+```sql
+UPDATE `evekit_data_customs_office` SET standingLevel = 'excellent' WHERE standingLevel = 10;
+UPDATE `evekit_data_customs_office` SET standingLevel = 'good' WHERE standingLevel = 5;
+UPDATE `evekit_data_customs_office` SET standingLevel = 'neutral' WHERE standingLevel = 0;
+UPDATE `evekit_data_customs_office` SET standingLevel = 'bad' WHERE standingLevel = -5;
+UPDATE `evekit_data_customs_office` SET standingLevel = 'terrible' WHERE standingLevel = -10;
+```
+
 ### Division
 
 ESI endpoint(s):
@@ -1302,7 +1342,38 @@ UPDATE `evekit_data_division` SET division = division - 1000 + 1;
 ```
 
 ### Facility
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/facilities/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+facilityID | facilityID | facility\_id |
+typeID | typeID | type\_id |
+typeName | (deleted) | *N/A* | ESI expects lookup from `typeID`.
+solarSystemID | solarSystemID | system\_id |
+solarSystemName | (deleted) | *N/A* | ESI expects lookup from `solarSystemID`.
+regionID | (deleted) | *N/A* | ESI expects lookup from `solarSystemID`.
+regionName | (deleted) | *N/A* | ESI expects lookup from `solarSystemID`.
+starbaseModifier | (deleted) | *N/A* | No longer relevant.
+tax | (deleted) | *N/A* | No longer relevant.
+
 ### Fuel
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/starbases/{starbase_id}/`
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+itemID | starbaseID | *N/A* | Inserted by EveKit.  Renamed to `starbaseID`.
+typeID | typeID | type\_id |
+quantity | quantity | quantity |
+
+#### Conversion Notes
+
+* Note that `itemIDIndex` must also be renamed to `starbaseIDIndex`.
 
 ### Member (new)
 
@@ -1464,7 +1535,13 @@ startDateTime | startDateTime | start\_date |
 title | (deleted) | *N/A* | Moved to new `MemberTitle` model.
 
 ### Outpost
+
+This model is no longer needed and will be removed.
+
 ### OutpostServiceDetail
+
+This model is no longer needed and will be removed.
+
 ### Role
 
 This model is no longer needed and will be removed.
@@ -1502,7 +1579,57 @@ UPDATE `evekit_data_shareholder` SET `shareholderType` = 'corporation' WHERE `is
 ```
 
 ### Starbase
+
+ESI endpoint(s):
+
+* `/corporations/{corporation_id}/starbases/`
+* `/corporations/{corporation_id}/starbases/{starbase_id}/`
+
+For starbase sync, we will combine Starbase and StarbaseDetail into a single model as detailed below.
+
+Old Model Field | New Model Field | ESI Field | Notes
+---|---|---|---
+itemID | starbaseID | starbase\_id | Renamed to `starbaseID`.
+typeID | typeID | type\_id |
+locationID | systemID | system\_id | Name changed to `systemID`.  Type change from long to int.
+moonID | moonID | moon\_id |
+state | state | state | Changed to enumerated type stored as String (see conversion notes below).
+*N/A* | unanchorAt | unanchor\_at | Type is long.
+*N/A* | reinforcedUntil | reinforced\_until | Type is long.
+onlineTimestamp | onlinedSince | onlined\_since | Renamed to `onlinedSince`.
+stateTimestamp | (deleted) | *N/A* | No equivalent in ESI.
+standingOwnerID | (deleted) | *N/A* | No equivalent in ESI.
+*N/A* | fuelBayView | fuel\_bay\_view | Type is String (enumerated).
+*N/A* | fuelBayTake | fuel\_bay\_take | Type is String (enumerated).
+*N/A* | anchor | anchor | Type is String (enumerated).
+*N/A* | unanchor | unanchor | Type is String (enumerated).
+*N/A* | online | online | Type is String (enumerated).
+*N/A* | offline | offline | Type is String (enumerated).
+*N/A* | allowCorporationMembers | allow\_corporation\_members | Type is boolean.
+*N/A* | allowAllianceMembers | allow\_alliance\_members | Type is boolean.
+*N/A* | useAllianceStandings | use\_alliance\_standings | Type is boolean.
+*N/A* | attackStandingThreshold | attack\_standing\_threshold | Type is float.
+*N/A* | attackSecurityStatusThreshold | attack\_security\_status\_threshold | Type is float.
+*N/A* | attackIfOtherSecurityStatusDropping | attack\_if\_other\_security\_status\_dropping | Type is boolean.
+*N/A* | attackIfAtWar | attack\_if\_at\_war | Type is boolean.
+
+#### Historic Conversion Notes
+
+* It also necessary to rename `itemIDIndex` to `starbaseIDIndex`.
+
+* `state` changed from int to String type as follows:
+
+```sql
+UPDATE `evekit_data_starbase` SET state = "unanchoring" WHERE state = 0; 
+UPDATE `evekit_data_starbase` SET state = "offline" WHERE state = 1; 
+UPDATE `evekit_data_starbase` SET state = "onlining" WHERE state = 2; 
+UPDATE `evekit_data_starbase` SET state = "reinforced" WHERE state = 3; 
+UPDATE `evekit_data_starbase` SET state = "online" WHERE state = 4; 
+```
+
 ### StarbaseDetail
+
+This model will be removed in favor of a unified Starbase model (see above).
 
 ## Common Model Changes
 
