@@ -68,7 +68,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
       ESIAccountClientProvider cp) throws ApiException, IOException {
     ContractData resultData = new ContractData();
     ContractsApi apiInstance = cp.getContractsApi();
-    // Retrieve contracts info
+    // Retrieve bases info
     Pair<Long, List<GetCorporationsCorporationIdContracts200Ok>> result = pagedResultRetriever((page) -> {
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCorporationsCorporationIdContractsWithHttpInfo(
@@ -80,8 +80,8 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
           null);
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
-    // Retrieve contract items for contracts with type: unknown, item_exchange, auction, courier
-    // Retrieve contract bids for contracts with type: auction
+    // Retrieve contract items for bases with type: unknown, item_exchange, auction, courier
+    // Retrieve contract bids for bases with type: auction
     resultData.contracts = result.getRight();
     for (GetCorporationsCorporationIdContracts200Ok nextContract : resultData.contracts) {
       switch (nextContract.getType()) {
@@ -146,7 +146,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
   @Override
   protected void processServerData(long time, ESIAccountServerResult<ContractData> data,
                                    List<CachedData> updates) throws IOException {
-    // Add contracts
+    // Add bases
     updates.addAll(data.getData().contracts.stream().map((next) -> new Contract(
         next.getContractId(),
         next.getIssuerId(),
@@ -196,7 +196,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
       )).collect(Collectors.toList()));
     }
 
-    // Contracts can never be deleted, they can only change state.  So no reason to check for removed contracts.
+    // Contracts can never be deleted, they can only change state.  So no reason to check for removed bases.
     // The same is true for the item list associated with a contract, as well as bids associated with an auction.
 
   }

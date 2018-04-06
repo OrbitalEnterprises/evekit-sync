@@ -108,11 +108,8 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "MemberRoleHistory");
     CachedData.cleanup(toDelete, "MemberTitle");
     CachedData.cleanup(toDelete, "MemberTracking");
-    CachedData.cleanup(toDelete, "Outpost");
-    CachedData.cleanup(toDelete, "OutpostServiceDetail");
     CachedData.cleanup(toDelete, "Shareholder");
     CachedData.cleanup(toDelete, "Starbase");
-    CachedData.cleanup(toDelete, "StarbaseDetail");
     try {
       SynchronizedEveAccount.remove(toDelete);
     } catch (IOException e) {
