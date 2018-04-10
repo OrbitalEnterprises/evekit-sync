@@ -2,11 +2,8 @@ package enterprises.orbital.evekit.model;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
-import enterprises.orbital.eve.esi.client.api.AssetsApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdAssets200Ok;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdBlueprints200Ok;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import org.apache.commons.lang3.tuple.Pair;
@@ -356,6 +353,18 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   }
 
   /**
+   * Retrieve context to be stored with the next tracker we create for this synchronizer.
+   * Context is only attached if the current synchronization succeeds.  Otherwise, the
+   * context for the next tracker is left at null.  Subclasses should override as
+   * appropriate.
+   *
+   * @return the context to be attached to the next tracker.
+   */
+  protected String getNextSyncContext() {
+    return null;
+  }
+
+  /**
    * {@inheritDoc}
    */
   @Override
@@ -399,6 +408,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
       // Set syncTime to the start of the current tracker
       long syncTime = tracker.getSyncStart();
       long nextEvent;
+      String nextContext;
 
       try {
         // Retrieve server and process server data.  Any client or processing
@@ -411,6 +421,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         nextEvent = serverData.getExpiryTime();
         log.fine("Processing server data: " + getContext());
         processServerData(syncTime, serverData, updateList);
+        nextContext = getNextSyncContext();
 
         // Commit all updates.  We process updates in batches with sizes that can be varied dynamically by the
         // admin as needed.  Smaller batches prevent long running transactions from tying up contended resources.
@@ -456,6 +467,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         // Client error while updating, mark the error in the tracker and exit
         log.log(Level.WARNING, "ESI client error: " + getContext(), e);
         nextEvent = -1;
+        nextContext = null;
         tracker.setStatus(ESISyncState.ERROR);
         tracker.setDetail("ESI client error, contact the site admin if this problem persists");
         // Throttle in case we're about to exhaust the error limit
@@ -465,6 +477,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         // Database errors during the update should end up here.
         log.log(Level.WARNING, "Error during update: " + getContext(), e);
         nextEvent = -1;
+        nextContext = null;
         tracker.setStatus(ESISyncState.ERROR);
         tracker.setDetail("Server error, contact the site admin if this problem persists");
       }
@@ -478,8 +491,10 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
       // - owning user is no longer active.
       // - endpoint is now excluded
       if (account.getEveCharacterID() == -1 ||
-          (endpoint().getScope() != null && !account.hasScope(endpoint().getScope().getName())) ||
-          !account.getUserAccount().isActive() ||
+          (endpoint().getScope() != null && !account.hasScope(endpoint().getScope()
+                                                                        .getName())) ||
+          !account.getUserAccount()
+                  .isActive() ||
           getExcludedEndpoints().contains(endpoint())) {
         log.fine(getContext() + " conditions not satisfied, not scheduling a future sync");
         return;
@@ -487,7 +502,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
       // Schedule the next event
       nextEvent = nextEvent < 0 ? defaultNextEvent() : nextEvent;
-      ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(account, endpoint(), nextEvent);
+      ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(account, endpoint(), nextEvent, nextContext);
 
     } catch (TrackerNotFoundException e) {
       // No action to take, exit
@@ -501,17 +516,17 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   // Convenience methods for dealing with missing data from api calls
   public static int nullSafeInteger(Integer value, int def) {
     if (value == null) return def;
-    return value.intValue();
+    return value;
   }
 
   public static long nullSafeLong(Long value, long def) {
     if (value == null) return def;
-    return value.longValue();
+    return value;
   }
 
   public static float nullSafeFloat(Float value, float def) {
     if (value == null) return def;
-    return value.floatValue();
+    return value;
   }
 
   public static DateTime nullSafeDateTime(DateTime value, DateTime def) {
@@ -521,12 +536,12 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
   public static double nullSafeDouble(Double value, double def) {
     if (value == null) return def;
-    return value.doubleValue();
+    return value;
   }
 
   public static boolean nullSafeBoolean(Boolean value, boolean def) {
     if (value == null) return def;
-    return value.booleanValue();
+    return value;
   }
 
   public static String nullSafeEnum(Enum<?> value, String def) {
@@ -537,7 +552,8 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     ApiResponse<List<A>> retrievePage(int page) throws ApiException, IOException;
   }
 
-  protected static <A> Pair<Long, List<A>> pagedResultRetriever(GetNextPage<A> pageFetcher) throws ApiException, IOException {
+  protected static <A> Pair<Long, List<A>> pagedResultRetriever(
+      GetNextPage<A> pageFetcher) throws ApiException, IOException {
     List<A> results = new ArrayList<>();
     int page = 1, maxPages = 1;
     long expiry = 0L;

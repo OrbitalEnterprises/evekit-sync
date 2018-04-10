@@ -80,7 +80,7 @@ public class ESICharacterNotificationSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_NOTIFICATIONS, 1234L);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_NOTIFICATIONS, 1234L, null);
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);

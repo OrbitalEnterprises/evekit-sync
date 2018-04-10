@@ -14,13 +14,13 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdWalletJournal200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterWalletJournalSync.class.getName());
+  private String context;
 
   public ESICharacterWalletJournalSync(SynchronizedEveAccount account) {
     super(account);
@@ -29,6 +29,11 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
   @Override
   public ESISyncEndpoint endpoint() {
     return ESISyncEndpoint.CHAR_WALLET_JOURNAL;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return context;
   }
 
   @Override
@@ -69,6 +74,7 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
     while (!result.getData()
                   .isEmpty()) {
       results.addAll(result.getData());
+      //noinspection ConstantConditions
       refIdLimit = result.getData()
                          .stream()
                          .min(Comparator.comparingLong(GetCharactersCharacterIdWalletJournal200Ok::getRefId))
@@ -96,10 +102,25 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdWalletJournal200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+    // Check for existing tracker context.  If exists, this will be a refID upper bound.  We can skip
+    // enqueuing updates for any item with a refID less than this bound.
+    long refIDBound = Long.MIN_VALUE;
+    long newRefBound = Long.MIN_VALUE;
+    try {
+      refIDBound = Long.valueOf(getCurrentTracker().getContext());
+    } catch (Exception e) {
+      // ignore, not able to use the bound;
+    }
+
     for (GetCharactersCharacterIdWalletJournal200Ok next : data.getData()) {
+      // Items below the bound have already been processed
+      if (next.getRefId() <= refIDBound)
+        continue;
+
       GetCharactersCharacterIdWalletJournalExtraInfo extra = next.getExtraInfo();
       updates.add(new WalletJournal(1, next.getRefId(),
-                                    next.getDate().getMillis(),
+                                    next.getDate()
+                                        .getMillis(),
                                     nullSafeEnum(next.getRefType(), null),
                                     nullSafeInteger(next.getFirstPartyId(), 0),
                                     nullSafeEnum(next.getFirstPartyType(), null),
@@ -126,7 +147,13 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
                                     extra != null ? nullSafeInteger(extra.getContractId(), 0) : 0,
                                     extra != null ? nullSafeInteger(extra.getSystemId(), 0) : 0,
                                     extra != null ? nullSafeInteger(extra.getPlanetId(), 0) : 0));
+
+      // Update the new bound for next sync
+      newRefBound = Math.max(newRefBound, next.getRefId());
     }
+
+    // Set next context to new ref bound
+    context = String.valueOf(newRefBound);
   }
 
 

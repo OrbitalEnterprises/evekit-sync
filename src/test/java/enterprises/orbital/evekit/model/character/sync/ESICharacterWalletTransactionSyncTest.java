@@ -84,7 +84,7 @@ public class ESICharacterWalletTransactionSyncTest extends SyncTestBase {
 
     // Prepare a test sync tracker
     ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_TRANSACTIONS,
-                                                        1234L);
+                                                        1234L, null);
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);

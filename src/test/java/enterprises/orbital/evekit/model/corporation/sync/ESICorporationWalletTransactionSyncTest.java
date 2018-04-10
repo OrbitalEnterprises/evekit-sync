@@ -91,7 +91,7 @@ public class ESICorporationWalletTransactionSyncTest extends SyncTestBase {
 
     // Prepare a test sync tracker
     ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_WALLET_TRANSACTIONS,
-                                                        1234L);
+                                                        1234L, null);
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);

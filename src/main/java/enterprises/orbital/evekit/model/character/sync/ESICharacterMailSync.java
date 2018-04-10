@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMailSync.MailData> {
   protected static final Logger log = Logger.getLogger(ESICharacterMailSync.class.getName());
+  private String context;
 
   // Capture data for mail headers, mail bodies, mail labels and mailing lists
   static class MailData {
@@ -37,6 +38,11 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
   @Override
   public ESISyncEndpoint endpoint() {
     return ESISyncEndpoint.CHAR_MAIL;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return context;
   }
 
   @Override
@@ -102,6 +108,26 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
 
     // Sort results in increasing order by mailID so we insert in order
     prelimResults.sort(Comparator.comparingLong(GetCharactersCharacterIdMail200Ok::getMailId));
+
+    // If a context is present, use it to filter out which mail headers we'll process.
+    // We do this since mail is updated frequently and usually changes slowly.
+    int mailFilter = -1;
+    try {
+      mailFilter = Integer.valueOf(getCurrentTracker().getContext());
+    } catch (Exception e) {
+      // No filter exists, do regular processing
+    }
+    if (mailFilter >= 0) {
+      // Filter present, reduces headers to a batch based on filter.
+      final int mailBatch = mailFilter;
+      prelimResults = prelimResults.stream()
+                                   .filter(x -> (x.getMailId() % 10) == mailBatch)
+                                   .collect(Collectors.toList());
+      mailFilter = (mailFilter + 1) % 10;
+    } else {
+      mailFilter = 0;
+    }
+    context = String.valueOf(mailFilter);
 
     // Now retrieve message bodies
     for (GetCharactersCharacterIdMail200Ok next : prelimResults) {

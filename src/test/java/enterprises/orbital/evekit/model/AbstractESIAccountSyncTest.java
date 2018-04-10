@@ -92,7 +92,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    tracker = ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE, 1234L);
+    tracker = ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE,
+                                                                  1234L, null);
   }
 
   @Override
@@ -114,7 +115,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
   @Test
   public void testNoSyncIfRefreshed() throws Exception {
     // Set the tracker as already updated
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount,
+                                                                                     ESISyncEndpoint.CHAR_WALLET_BALANCE);
     syncTracker.setSyncStart(testTime);
     syncTracker.setStatus(ESISyncState.FINISHED);
     EveKitUserAccountProvider.update(syncTracker);
@@ -137,7 +139,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
   @Test
   public void testKillStaleTracker() throws Exception {
     // Set the tracker as already updated
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount,
+                                                                                     ESISyncEndpoint.CHAR_WALLET_BALANCE);
     syncTracker.setSyncStart(1234L);
     EveKitUserAccountProvider.update(syncTracker);
 
@@ -174,7 +177,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
     cut.synch(mockServer);
 
     // Verify tracker not modified
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount,
+                                                                                     ESISyncEndpoint.CHAR_WALLET_BALANCE);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(-1L, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.NOT_PROCESSED, syncTracker.getStatus());
@@ -183,7 +187,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
   }
 
   private void checkForScheduledTracker(long scheduleTime) throws Exception {
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount,
+                                                                                     ESISyncEndpoint.CHAR_WALLET_BALANCE);
     Assert.assertEquals(scheduleTime, syncTracker.getScheduled());
     Assert.assertEquals(-1L, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.NOT_PROCESSED, syncTracker.getStatus());
@@ -201,7 +206,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
     cut.synch(mockServer);
 
     // Verify tracker is properly terminated
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_WALLET_BALANCE);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.ERROR, syncTracker.getStatus());
@@ -213,7 +219,8 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
   }
 
   private void checkIOExceptionHandled() throws Exception {
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_WALLET_BALANCE);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.ERROR, syncTracker.getStatus());
@@ -269,7 +276,10 @@ public class AbstractESIAccountSyncTest extends SyncTestBase {
     // Now setup a retrievAll query to retrieve all the objects we just created.
     List<AccountBalance> stored = AbstractESIAccountSync.retrieveAll(testTime,
                                                                      (long contid, AttributeSelector at) ->
-                                                                         AccountBalance.accessQuery(charSyncAccount, contid, 100, false, at, ANY_SELECTOR, ANY_SELECTOR));
+                                                                         AccountBalance.accessQuery(charSyncAccount,
+                                                                                                    contid, 100, false,
+                                                                                                    at, ANY_SELECTOR,
+                                                                                                    ANY_SELECTOR));
     Assert.assertEquals(testObjs, stored);
   }
 }
