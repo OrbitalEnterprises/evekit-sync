@@ -110,23 +110,25 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     prelimResults.sort(Comparator.comparingLong(GetCharactersCharacterIdMail200Ok::getMailId));
 
     // If a context is present, use it to filter out which mail headers we'll process.
-    // We do this since mail is updated frequently and usually changes slowly.
-    int mailFilter = -1;
+    // We do this since mail is sync'd frequently but usually changes slowly.
+    int mailFilter;
     try {
       mailFilter = Integer.valueOf(getCurrentTracker().getContext());
+      mailFilter = Math.max(mailFilter, 0);
     } catch (Exception e) {
-      // No filter exists, do regular processing
+      // No filter exists, assign a random filter
+      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % 10);
     }
-    if (mailFilter >= 0) {
-      // Filter present, reduces headers to a batch based on filter.
-      final int mailBatch = mailFilter;
-      prelimResults = prelimResults.stream()
-                                   .filter(x -> (x.getMailId() % 10) == mailBatch)
-                                   .collect(Collectors.toList());
-      mailFilter = (mailFilter + 1) % 10;
-    } else {
-      mailFilter = 0;
-    }
+
+    // Filter headers by mail ID to create a smaller processing batch.
+    // Eventually, all headers will be processed as the filter cycles.
+    final int mailBatch = mailFilter;
+    prelimResults = prelimResults.stream()
+                                 .filter(x -> (x.getMailId() % 10) == mailBatch)
+                                 .collect(Collectors.toList());
+
+    // Prepare filter and context for next tracker
+    mailFilter = (mailFilter + 1) % 10;
     context = String.valueOf(mailFilter);
 
     // Now retrieve message bodies
