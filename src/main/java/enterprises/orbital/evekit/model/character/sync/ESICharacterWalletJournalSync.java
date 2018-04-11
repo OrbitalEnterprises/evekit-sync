@@ -156,5 +156,4 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
     context = String.valueOf(newRefBound);
   }
 
-
 }

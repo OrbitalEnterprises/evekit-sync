@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESICorporationWalletJournalSync.CorpWalletJournal> {
   protected static final Logger log = Logger.getLogger(ESICorporationWalletJournalSync.class.getName());
+  private String context;
 
   public ESICorporationWalletJournalSync(SynchronizedEveAccount account) {
     super(account);
@@ -41,6 +42,11 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
   @Override
   public ESISyncEndpoint endpoint() {
     return ESISyncEndpoint.CORP_WALLET_JOURNAL;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return context;
   }
 
   @Override
@@ -87,6 +93,7 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
       while (!result.getData()
                     .isEmpty()) {
         resultObject.appendDivision(division, result.getData());
+        //noinspection ConstantConditions
         refIdLimit = result.getData()
                            .stream()
                            .min(Comparator.comparingLong(
@@ -118,8 +125,39 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
   protected void processServerData(long time,
                                    ESIAccountServerResult<CorpWalletJournal> data,
                                    List<CachedData> updates) throws IOException {
+    // Check for existing tracker context.  If exists, this will be a refID upper bound.  We can skip
+    // enqueuing updates for any item with a refID less than this bound.  Note that we require a
+    // separate bound for each division.
+    long[] refIDBound = new long[7];
+    long[] newRefBound = new long[7];
+    long[] storedBound = new long[7];
+    try {
+      for (int i = 0; i < 7; i++) storedBound[i] = Long.MIN_VALUE;
+      String oldContext = getCurrentTracker().getContext();
+      if (oldContext != null) {
+        String[] stored = oldContext.split(",");
+        for (int i = 0; i < 7 && i < stored.length; i++) {
+          try {
+            storedBound[i] = Long.valueOf(stored[i]);
+          } catch (Exception f) {
+            // Couldn't convert value, skip
+          }
+        }
+      }
+    } catch (Exception e) {
+      // Ignore, no previous bound could be retrieved
+    }
+    for (int i = 0; i < 7; i++) {
+      refIDBound[i] = storedBound[i];
+      newRefBound[i] = Long.MIN_VALUE;
+    }
+
     for (int division = 1; division <= 7; division++) {
       for (GetCorporationsCorporationIdWalletsDivisionJournal200Ok next : data.getData().journals.get(division)) {
+        // Items below the bound have already been processed
+        if (next.getRefId() <= refIDBound[division - 1])
+          continue;
+
         GetCorporationsCorporationIdWalletsDivisionJournalExtraInfo extra = next.getExtraInfo();
         updates.add(new WalletJournal(division, next.getRefId(),
                                       next.getDate()
@@ -150,8 +188,18 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
                                       extra != null ? nullSafeInteger(extra.getContractId(), 0) : 0,
                                       extra != null ? nullSafeInteger(extra.getSystemId(), 0) : 0,
                                       extra != null ? nullSafeInteger(extra.getPlanetId(), 0) : 0));
+
+        // Update the new bound for next sync
+        newRefBound[division - 1] = Math.max(newRefBound[division - 1], next.getRefId());
       }
     }
+
+    // Set next context to new ref bound
+    StringBuilder contextString = new StringBuilder();
+    for (long n : newRefBound)
+      contextString.append(n).append(",");
+    contextString.setLength(contextString.length() - 1);
+    context = contextString.toString();
   }
 
 

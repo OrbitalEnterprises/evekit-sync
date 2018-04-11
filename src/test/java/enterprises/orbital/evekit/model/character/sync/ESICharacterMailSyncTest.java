@@ -49,7 +49,9 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
       // 5 Object[] recipients
       // 6 boolean isRead
       // 7 String body
-      mailTestData[i][0] = TestBase.getUniqueRandomLong();
+      //
+      // We only process batch 0, so make sure all IDs end in 0
+      mailTestData[i][0] = (TestBase.getUniqueRandomLong() / 10) * 10;
       mailTestData[i][1] = TestBase.getRandomText(50);
       mailTestData[i][2] = TestBase.getRandomInt();
       mailTestData[i][3] = TestBase.getRandomLong();
@@ -114,7 +116,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_MAIL, 1234L, null);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_MAIL, 1234L, "0");
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);
@@ -260,6 +262,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
                                                                                  createHeaders("Expires",
                                                                                                "Thu, 21 Dec 2017 12:00:00 GMT"),
                                                                                  nb.getValue());
+      // Must be "anyTimes" because mail sync will batch to only those mail IDs that end in 0
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdMailMailIdWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(nb.getKey()
@@ -268,7 +271,8 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
-              .andReturn(apir);
+              .andReturn(apir)
+              .anyTimes();
     }
 
     // Setup mail labels mock
