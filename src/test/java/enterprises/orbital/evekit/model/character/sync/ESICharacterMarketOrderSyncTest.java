@@ -58,7 +58,6 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
     // 16 boolean isCorp;
     int size = 50 + TestBase.getRandomInt(50);
     marketTestData = new Object[size][17];
-    int orderStateLen = GetCharactersCharacterIdOrders200Ok.StateEnum.values().length;
     int orderRangeLen = GetCharactersCharacterIdOrders200Ok.RangeEnum.values().length;
     for (int i = 0; i < size; i++) {
       marketTestData[i][0] = TestBase.getUniqueRandomLong();
@@ -70,8 +69,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                                        .setScale(2, RoundingMode.HALF_UP);
       marketTestData[i][6] = TestBase.getRandomLong();
       marketTestData[i][7] = TestBase.getRandomInt();
-      marketTestData[i][8] = GetCharactersCharacterIdOrders200Ok.StateEnum.values()[TestBase.getRandomInt(
-          orderStateLen)];
+      marketTestData[i][8] = "open";
       marketTestData[i][9] = BigDecimal.valueOf(TestBase.getRandomDouble(10000))
                                        .setScale(2, RoundingMode.HALF_UP);
       marketTestData[i][10] = GetCharactersCharacterIdOrders200Ok.RangeEnum.values()[TestBase.getRandomInt(
@@ -162,7 +160,6 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                 nextOrder.setEscrow(((BigDecimal) x[5]).doubleValue());
                 nextOrder.setIssued(new DateTime(new Date((Long) x[6])));
                 nextOrder.setMinVolume((Integer) x[7]);
-                nextOrder.setState((GetCharactersCharacterIdOrders200Ok.StateEnum) x[8]);
                 nextOrder.setPrice(((BigDecimal) x[9]).doubleValue());
                 nextOrder.setRange((GetCharactersCharacterIdOrders200Ok.RangeEnum) x[10]);
                 nextOrder.setTypeId((Integer) x[11]);
@@ -170,7 +167,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                 nextOrder.setVolumeRemain((Integer) x[13]);
                 nextOrder.setRegionId((Integer) x[14]);
                 nextOrder.setLocationId((Long) x[15]);
-                nextOrder.setIsCorp((Boolean) x[16]);
+                nextOrder.setIsCorporation((Boolean) x[16]);
                 return nextOrder;
               })
               .collect(Collectors.toList());
@@ -370,7 +367,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                                           ((BigDecimal) aMarketTestData[5]).add(BigDecimal.ONE),
                                           (Long) aMarketTestData[6] + 1,
                                           (Integer) aMarketTestData[7],
-                                          GetCharactersCharacterIdOrders200Ok.StateEnum.OPEN.toString(),
+                                          "open",
                                           ((BigDecimal) aMarketTestData[9]).add(BigDecimal.ONE),
                                           aMarketTestData[10].toString(),
                                           (Integer) aMarketTestData[11],
@@ -438,13 +435,13 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
       Assert.assertEquals(testTime, nextEl.getLifeEnd());
       Assert.assertEquals((long) (Long) historicMarketTestData[i][0], nextEl.getOrderID());
       Assert.assertEquals(1, nextEl.getWalletDivision());
-      Assert.assertEquals((Boolean) historicMarketTestData[i][2], nextEl.isBid());
+      Assert.assertEquals(historicMarketTestData[i][2], nextEl.isBid());
       Assert.assertEquals(0, nextEl.getCharID());
       Assert.assertEquals((int) (Integer) historicMarketTestData[i][4], nextEl.getDuration());
       Assert.assertEquals(((BigDecimal) historicMarketTestData[i][5]).add(BigDecimal.ONE), nextEl.getEscrow());
       Assert.assertEquals((Long) historicMarketTestData[i][6] + 1, nextEl.getIssued());
       Assert.assertEquals((int) (Integer) historicMarketTestData[i][7], nextEl.getMinVolume());
-      Assert.assertEquals(GetCharactersCharacterIdOrders200Ok.StateEnum.OPEN.toString(), nextEl.getOrderState());
+      Assert.assertEquals("open", nextEl.getOrderState());
       Assert.assertEquals(((BigDecimal) historicMarketTestData[i][9]).add(BigDecimal.ONE), nextEl.getPrice());
       Assert.assertEquals(historicMarketTestData[i][10].toString(), nextEl.getOrderRange());
       Assert.assertEquals((int) (Integer) historicMarketTestData[i][11], nextEl.getTypeID());
@@ -452,7 +449,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
       Assert.assertEquals((Integer) historicMarketTestData[i][13] + 1, nextEl.getVolRemaining());
       Assert.assertEquals((int) (Integer) historicMarketTestData[i][14], nextEl.getRegionID());
       Assert.assertEquals((long) (Long) historicMarketTestData[i][15], nextEl.getLocationID());
-      Assert.assertEquals((Boolean) historicMarketTestData[i][16], nextEl.isCorp());
+      Assert.assertEquals(historicMarketTestData[i][16], nextEl.isCorp());
     }
 
     // Verify updates which will also verify that all old alliances were properly end of life
