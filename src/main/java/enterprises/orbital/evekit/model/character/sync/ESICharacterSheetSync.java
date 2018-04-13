@@ -37,12 +37,15 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   }
 
   @Override
-  protected ESIAccountServerResult<GetCharactersCharacterIdOk> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
+  protected ESIAccountServerResult<GetCharactersCharacterIdOk> getServerData(
+      ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo((int) account.getEveCharacterID(), null, null, null);
+    ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo(
+        (int) account.getEveCharacterID(), null, null, null);
     checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
+    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                        result.getData());
   }
 
   @SuppressWarnings("RedundantThrows")
@@ -50,17 +53,30 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
     updates.add(new CharacterSheet(account.getEveCharacterID(),
-                                   data.getData().getName(),
-                                   data.getData().getCorporationId(),
-                                   data.getData().getRaceId(),
-                                   data.getData().getBirthday().getMillis(),
-                                   data.getData().getBloodlineId(),
-                                   nullSafeInteger(data.getData().getAncestryId(), 0),
-                                   data.getData().getGender().toString(),
-                                   nullSafeInteger(data.getData().getAllianceId(), 0),
-                                   nullSafeInteger(data.getData().getFactionId(), 0),
-                                   data.getData().getDescription(),
-                                   nullSafeFloat(data.getData().getSecurityStatus(), 0F)));
+                                   data.getData()
+                                       .getName(),
+                                   data.getData()
+                                       .getCorporationId(),
+                                   data.getData()
+                                       .getRaceId(),
+                                   data.getData()
+                                       .getBirthday()
+                                       .getMillis(),
+                                   data.getData()
+                                       .getBloodlineId(),
+                                   nullSafeInteger(data.getData()
+                                                       .getAncestryId(), 0),
+                                   data.getData()
+                                       .getGender()
+                                       .toString(),
+                                   nullSafeInteger(data.getData()
+                                                       .getAllianceId(), 0),
+                                   nullSafeInteger(data.getData()
+                                                       .getFactionId(), 0),
+                                   data.getData()
+                                       .getDescription(),
+                                   nullSafeFloat(data.getData()
+                                                     .getSecurityStatus(), 0F)));
   }
 
 
