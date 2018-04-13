@@ -5,6 +5,7 @@ import enterprises.orbital.eve.esi.client.api.CharacterApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdOk;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdOk;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
@@ -15,6 +16,8 @@ import java.util.logging.Logger;
 
 public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersCharacterIdOk> {
   protected static final Logger log = Logger.getLogger(ESICharacterSheetSync.class.getName());
+  private long corporationID;
+  private String corporationName;
 
   public ESICharacterSheetSync(SynchronizedEveAccount account) {
     super(account);
@@ -44,6 +47,17 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo(
         (int) account.getEveCharacterID(), null, null, null);
     checkCommonProblems(result);
+
+    // Also cache corporation ID and name in case these changed
+    corporationID = result.getData().getCorporationId();
+    ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi().getCorporationsCorporationIdWithHttpInfo(
+        (int) corporationID,
+        null,
+        null,
+        null);
+    checkCommonProblems(corpResult);
+    corporationName = corpResult.getData().getName();
+
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());
   }
@@ -52,6 +66,7 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
+    // Add update for processing
     updates.add(new CharacterSheet(account.getEveCharacterID(),
                                    data.getData()
                                        .getName(),
@@ -77,6 +92,14 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
                                        .getDescription(),
                                    nullSafeFloat(data.getData()
                                                      .getSecurityStatus(), 0F)));
+
+    // Check whether the corporation has changed.  If so, update the SynchronizedEveAccount
+    if (account.getEveCorporationID() != corporationID) {
+      // Update account which includes updating the corporation name
+      account.setEveCorporationID(corporationID);
+      account.setEveCorporationName(corporationName);
+      account = SynchronizedEveAccount.update(account);
+    }
   }
 
 

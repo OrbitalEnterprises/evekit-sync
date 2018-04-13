@@ -2,10 +2,13 @@ package enterprises.orbital.evekit.model.character.sync;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CharacterApi;
+import enterprises.orbital.eve.esi.client.api.CorporationApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdOk;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdOk;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
+import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
 import org.easymock.EasyMock;
@@ -25,8 +28,10 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
   // Local mocks and other objects
   private ESIAccountClientProvider mockServer;
   private CharacterApi mockEndpoint;
+  private CorporationApi mockCorpEndpoint;
   private long testTime = 1238L;
   private GetCharactersCharacterIdOk testSheet;
+  private GetCorporationsCorporationIdOk corpSheet;
 
   @Override
   @Before
@@ -69,6 +74,10 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     testSheet.setFactionId(TestBase.getRandomInt());
     testSheet.setDescription(TestBase.getRandomText(50));
     testSheet.setSecurityStatus(TestBase.getRandomFloat(10));
+
+    corpSheet = new GetCorporationsCorporationIdOk();
+    corpSheet.setName(TestBase.getRandomText(50));
+
     Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
     ApiResponse<GetCharactersCharacterIdOk> apir = new ApiResponse<>(200, headers, testSheet);
     mockEndpoint = EasyMock.createMock(CharacterApi.class);
@@ -78,20 +87,32 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
         EasyMock.isNull(),
         EasyMock.isNull()))
             .andReturn(apir);
+
+    ApiResponse<GetCorporationsCorporationIdOk> corpR = new ApiResponse<>(200, headers, corpSheet);
+    mockCorpEndpoint = EasyMock.createMock(CorporationApi.class);
+    EasyMock.expect(mockCorpEndpoint.getCorporationsCorporationIdWithHttpInfo(
+        EasyMock.eq((int) testSheet.getCorporationId()),
+        EasyMock.isNull(),
+        EasyMock.isNull(),
+        EasyMock.isNull()))
+            .andReturn(corpR);
+
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getCharacterApi())
             .andReturn(mockEndpoint);
+    EasyMock.expect(mockServer.getCorporationApi())
+            .andReturn(mockCorpEndpoint);
   }
 
   @Test
   public void testSyncUpdate() throws Exception {
     setupOkMock();
-    EasyMock.replay(mockServer, mockEndpoint);
+    EasyMock.replay(mockServer, mockEndpoint, mockCorpEndpoint);
 
     // Perform the sync
     ESICharacterSheetSync sync = new ESICharacterSheetSync(charSyncAccount);
     sync.synch(mockServer);
-    EasyMock.verify(mockServer, mockEndpoint);
+    EasyMock.verify(mockServer, mockEndpoint, mockCorpEndpoint);
 
     // Verify updated properly
     CharacterSheet result = CharacterSheet.get(charSyncAccount, testTime);
@@ -112,6 +133,11 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     Assert.assertEquals(testSheet.getDescription(), result.getDescription());
     Assert.assertEquals(testSheet.getSecurityStatus(), result.getSecurityStatus(), 0.001);
 
+    // Verify synch account corp ID and name were updated
+    SynchronizedEveAccount updated = SynchronizedEveAccount.getSynchronizedAccount(testUserAccount, charSyncAccount.getAid(), false);
+    Assert.assertEquals(updated.getEveCorporationID(), (long) testSheet.getCorporationId());
+    Assert.assertEquals(updated.getEveCorporationName(), corpSheet.getName());
+
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
                                                                                          ESISyncEndpoint.CHAR_SHEET);
@@ -130,7 +156,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
   @Test
   public void testSyncUpdateExisting() throws Exception {
     setupOkMock();
-    EasyMock.replay(mockServer, mockEndpoint);
+    EasyMock.replay(mockServer, mockEndpoint, mockCorpEndpoint);
 
     // Populate existing
     CharacterSheet existing = new CharacterSheet(charSyncAccount.getEveCharacterID(),
@@ -153,7 +179,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     // Perform the sync
     ESICharacterSheetSync sync = new ESICharacterSheetSync(charSyncAccount);
     sync.synch(mockServer);
-    EasyMock.verify(mockServer, mockEndpoint);
+    EasyMock.verify(mockServer, mockEndpoint, mockCorpEndpoint);
 
     // Verify old object was evolved properly
     CharacterSheet result = CharacterSheet.get(charSyncAccount, testTime - 1);
@@ -192,6 +218,11 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     Assert.assertEquals((int) testSheet.getFactionId(), result.getFactionID());
     Assert.assertEquals(testSheet.getDescription(), result.getDescription());
     Assert.assertEquals(testSheet.getSecurityStatus(), result.getSecurityStatus(), 0.001);
+
+    // Verify synch account corp ID and name were updated
+    SynchronizedEveAccount updated = SynchronizedEveAccount.getSynchronizedAccount(testUserAccount, charSyncAccount.getAid(), false);
+    Assert.assertEquals(updated.getEveCorporationID(), (long) testSheet.getCorporationId());
+    Assert.assertEquals(updated.getEveCorporationName(), corpSheet.getName());
 
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
