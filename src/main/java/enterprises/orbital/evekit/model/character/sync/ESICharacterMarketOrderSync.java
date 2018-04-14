@@ -85,14 +85,14 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
     for (GetCharactersCharacterIdOrders200Ok next : data.getData().liveOrders) {
       MarketOrder nextOrder = new MarketOrder(next.getOrderId(),
                                               1,
-                                              next.getIsBuyOrder(),
+                                              nullSafeBoolean(next.getIsBuyOrder(), false),
                                               0,
                                               next.getDuration(),
-                                              BigDecimal.valueOf(next.getEscrow())
+                                              BigDecimal.valueOf(nullSafeDouble(next.getEscrow(), 0D))
                                                         .setScale(2, RoundingMode.HALF_UP),
                                               next.getIssued()
                                                   .getMillis(),
-                                              next.getMinVolume(),
+                                              nullSafeInteger(next.getMinVolume(), 1),
                                               "open",
                                               BigDecimal.valueOf(next.getPrice())
                                                                          .setScale(2, RoundingMode.HALF_UP),
