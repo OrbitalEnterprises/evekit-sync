@@ -105,6 +105,7 @@ public class ESIThrottle {
       // Too close to error limit, force current thread to sleep
       long delay = extractErrorLimitReset(e, 5) * 1000 + 5000;
       synchronized (ESIThrottle.class) {
+        log.fine("Near error rate threshold, throttling thread: " + Thread.currentThread().getName());
         try {
           Thread.sleep(delay);
         } catch (InterruptedException f) {
