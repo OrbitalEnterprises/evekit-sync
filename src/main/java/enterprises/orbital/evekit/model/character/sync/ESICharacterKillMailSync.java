@@ -111,6 +111,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
         log.log(Level.WARNING, "Error checking for existing kill, continuing", e);
       }
 
+      //noinspection Duplicates
       try {
         ESIThrottle.throttle(endpoint().name(), account);
         ApiResponse<GetKillmailsKillmailIdKillmailHashOk> nextHash = apiInstance.getKillmailsKillmailIdKillmailHashWithHttpInfo(

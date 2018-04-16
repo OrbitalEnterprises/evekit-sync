@@ -151,6 +151,8 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
       } catch (ApiException | IOException e) {
         // Skip this header, try to make progress with what is left
         log.log(Level.FINE, "Skipping failed header " + next, e);
+        if (e instanceof ApiException)
+          ESIThrottle.throttle((ApiException) e);
       }
     }
 
