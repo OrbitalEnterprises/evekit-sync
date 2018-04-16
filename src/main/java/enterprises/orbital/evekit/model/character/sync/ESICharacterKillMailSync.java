@@ -124,6 +124,8 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
       } catch (ApiException | IOException e) {
         // Log the error, continue to next kill hash
         log.log(Level.WARNING, "Error retrieving kill information, continuing to next kill", e);
+        if (e instanceof ApiException)
+          ESIThrottle.throttle((ApiException) e);
       }
     }
 
