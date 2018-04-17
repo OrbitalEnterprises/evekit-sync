@@ -20,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class ESICharacterKillmailSyncTest extends SyncTestBase {
@@ -48,7 +49,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
       // 5 Object[] killvictim
       // 6 Object[][] killattackers
       // 7 Object[][] killitems
-      killmailTestData[i][0] = TestBase.getUniqueRandomInteger();
+      killmailTestData[i][0] = (TestBase.getUniqueRandomInteger() / 10) * 10;
       killmailTestData[i][1] = TestBase.getRandomLong();
       killmailTestData[i][2] = TestBase.getRandomInt();
       killmailTestData[i][3] = TestBase.getRandomInt();
@@ -149,7 +150,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL, 1234L, null);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL, 1234L, "0");
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);
@@ -446,6 +447,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
@@ -572,6 +574,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 

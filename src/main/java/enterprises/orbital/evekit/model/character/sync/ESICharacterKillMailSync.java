@@ -16,11 +16,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKillmailsKillmailIdKillmailHashOk>> {
   protected static final Logger log = Logger.getLogger(ESICharacterKillMailSync.class.getName());
+  private String context;
 
   public ESICharacterKillMailSync(SynchronizedEveAccount account) {
     super(account);
@@ -31,6 +34,12 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
     return ESISyncEndpoint.CHAR_KILL_MAIL;
   }
 
+  @Override
+  protected String getNextSyncContext() {
+    return context;
+  }
+
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
@@ -99,6 +108,28 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
     // Sort results in increasing order by killID so we insert in order
     results.sort(Comparator.comparingInt(GetCharactersCharacterIdKillmailsRecent200Ok::getKillmailId));
 
+    // If a context is present, use it to filter out which kill mail we'll process.
+    // We do this to batch the processing of kill mail which can be very large.
+    int mailFilter;
+    try {
+      mailFilter = Integer.valueOf(getCurrentTracker().getContext());
+      mailFilter = Math.max(mailFilter, 0);
+    } catch (Exception e) {
+      // No filter exists, assign a random filter
+      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % 10);
+    }
+
+    // Filter headers by killmail ID to create a smaller processing batch.
+    // Eventually, all headers will be processed as the filter cycles.
+    final int mailBatch = mailFilter;
+    results = results.stream()
+                     .filter(x -> (x.getKillmailId() % 10) == mailBatch)
+                     .collect(Collectors.toList());
+
+    // Prepare filter and context for next tracker
+    mailFilter = (mailFilter + 1) % 10;
+    context = String.valueOf(mailFilter);
+
     // Retrieve detailed kill information
     List<GetKillmailsKillmailIdKillmailHashOk> data = new ArrayList<>();
     for (GetCharactersCharacterIdKillmailsRecent200Ok next : results) {
@@ -130,6 +161,8 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
       }
     }
 
+    // Speed up next query time since we batch the downloads
+    expiry -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     return new ESIAccountServerResult<>(expiry, data);
   }
 

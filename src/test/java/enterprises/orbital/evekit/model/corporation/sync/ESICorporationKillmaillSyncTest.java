@@ -7,7 +7,6 @@ import enterprises.orbital.eve.esi.client.model.*;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
-import enterprises.orbital.evekit.model.character.sync.ESICharacterKillMailSync;
 import enterprises.orbital.evekit.model.common.Kill;
 import enterprises.orbital.evekit.model.common.KillAttacker;
 import enterprises.orbital.evekit.model.common.KillItem;
@@ -21,6 +20,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
@@ -50,7 +50,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       // 5 Object[] killvictim
       // 6 Object[][] killattackers
       // 7 Object[][] killitems
-      killmailTestData[i][0] = TestBase.getUniqueRandomInteger();
+      killmailTestData[i][0] = (TestBase.getUniqueRandomInteger() / 10) * 10;
       killmailTestData[i][1] = TestBase.getRandomLong();
       killmailTestData[i][2] = TestBase.getRandomInt();
       killmailTestData[i][3] = TestBase.getRandomInt();
@@ -151,7 +151,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_KILL_MAIL, 1234L, null);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_KILL_MAIL, 1234L, "0");
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);
@@ -199,12 +199,14 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
 
     // Setup kill list
     List<GetCorporationsCorporationIdKillmailsRecent200Ok> killmailList =
-        Arrays.stream(killmailTestData).map(x -> {
-          GetCorporationsCorporationIdKillmailsRecent200Ok killHash = new GetCorporationsCorporationIdKillmailsRecent200Ok();
-          killHash.setKillmailId((Integer) x[0]);
-          killHash.setKillmailHash(String.valueOf(x[0]));
-          return killHash;
-        }).collect(Collectors.toList());
+        Arrays.stream(killmailTestData)
+              .map(x -> {
+                GetCorporationsCorporationIdKillmailsRecent200Ok killHash = new GetCorporationsCorporationIdKillmailsRecent200Ok();
+                killHash.setKillmailId((Integer) x[0]);
+                killHash.setKillmailHash(String.valueOf(x[0]));
+                return killHash;
+              })
+              .collect(Collectors.toList());
 
     // First setup kill list mock
     @SuppressWarnings("unchecked")
@@ -214,12 +216,14 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       pages[i] = killmailList.subList(killmailPages[i], limit);
     }
     for (int i = killmailPages.length; i >= 0; i--) {
-      Integer killmailID = i < killmailPages.length ? pages[i].get(0).getKillmailId() : Integer.MAX_VALUE;
+      Integer killmailID = i < killmailPages.length ? pages[i].get(0)
+                                                              .getKillmailId() : Integer.MAX_VALUE;
       List<GetCorporationsCorporationIdKillmailsRecent200Ok> data = i > 0 ? pages[i - 1] : Collections.emptyList();
       ApiResponse<List<GetCorporationsCorporationIdKillmailsRecent200Ok>> apir = new ApiResponse<>(200,
-                                                                                             createHeaders("Expires",
-                                                                                                           "Thu, 21 Dec 2017 12:00:00 GMT"),
-                                                                                             data);
+                                                                                                   createHeaders(
+                                                                                                       "Expires",
+                                                                                                       "Thu, 21 Dec 2017 12:00:00 GMT"),
+                                                                                                   data);
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
@@ -273,36 +277,42 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
           newTI.setQuantityDestroyed((Long) ni[3]);
           newTI.setQuantityDropped((Long) ni[4]);
           newTI.setSingleton((Integer) ni[5]);
-          topItems.get(topItems.size() - 1).getItems().add(newTI);
+          topItems.get(topItems.size() - 1)
+                  .getItems()
+                  .add(newTI);
         }
       }
 
-      killData.getAttackers().addAll(
-          Arrays.stream((Object[][]) nk[6]).map(x -> {
-            GetKillmailsKillmailIdKillmailHashAttacker newA = new GetKillmailsKillmailIdKillmailHashAttacker();
-            newA.setCharacterId((Integer) x[1]);
-            newA.setAllianceId((Integer) x[2]);
-            newA.setCorporationId((Integer) x[3]);
-            newA.setDamageDone((Integer) x[4]);
-            newA.setFactionId((Integer) x[5]);
-            newA.setSecurityStatus((Float) x[6]);
-            newA.setShipTypeId((Integer) x[7]);
-            newA.setWeaponTypeId((Integer) x[8]);
-            newA.setFinalBlow((Boolean) x[9]);
-            return newA;
-          }).collect(Collectors.toList()));
+      killData.getAttackers()
+              .addAll(
+                  Arrays.stream((Object[][]) nk[6])
+                        .map(x -> {
+                          GetKillmailsKillmailIdKillmailHashAttacker newA = new GetKillmailsKillmailIdKillmailHashAttacker();
+                          newA.setCharacterId((Integer) x[1]);
+                          newA.setAllianceId((Integer) x[2]);
+                          newA.setCorporationId((Integer) x[3]);
+                          newA.setDamageDone((Integer) x[4]);
+                          newA.setFactionId((Integer) x[5]);
+                          newA.setSecurityStatus((Float) x[6]);
+                          newA.setShipTypeId((Integer) x[7]);
+                          newA.setWeaponTypeId((Integer) x[8]);
+                          newA.setFinalBlow((Boolean) x[9]);
+                          return newA;
+                        })
+                        .collect(Collectors.toList()));
 
       // Insert mock call and response
       ApiResponse<GetKillmailsKillmailIdKillmailHashOk> apir = new ApiResponse<>(200,
-                                                                                               createHeaders("Expires",
-                                                                                                             "Thu, 21 Dec 2017 12:00:00 GMT"),
-                                                                                               killData);
+                                                                                 createHeaders("Expires",
+                                                                                               "Thu, 21 Dec 2017 12:00:00 GMT"),
+                                                                                 killData);
       EasyMock.expect(mockEndpoint.getKillmailsKillmailIdKillmailHashWithHttpInfo(
           String.valueOf(killData.getKillmailId()),
           killData.getKillmailId(),
           null,
           null,
-          null)).andReturn(apir);
+          null))
+              .andReturn(apir);
     }
 
 
@@ -316,8 +326,8 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     // Retrieve all stored data
     List<Kill> storedKills = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
         Kill.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
-                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+                         AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                         AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
     Assert.assertEquals(testData.length, storedKills.size());
@@ -362,16 +372,26 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     }
 
     // Retrieve all stored data
-    List<KillAttacker> storedAttackers = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
-        KillAttacker.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
-                               AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                               AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                               AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                               AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                               AbstractESIAccountSync.ANY_SELECTOR));
+    List<KillAttacker> storedAttackers = AbstractESIAccountSync.retrieveAll(testTime,
+                                                                            (long contid, AttributeSelector at) ->
+                                                                                KillAttacker.accessQuery(
+                                                                                    corpSyncAccount, contid, 1000,
+                                                                                    false, at,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                    AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
-    int attackerLength = Arrays.stream(testData).map(x -> ((Object[][]) x[6]).length ).reduce(0, (x, y) -> x + y);
+    int attackerLength = Arrays.stream(testData)
+                               .map(x -> ((Object[][]) x[6]).length)
+                               .reduce(0, (x, y) -> x + y);
     Assert.assertEquals(attackerLength, storedAttackers.size());
 
     // Check stored data
@@ -395,13 +415,15 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     // Retrieve all stored data
     List<KillItem> storedItems = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
         KillItem.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
-                                 AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                                 AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                                 AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                                 AbstractESIAccountSync.ANY_SELECTOR));
+                             AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                             AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                             AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                             AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
-    int itemLength = Arrays.stream(testData).map(x -> ((Object[][]) x[7]).length ).reduce(0, (x, y) -> x + y);
+    int itemLength = Arrays.stream(testData)
+                           .map(x -> ((Object[][]) x[7]).length)
+                           .reduce(0, (x, y) -> x + y);
     Assert.assertEquals(itemLength, storedItems.size());
 
     // Check stored data
@@ -447,6 +469,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
@@ -469,7 +492,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       allData[i][0] = firstID + i;
 
       // Copy victim
-      Object[] victimCopy =  new Object[10];
+      Object[] victimCopy = new Object[10];
       allData[i][5] = victimCopy;
       Object[] victim = (Object[]) allData[i + killmailTestData.length][5];
       System.arraycopy(victim, 0, victimCopy, 0, 10);
@@ -573,6 +596,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
+    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
