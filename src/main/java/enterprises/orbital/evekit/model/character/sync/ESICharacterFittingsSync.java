@@ -13,10 +13,9 @@ import enterprises.orbital.evekit.model.character.FittingItem;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdFittings200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterFittingsSync.class.getName());
@@ -62,32 +61,66 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdFittings200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+
+    Map<Integer, Fitting> existingFittingMap = CachedData.retrieveAll(time,
+                                                                      (contid, at) -> Fitting.accessQuery(account,
+                                                                                                          contid, 1000,
+                                                                                                          false, at,
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any()))
+                                                         .stream()
+                                                         .map(x -> new AbstractMap.SimpleEntry<>(x.getFittingID(), x))
+                                                         .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey,
+                                                                                   AbstractMap.SimpleEntry::getValue));
+
+    Map<Pair<Integer, Integer>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
+                                                                                      (contid, at) -> FittingItem.accessQuery(
+                                                                                          account,
+                                                                                          contid, 1000,
+                                                                                          false, at,
+                                                                                          AttributeSelector.any(),
+                                                                                          AttributeSelector.any(),
+                                                                                          AttributeSelector.any(),
+                                                                                          AttributeSelector.any()))
+                                                                         .stream()
+                                                                         .map(x -> new AbstractMap.SimpleEntry<>(
+                                                                             Pair.of(x.getFittingID(), x.getTypeID()),
+                                                                             x))
+                                                                         .collect(Collectors.toMap(
+                                                                             AbstractMap.SimpleEntry::getKey,
+                                                                             AbstractMap.SimpleEntry::getValue));
+
     Set<Integer> seenFittings = new HashSet<>();
     Set<Pair<Integer, Integer>> seenItems = new HashSet<>();
+
     for (GetCharactersCharacterIdFittings200Ok next : data.getData()) {
-      updates.add(new Fitting(next.getFittingId(),
-                              next.getName(),
-                              next.getDescription(),
-                              next.getShipTypeId()));
+      Fitting nextFitting = new Fitting(next.getFittingId(),
+                                        next.getName(),
+                                        next.getDescription(),
+                                        next.getShipTypeId());
+      // Only update if there is a change to reduce DB contention
+      if (!existingFittingMap.containsKey(nextFitting.getFittingID()) ||
+          !nextFitting.equivalent(existingFittingMap.get(nextFitting.getFittingID())))
+        updates.add(nextFitting);
       seenFittings.add(next.getFittingId());
 
       for (GetCharactersCharacterIdFittingsItem item : next.getItems()) {
-        updates.add(new FittingItem(next.getFittingId(),
-                                    item.getTypeId(),
-                                    item.getFlag(),
-                                    item.getQuantity()));
+        FittingItem nextItem = new FittingItem(next.getFittingId(),
+                                               item.getTypeId(),
+                                               item.getFlag(),
+                                               item.getQuantity());
+        // Only update if there is a change to reduce DB contention
+        if (!existingItemMap.containsKey(Pair.of(nextItem.getFittingID(), nextItem.getTypeID())) ||
+            !nextItem.equivalent(existingItemMap.get(Pair.of(nextItem.getFittingID(), nextItem.getTypeID()))))
+          updates.add(nextItem);
         seenItems.add(Pair.of(next.getFittingId(), item.getTypeId()));
       }
     }
 
-    // Check for fittings
-    for (Fitting stored : CachedData.retrieveAll(time,
-                                                 (contid, at) -> Fitting.accessQuery(account, contid, 1000,
-                                                                                     false, at,
-                                                                                     AttributeSelector.any(),
-                                                                                     AttributeSelector.any(),
-                                                                                     AttributeSelector.any(),
-                                                                                     AttributeSelector.any()))) {
+    // Check for deleted fittings
+    for (Fitting stored : existingFittingMap.values()) {
       if (!seenFittings.contains(stored.getFittingID())) {
         stored.evolve(null, time);
         updates.add(stored);
@@ -95,15 +128,7 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
     }
 
     // Check for deleted items
-    for (FittingItem stored : CachedData.retrieveAll(time, (contid, at) -> FittingItem.accessQuery(account,
-                                                                                                   contid,
-                                                                                                   1000,
-                                                                                                   false,
-                                                                                                   at,
-                                                                                                   AttributeSelector.any(),
-                                                                                                   AttributeSelector.any(),
-                                                                                                   AttributeSelector.any(),
-                                                                                                   AttributeSelector.any()))) {
+    for (FittingItem stored : existingItemMap.values()) {
       if (!seenItems.contains(Pair.of(stored.getFittingID(), stored.getTypeID()))) {
         stored.evolve(null, time);
         updates.add(stored);
