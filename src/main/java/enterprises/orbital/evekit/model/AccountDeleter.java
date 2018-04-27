@@ -58,6 +58,8 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "CharacterTitle");
     CachedData.cleanup(toDelete, "ChatChannel");
     CachedData.cleanup(toDelete, "ChatChannelMember");
+    CachedData.cleanup(toDelete, "Fitting");
+    CachedData.cleanup(toDelete, "FittingItem");
     CachedData.cleanup(toDelete, "Implant");
     CachedData.cleanup(toDelete, "JumpClone");
     CachedData.cleanup(toDelete, "JumpCloneImplant");

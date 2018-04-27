@@ -45,4 +45,6 @@ public interface ESIAccountClientProvider {
   PlanetaryInteractionApi getPlanetaryInteractionApi();
 
   CalendarApi getCalendarApi();
+
+  FittingsApi getFittingsApi();
 }
