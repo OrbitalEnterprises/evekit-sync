@@ -3,10 +3,13 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.ContactsApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
+import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdContacts200Ok;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdContactsLabels200Ok;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Contact;
+import enterprises.orbital.evekit.model.common.ContactLabel;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
@@ -15,8 +18,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class ESICorporationContactsSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdContacts200Ok>> {
+public class ESICorporationContactsSync extends AbstractESIAccountSync<ESICorporationContactsSync.ContactData> {
   protected static final Logger log = Logger.getLogger(ESICorporationContactsSync.class.getName());
+
+  class ContactData {
+    List<GetCorporationsCorporationIdContacts200Ok> contacts;
+    List<GetCorporationsCorporationIdContactsLabels200Ok> labels;
+  }
 
   public ESICorporationContactsSync(SynchronizedEveAccount account) {
     super(account);
@@ -30,17 +38,23 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<List<GetC
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
-    assert item instanceof Contact;
+    assert (item instanceof Contact) ||
+        (item instanceof ContactLabel);
     CachedData existing = null;
-    if (item.getLifeStart() == 0)
+    if (item.getLifeStart() == 0) {
       // Only need to check for existing item if current item is an update
-      existing = Contact.get(account, time, ((Contact) item).getList(), ((Contact) item).getContactID());
+      if (item instanceof Contact)
+        existing = Contact.get(account, time, ((Contact) item).getList(), ((Contact) item).getContactID());
+      else
+        existing = ContactLabel.get(account, time, ((ContactLabel) item).getList(), ((ContactLabel) item).getLabelID());
+    }
     evolveOrAdd(time, existing, item);
   }
 
   @Override
-  protected ESIAccountServerResult<List<GetCorporationsCorporationIdContacts200Ok>> getServerData(
+  protected ESIAccountServerResult<ContactData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
+    ESICorporationContactsSync.ContactData data = new ESICorporationContactsSync.ContactData();
     ContactsApi apiInstance = cp.getContactsApi();
 
     Pair<Long, List<GetCorporationsCorporationIdContacts200Ok>> result = pagedResultRetriever((page) -> {
@@ -48,24 +62,37 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<List<GetC
       return apiInstance.getCorporationsCorporationIdContactsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
           null);
     });
+    long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
+    data.contacts = result.getRight();
 
-    return new ESIAccountServerResult<>(Math.max(result.getLeft(), OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getRight());
+    ApiResponse<List<GetCorporationsCorporationIdContactsLabels200Ok>> clResult = apiInstance.getCorporationsCorporationIdContactsLabelsWithHttpInfo(
+        (int) account.getEveCorporationID(),
+        null,
+        null,
+        accessToken(),
+        null,
+        null);
+    checkCommonProblems(clResult);
+    expiry = Math.max(expiry, extractExpiry(clResult, OrbitalProperties.getCurrentTime() + maxDelay()));
+    data.labels = clResult.getData();
+
+    return new ESIAccountServerResult<>(expiry, data);
   }
 
   @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
-                                   ESIAccountServerResult<List<GetCorporationsCorporationIdContacts200Ok>> data,
+                                   ESIAccountServerResult<ContactData> data,
                                    List<CachedData> updates) throws IOException {
     // Map contacts, then look for non-existent contacts
     Set<Integer> seenContacts = new HashSet<>();
-    for (GetCorporationsCorporationIdContacts200Ok next : data.getData()) {
+    for (GetCorporationsCorporationIdContacts200Ok next : data.getData().contacts) {
       seenContacts.add(next.getContactId());
       updates.add(new Contact("corporation",
                               next.getContactId(),
@@ -95,6 +122,29 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<List<GetC
         updates.add(existing);
       }
     }
+
+    // Map contact labels, then look for non-existent contact labels
+    Set<Long> seenLabels = new HashSet<>();
+    for (GetCorporationsCorporationIdContactsLabels200Ok next : data.getData().labels) {
+      seenLabels.add(next.getLabelId());
+      updates.add(new ContactLabel("corporation",
+                                   next.getLabelId(),
+                                   next.getLabelName()));
+    }
+
+    for (ContactLabel existing : CachedData.retrieveAll(time,
+                                                        (contid, at) -> ContactLabel.accessQuery(account, contid, 1000,
+                                                                                                 false, at,
+                                                                                                 AttributeSelector.values(
+                                                                                                     "corporation"),
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR))) {
+      if (!seenLabels.contains(existing.getLabelID())) {
+        existing.evolve(null, time);
+        updates.add(existing);
+      }
+    }
+
   }
 
 }

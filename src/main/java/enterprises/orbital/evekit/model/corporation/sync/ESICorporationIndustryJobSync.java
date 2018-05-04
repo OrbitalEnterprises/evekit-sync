@@ -2,14 +2,11 @@ package enterprises.orbital.evekit.model.corporation.sync;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.IndustryApi;
-import enterprises.orbital.eve.esi.client.api.MarketApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdIndustryJobs200Ok;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdOrders200Ok;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.IndustryJob;
-import enterprises.orbital.evekit.model.common.MarketOrder;
 import org.apache.commons.lang3.tuple.Pair;
 import org.joda.time.DateTime;
 
@@ -53,6 +50,7 @@ public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<G
       return apiInstance.getCorporationsCorporationIdIndustryJobsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           true,
           page,
           accessToken(),
@@ -81,16 +79,22 @@ public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<G
                                             next.getBlueprintLocationId(),
                                             next.getOutputLocationId(),
                                             next.getRuns(),
-                                            BigDecimal.valueOf(nullSafeDouble(next.getCost(), 0D)).setScale(2, RoundingMode.HALF_UP),
+                                            BigDecimal.valueOf(nullSafeDouble(next.getCost(), 0D))
+                                                      .setScale(2, RoundingMode.HALF_UP),
                                             nullSafeInteger(next.getLicensedRuns(), 0),
                                             nullSafeFloat(next.getProbability(), 0F),
                                             nullSafeInteger(next.getProductTypeId(), 0),
-                                            next.getStatus().toString(),
+                                            next.getStatus()
+                                                .toString(),
                                             next.getDuration(),
-                                            next.getStartDate().getMillis(),
-                                            next.getEndDate().getMillis(),
-                                            nullSafeDateTime(next.getPauseDate(), new DateTime(new Date(0L))).getMillis(),
-                                            nullSafeDateTime(next.getCompletedDate(), new DateTime(new Date(0L))).getMillis(),
+                                            next.getStartDate()
+                                                .getMillis(),
+                                            next.getEndDate()
+                                                .getMillis(),
+                                            nullSafeDateTime(next.getPauseDate(),
+                                                             new DateTime(new Date(0L))).getMillis(),
+                                            nullSafeDateTime(next.getCompletedDate(),
+                                                             new DateTime(new Date(0L))).getMillis(),
                                             nullSafeInteger(next.getCompletedCharacterId(), 0),
                                             nullSafeInteger(next.getSuccessfulRuns(), 0));
       updates.add(nextJob);

@@ -183,6 +183,7 @@ public class ESICorporationStarbasesSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdStarbasesWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -228,6 +229,7 @@ public class ESICorporationStarbasesSyncTest extends SyncTestBase {
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.eq((long) nextBase[0]),
           EasyMock.eq((int) nextBase[2]),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

@@ -55,7 +55,7 @@ public class ESICharacterMedalsSync extends AbstractESIAccountSync<List<GetChara
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdMedals200Ok>> result = apiInstance.getCharactersCharacterIdMedalsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

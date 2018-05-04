@@ -155,6 +155,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdAssetsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),

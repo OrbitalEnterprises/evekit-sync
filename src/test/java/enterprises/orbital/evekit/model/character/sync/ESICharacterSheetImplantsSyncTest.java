@@ -81,6 +81,7 @@ public class ESICharacterSheetImplantsSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdImplantsWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))
@@ -177,7 +178,7 @@ public class ESICharacterSheetImplantsSyncTest extends SyncTestBase {
     for (int i = 0; i < oldData.length; i++) {
       Implant nextEl = oldEls.get(i);
       Assert.assertEquals(testTime, nextEl.getLifeEnd());
-      Assert.assertEquals((int) oldData[i], nextEl.getTypeID());
+      Assert.assertEquals(oldData[i], nextEl.getTypeID());
     }
 
     // Verify updates which will also verify that all old alliances were properly end of life

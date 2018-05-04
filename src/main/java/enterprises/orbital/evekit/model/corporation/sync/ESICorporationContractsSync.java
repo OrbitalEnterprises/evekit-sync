@@ -74,6 +74,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
       return apiInstance.getCorporationsCorporationIdContractsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -94,6 +95,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
             ApiResponse<List<GetCorporationsCorporationIdContractsContractIdItems200Ok>> items = apiInstance.getCorporationsCorporationIdContractsContractIdItemsWithHttpInfo(
                 nextContract.getContractId(),
                 (int) account.getEveCorporationID(),
+                null,
                 null,
                 accessToken(),
                 null,
@@ -119,6 +121,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
                 return apiInstance.getCorporationsCorporationIdContractsContractIdBidsWithHttpInfo(
                     nextContract.getContractId(),
                     (int) account.getEveCorporationID(),
+                    null,
                     null,
                     page,
                     accessToken(),

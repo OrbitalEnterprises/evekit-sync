@@ -152,6 +152,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdBookmarksFoldersWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -192,6 +193,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
                                                                                                                bookmarksPages[i]));
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdBookmarksWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

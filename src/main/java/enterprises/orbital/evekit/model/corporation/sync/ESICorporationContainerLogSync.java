@@ -49,6 +49,7 @@ public class ESICorporationContainerLogSync extends AbstractESIAccountSync<List<
       return apiInstance.getCorporationsCorporationIdContainersLogsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,

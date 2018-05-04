@@ -65,7 +65,7 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
     // Retrieve skill info
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdSkillsOk> resultS = apiInstance.getCharactersCharacterIdSkillsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(resultS);
     expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
     resultData.skillInfo = resultS.getData();
@@ -73,7 +73,7 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
     // Retrieve attribute info
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdAttributesOk> resultA = apiInstance.getCharactersCharacterIdAttributesWithHttpInfo(
-        (int) account.getEveCharacterID(), null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(resultA);
     expiry = Math.max(expiry, extractExpiry(resultA, OrbitalProperties.getCurrentTime() + maxDelay()));
     resultData.attributeInfo = resultA.getData();

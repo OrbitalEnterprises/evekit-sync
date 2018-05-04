@@ -66,6 +66,7 @@ public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESIChar
     ApiResponse<List<GetCharactersCharacterIdNotificationsContacts200Ok>> result = apiInstance.getCharactersCharacterIdNotificationsContactsWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
+        null,
         accessToken(),
         null,
         null);
@@ -77,6 +78,7 @@ public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESIChar
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdNotifications200Ok>> noteResult = apiInstance.getCharactersCharacterIdNotificationsWithHttpInfo(
         (int) account.getEveCharacterID(),
+        null,
         null,
         accessToken(),
         null,

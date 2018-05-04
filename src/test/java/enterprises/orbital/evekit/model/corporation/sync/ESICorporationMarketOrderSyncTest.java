@@ -189,6 +189,7 @@ public class ESICorporationMarketOrderSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdOrdersWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -230,6 +231,7 @@ public class ESICorporationMarketOrderSyncTest extends SyncTestBase {
                                                                                                      historicPages[i]));
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdOrdersHistoryWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

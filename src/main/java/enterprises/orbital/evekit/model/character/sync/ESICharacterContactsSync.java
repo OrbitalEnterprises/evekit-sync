@@ -62,6 +62,7 @@ public class ESICharacterContactsSync extends AbstractESIAccountSync<ESICharacte
       return apiInstance.getCharactersCharacterIdContactsWithHttpInfo(
           (int) account.getEveCharacterID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -72,6 +73,7 @@ public class ESICharacterContactsSync extends AbstractESIAccountSync<ESICharacte
 
     ApiResponse<List<GetCharactersCharacterIdContactsLabels200Ok>> clResult = apiInstance.getCharactersCharacterIdContactsLabelsWithHttpInfo(
         (int) account.getEveCharacterID(),
+        null,
         null,
         accessToken(),
         null,

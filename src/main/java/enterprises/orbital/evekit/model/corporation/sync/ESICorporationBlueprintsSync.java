@@ -48,6 +48,7 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
       return apiInstance.getCorporationsCorporationIdBlueprintsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,

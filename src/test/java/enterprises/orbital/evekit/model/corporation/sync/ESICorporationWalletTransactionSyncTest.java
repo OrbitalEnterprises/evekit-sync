@@ -155,6 +155,7 @@ public class ESICorporationWalletTransactionSyncTest extends SyncTestBase {
             EasyMock.eq(division + 1),
             EasyMock.isNull(),
             EasyMock.eq(txnID),
+            EasyMock.isNull(),
             EasyMock.anyString(),
             EasyMock.isNull(),
             EasyMock.isNull()))

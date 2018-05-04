@@ -67,6 +67,7 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
       return apiInstance.getCorporationsCorporationIdMedalsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -79,6 +80,7 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCorporationsCorporationIdMedalsIssuedWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           page,
           accessToken(),

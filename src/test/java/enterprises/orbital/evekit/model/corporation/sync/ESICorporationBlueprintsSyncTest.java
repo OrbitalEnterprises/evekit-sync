@@ -120,6 +120,7 @@ public class ESICorporationBlueprintsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdBlueprintsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),

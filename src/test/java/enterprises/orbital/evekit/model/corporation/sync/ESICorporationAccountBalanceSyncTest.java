@@ -35,7 +35,8 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     super.setup();
 
     // Prepare a test sync tracker
-    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_WALLET_BALANCE, 1234L, null);
+    ESIEndpointSyncTracker.getOrCreateUnfinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_WALLET_BALANCE, 1234L,
+                                                        null);
 
     // Initialize time keeper
     OrbitalProperties.setTimeGenerator(() -> testTime);
@@ -47,11 +48,11 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     // Cleanup test specific tables after each test
     EveKitUserAccountProvider.getFactory()
                              .runTransaction(() -> {
-                           EveKitUserAccountProvider.getFactory()
-                                                .getEntityManager()
-                                                .createQuery("DELETE FROM AccountBalance ")
-                                                .executeUpdate();
-                         });
+                               EveKitUserAccountProvider.getFactory()
+                                                        .getEntityManager()
+                                                        .createQuery("DELETE FROM AccountBalance ")
+                                                        .executeUpdate();
+                             });
     OrbitalProperties.setTimeGenerator(null);
     super.teardown();
   }
@@ -60,38 +61,42 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
       {
           1, (new BigDecimal(12994.75)).setScale(2, RoundingMode.HALF_UP)
       }, {
-          2, (new BigDecimal(82114.78)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          3, (new BigDecimal(85.23)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          4, (new BigDecimal(0)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          5, (new BigDecimal(88313.21)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          6, (new BigDecimal(459988234.12)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          7, (new BigDecimal(984123483.20)).setScale(2, RoundingMode.HALF_UP)
-      }, {
-          8, (new BigDecimal(0.0)).setScale(2, RoundingMode.HALF_UP)
-      }
+      2, (new BigDecimal(82114.78)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      3, (new BigDecimal(85.23)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      4, (new BigDecimal(0)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      5, (new BigDecimal(88313.21)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      6, (new BigDecimal(459988234.12)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      7, (new BigDecimal(984123483.20)).setScale(2, RoundingMode.HALF_UP)
+  }, {
+      8, (new BigDecimal(0.0)).setScale(2, RoundingMode.HALF_UP)
+  }
   };
 
   // Mock up server interface
   private void setupOkMock() throws Exception {
-    List<GetCorporationsCorporationIdWallets200Ok> balances = Arrays.stream(mockData).map(x -> {
-      GetCorporationsCorporationIdWallets200Ok wal = new GetCorporationsCorporationIdWallets200Ok();
-      wal.setDivision((int) x[0]);
-      wal.setBalance(((BigDecimal) x[1]).doubleValue());
-      return wal;
-    }).collect(Collectors.toList());
+    List<GetCorporationsCorporationIdWallets200Ok> balances = Arrays.stream(mockData)
+                                                                    .map(x -> {
+                                                                      GetCorporationsCorporationIdWallets200Ok wal = new GetCorporationsCorporationIdWallets200Ok();
+                                                                      wal.setDivision((int) x[0]);
+                                                                      wal.setBalance(((BigDecimal) x[1]).doubleValue());
+                                                                      return wal;
+                                                                    })
+                                                                    .collect(Collectors.toList());
     Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
     ApiResponse<List<GetCorporationsCorporationIdWallets200Ok>> apir = new ApiResponse<>(200, headers, balances);
     mockEndpoint = EasyMock.createMock(WalletApi.class);
-    EasyMock.expect(mockEndpoint.getCorporationsCorporationIdWalletsWithHttpInfo(EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
-                                                                            EasyMock.isNull(),
-                                                                            EasyMock.anyString(),
-                                                                            EasyMock.isNull(),
-                                                                            EasyMock.isNull()))
+    EasyMock.expect(mockEndpoint.getCorporationsCorporationIdWalletsWithHttpInfo(
+        EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+        EasyMock.isNull(),
+        EasyMock.isNull(),
+        EasyMock.anyString(),
+        EasyMock.isNull(),
+        EasyMock.isNull()))
             .andReturn(apir);
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getWalletApi())
@@ -99,8 +104,13 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
   }
 
   private void verifyDataUpdate() throws Exception {
-    List<AccountBalance> storedBalances = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
-        AccountBalance.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+    List<AccountBalance> storedBalances = AbstractESIAccountSync.retrieveAll(testTime,
+                                                                             (long contid, AttributeSelector at) ->
+                                                                                 AccountBalance.accessQuery(
+                                                                                     corpSyncAccount, contid, 1000,
+                                                                                     false, at,
+                                                                                     AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                     AbstractESIAccountSync.ANY_SELECTOR));
 
     Assert.assertEquals(mockData.length, storedBalances.size());
 
@@ -125,7 +135,8 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     verifyDataUpdate();
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount,
+                                                                                         ESISyncEndpoint.CORP_WALLET_BALANCE);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
@@ -144,7 +155,7 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     EasyMock.replay(mockServer, mockEndpoint);
 
     // Populate existing
-    for(Object[] next : mockData) {
+    for (Object[] next : mockData) {
       AccountBalance existing = new AccountBalance((int) next[0], ((BigDecimal) next[1]).add(BigDecimal.TEN));
       existing.setup(corpSyncAccount, testTime - 1);
       CachedData.update(existing);
@@ -156,15 +167,21 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     EasyMock.verify(mockServer, mockEndpoint);
 
     // Verify old objects were evolved properly
-    List<AccountBalance> oldBalances = AbstractESIAccountSync.retrieveAll(testTime - 1, (long contid, AttributeSelector at) ->
-        AccountBalance.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+    List<AccountBalance> oldBalances = AbstractESIAccountSync.retrieveAll(testTime - 1,
+                                                                          (long contid, AttributeSelector at) ->
+                                                                              AccountBalance.accessQuery(
+                                                                                  corpSyncAccount, contid, 1000, false,
+                                                                                  at,
+                                                                                  AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                  AbstractESIAccountSync.ANY_SELECTOR));
 
     Assert.assertEquals(mockData.length, oldBalances.size());
 
     for (int i = 0; i < mockData.length; i++) {
       AccountBalance nextBalance = oldBalances.get(i);
       Assert.assertEquals((int) (Integer) mockData[i][0], nextBalance.getDivision());
-      Assert.assertEquals(mockData[i][1], nextBalance.getBalance().subtract(BigDecimal.TEN));
+      Assert.assertEquals(mockData[i][1], nextBalance.getBalance()
+                                                     .subtract(BigDecimal.TEN));
       Assert.assertEquals(testTime - 1, nextBalance.getLifeStart());
       Assert.assertEquals(testTime, nextBalance.getLifeEnd());
     }
@@ -173,7 +190,8 @@ public class ESICorporationAccountBalanceSyncTest extends SyncTestBase {
     verifyDataUpdate();
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount, ESISyncEndpoint.CORP_WALLET_BALANCE);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(corpSyncAccount,
+                                                                                         ESISyncEndpoint.CORP_WALLET_BALANCE);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());

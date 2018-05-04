@@ -39,16 +39,19 @@ public class ESICharacterWalletBalanceSync extends AbstractESIAccountSync<Double
   protected ESIAccountServerResult<Double> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     WalletApi apiInstance = cp.getWalletApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<Double> result = apiInstance.getCharactersCharacterIdWalletWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
+    ApiResponse<Double> result = apiInstance.getCharactersCharacterIdWalletWithHttpInfo(
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
+    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                        result.getData());
   }
 
   @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<Double> data,
                                    List<CachedData> updates) throws IOException {
-    updates.add(new AccountBalance(1, BigDecimal.valueOf(data.getData()).setScale(2, RoundingMode.HALF_UP)));
+    updates.add(new AccountBalance(1, BigDecimal.valueOf(data.getData())
+                                                .setScale(2, RoundingMode.HALF_UP)));
   }
 
 

@@ -153,6 +153,7 @@ public class ESICharacterMedalsSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdMedalsWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))

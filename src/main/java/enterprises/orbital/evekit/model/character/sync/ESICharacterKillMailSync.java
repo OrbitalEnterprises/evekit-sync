@@ -76,6 +76,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
         (int) account.getEveCharacterID(),
         null,
         null,
+        null,
         killIdLimit,
         accessToken(),
         null,
@@ -95,6 +96,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
                          .getKillmailId();
       ESIThrottle.throttle(endpoint().name(), account);
       result = apiInstance.getCharactersCharacterIdKillmailsRecentWithHttpInfo((int) account.getEveCharacterID(),
+                                                                               null,
                                                                                null,
                                                                                null,
                                                                                 killIdLimit,
@@ -148,6 +150,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
         ApiResponse<GetKillmailsKillmailIdKillmailHashOk> nextHash = apiInstance.getKillmailsKillmailIdKillmailHashWithHttpInfo(
             next.getKillmailHash(),
             next.getKillmailId(),
+            null,
             null,
             null,
             null);

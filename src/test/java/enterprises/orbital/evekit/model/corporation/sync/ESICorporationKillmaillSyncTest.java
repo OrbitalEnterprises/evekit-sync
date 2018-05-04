@@ -143,6 +143,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
     for (int i = 0; i < pageCount; i++) {
       killmailPages[i] = i * size / pageCount;
     }
+
   }
 
   @Override
@@ -227,6 +228,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(killmailID),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -309,6 +311,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getKillmailsKillmailIdKillmailHashWithHttpInfo(
           String.valueOf(killData.getKillmailId()),
           killData.getKillmailId(),
+          null,
           null,
           null,
           null))

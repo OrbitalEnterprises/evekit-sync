@@ -176,6 +176,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdOrdersWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))
@@ -214,6 +215,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
                                                                                                     pages[i]));
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdOrdersHistoryWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

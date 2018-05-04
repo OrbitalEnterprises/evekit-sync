@@ -194,6 +194,7 @@ public class ESICharacterCalendarSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.eq(eventID),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -210,6 +211,7 @@ public class ESICharacterCalendarSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(nb.getKey()
                         .intValue()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -228,6 +230,7 @@ public class ESICharacterCalendarSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(nb.getKey()
                         .intValue()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

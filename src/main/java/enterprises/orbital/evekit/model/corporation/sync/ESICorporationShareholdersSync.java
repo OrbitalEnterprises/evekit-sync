@@ -49,6 +49,7 @@ public class ESICorporationShareholdersSync extends AbstractESIAccountSync<List<
       return apiInstance.getCorporationsCorporationIdShareholdersWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,

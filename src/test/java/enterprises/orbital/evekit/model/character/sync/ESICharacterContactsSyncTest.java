@@ -140,6 +140,7 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdContactsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -163,6 +164,7 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
                                                                                             bookmarksList);
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdContactsLabelsWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+        EasyMock.isNull(),
         EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
@@ -334,7 +336,7 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
     for (Object[] d : labelsTestData) {
       ContactLabel newEl = new ContactLabel((String) d[0],
                                             (long) d[1],
-                                            (String) d[2] + "1");
+                                            d[2] + "1");
       newEl.setup(charSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }

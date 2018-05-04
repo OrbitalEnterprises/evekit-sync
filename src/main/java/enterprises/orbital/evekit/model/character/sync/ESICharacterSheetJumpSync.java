@@ -42,7 +42,7 @@ public class ESICharacterSheetJumpSync extends AbstractESIAccountSync<GetCharact
   protected ESIAccountServerResult<GetCharactersCharacterIdFatigueOk> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdFatigueOk> result = apiInstance.getCharactersCharacterIdFatigueWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
+    ApiResponse<GetCharactersCharacterIdFatigueOk> result = apiInstance.getCharactersCharacterIdFatigueWithHttpInfo((int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
   }

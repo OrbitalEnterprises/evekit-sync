@@ -86,6 +86,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
       return apiInstance.getCharactersCharacterIdAssetsWithHttpInfo(
           (int) account.getEveCharacterID(),
           null,
+          null,
           page,
           accessToken(),
           null,

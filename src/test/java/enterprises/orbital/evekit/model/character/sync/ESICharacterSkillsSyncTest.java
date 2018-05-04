@@ -134,6 +134,7 @@ public class ESICharacterSkillsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdAttributesWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -143,6 +144,7 @@ public class ESICharacterSkillsSyncTest extends SyncTestBase {
       ApiResponse<GetCharactersCharacterIdSkillsOk> apir = new ApiResponse<>(200, headers, testSkills);
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdSkillsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

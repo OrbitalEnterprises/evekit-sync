@@ -74,6 +74,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
       return apiInstance.getCharactersCharacterIdContractsWithHttpInfo(
           (int) account.getEveCharacterID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -94,6 +95,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
             ApiResponse<List<GetCharactersCharacterIdContractsContractIdItems200Ok>> items = apiInstance.getCharactersCharacterIdContractsContractIdItemsWithHttpInfo(
                 (int) account.getEveCharacterID(),
                 nextContract.getContractId(),
+                null,
                 null,
                 accessToken(),
                 null,
@@ -118,6 +120,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
               ApiResponse<List<GetCharactersCharacterIdContractsContractIdBids200Ok>> bids = apiInstance.getCharactersCharacterIdContractsContractIdBidsWithHttpInfo(
                   (int) account.getEveCharacterID(),
                   nextContract.getContractId(),
+                  null,
                   null,
                   accessToken(),
                   null,

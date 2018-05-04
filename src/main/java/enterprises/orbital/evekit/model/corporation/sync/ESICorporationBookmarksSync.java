@@ -58,6 +58,7 @@ public class ESICorporationBookmarksSync extends AbstractESIAccountSync<ESICorpo
       return apiInstance.getCorporationsCorporationIdBookmarksFoldersWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -70,6 +71,7 @@ public class ESICorporationBookmarksSync extends AbstractESIAccountSync<ESICorpo
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCorporationsCorporationIdBookmarksWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           page,
           accessToken(),

@@ -221,6 +221,7 @@ public class ESICorporationTitlesSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdTitlesWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -245,6 +246,7 @@ public class ESICorporationTitlesSyncTest extends SyncTestBase {
                                                                                           memberList);
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdMembersTitlesWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

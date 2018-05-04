@@ -73,6 +73,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       ApiResponse<List<Integer>> apir = apiInstance.getCorporationsCorporationIdMembersWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           accessToken(),
           null,
           null);
@@ -85,6 +86,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdRoles200Ok>> apir = apiInstance.getCorporationsCorporationIdRolesWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           accessToken(),
           null,
@@ -99,6 +101,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
         ESIThrottle.throttle(endpoint().name(), account);
         return apiInstance.getCorporationsCorporationIdRolesHistoryWithHttpInfo(
             (int) account.getEveCorporationID(),
+            null,
             null,
             page,
             accessToken(),

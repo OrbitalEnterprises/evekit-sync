@@ -218,6 +218,7 @@ public class ESICorporationMembershipSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdMembersWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -277,6 +278,7 @@ public class ESICorporationMembershipSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdRolesWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -312,6 +314,7 @@ public class ESICorporationMembershipSyncTest extends SyncTestBase {
                                                                                                     roleHistoryPages[i]));
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdRolesHistoryWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

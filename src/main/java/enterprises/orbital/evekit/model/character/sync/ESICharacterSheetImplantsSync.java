@@ -43,7 +43,7 @@ public class ESICharacterSheetImplantsSync extends AbstractESIAccountSync<List<I
     ClonesApi apiInstance = cp.getClonesApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<Integer>> result = apiInstance.getCharactersCharacterIdImplantsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

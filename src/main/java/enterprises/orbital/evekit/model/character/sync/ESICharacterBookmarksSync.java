@@ -58,6 +58,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
       return apiInstance.getCharactersCharacterIdBookmarksFoldersWithHttpInfo(
           (int) account.getEveCharacterID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -70,6 +71,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCharactersCharacterIdBookmarksWithHttpInfo(
           (int) account.getEveCharacterID(),
+          null,
           null,
           page,
           accessToken(),

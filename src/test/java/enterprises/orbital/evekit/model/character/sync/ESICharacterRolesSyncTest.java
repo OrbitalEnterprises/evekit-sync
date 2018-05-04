@@ -122,6 +122,7 @@ public class ESICharacterRolesSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdRolesWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))

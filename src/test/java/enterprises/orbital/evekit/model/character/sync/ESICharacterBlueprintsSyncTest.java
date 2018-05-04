@@ -119,6 +119,7 @@ public class ESICharacterBlueprintsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdBlueprintsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),

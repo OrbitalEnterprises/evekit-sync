@@ -64,6 +64,7 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
       return apiInstance.getCorporationsCorporationIdStarbasesWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -79,6 +80,7 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
           (int) account.getEveCorporationID(),
           nextBase.getStarbaseId(),
           nextBase.getSystemId(),
+          null,
           null,
           accessToken(),
           null,

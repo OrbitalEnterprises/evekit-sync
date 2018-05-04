@@ -91,6 +91,7 @@ public class ESICharacterTitlesSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdTitlesWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))

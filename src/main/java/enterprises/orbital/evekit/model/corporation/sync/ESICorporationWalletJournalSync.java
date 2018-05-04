@@ -3,40 +3,27 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.WalletApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
-import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdWalletsDivisionJournal200Ok;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdWalletsDivisionJournalExtraInfo;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.WalletJournal;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
-public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESICorporationWalletJournalSync.CorpWalletJournal> {
+public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>>> {
   protected static final Logger log = Logger.getLogger(ESICorporationWalletJournalSync.class.getName());
   private String context;
 
   public ESICorporationWalletJournalSync(SynchronizedEveAccount account) {
     super(account);
-  }
-
-  class CorpWalletJournal {
-    Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> journals = new HashMap<>();
-
-    void ensureDivision(int division) {
-      if (!journals.containsKey(division))
-        journals.put(division, new ArrayList<>());
-    }
-
-    void appendDivision(int division, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok> journal) {
-      ensureDivision(division);
-      journals.get(division)
-              .addAll(journal);
-    }
   }
 
   @Override
@@ -65,65 +52,43 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
   }
 
   @Override
-  protected ESIAccountServerResult<CorpWalletJournal> getServerData(
+  protected ESIAccountServerResult<Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     WalletApi apiInstance = cp.getWalletApi();
-    CorpWalletJournal resultObject = new CorpWalletJournal();
+    Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> resultMap = new HashMap<>();
     long expiry = 0;
 
     for (int division = 1; division <= 7; division++) {
-      long refIdLimit = Long.MAX_VALUE;
-      resultObject.ensureDivision(division);
-      
-      // Retrieve initial batch
-      ESIThrottle.throttle(endpoint().name(), account);
-      ApiResponse<List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> result =
-          apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
-              (int) account.getEveCorporationID(),
-              division,
-              null,
-              refIdLimit,
-              accessToken(),
-              null,
-              null);
-      checkCommonProblems(result);
-      expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
-
-      // Crawl the journal backwards until no more entries are retrieved
-      while (!result.getData()
-                    .isEmpty()) {
-        resultObject.appendDivision(division, result.getData());
-        //noinspection ConstantConditions
-        refIdLimit = result.getData()
-                           .stream()
-                           .min(Comparator.comparingLong(
-                               GetCorporationsCorporationIdWalletsDivisionJournal200Ok::getRefId))
-                           .get()
-                           .getRefId();
-        ESIThrottle.throttle(endpoint().name(), account);
-        result = apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
-            (int) account.getEveCorporationID(),
-            division,
-            null,
-            refIdLimit,
-            accessToken(),
-            null,
-            null);
-        checkCommonProblems(result);
-        expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
-      }
+      final int nextDivision = division;
+      Pair<Long, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> result = pagedResultRetriever(
+          (page) -> {
+            ESIThrottle.throttle(endpoint().name(), account);
+            return apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
+                (int) account.getEveCorporationID(),
+                nextDivision,
+                null,
+                null,
+                page,
+                accessToken(),
+                null,
+                null);
+          });
+      resultMap.put(division, result.getRight());
+      expiry = Math.max(expiry,
+                        result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
 
       // Sort division by refID so we insert into the DB in order
-      resultObject.journals.get(division).sort(Comparator.comparingLong(GetCorporationsCorporationIdWalletsDivisionJournal200Ok::getRefId));
+      resultMap.get(division)
+               .sort(Comparator.comparingLong(GetCorporationsCorporationIdWalletsDivisionJournal200Ok::getId));
     }
 
-    return new ESIAccountServerResult<>(expiry, resultObject);
+    return new ESIAccountServerResult<>(expiry, resultMap);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings({"RedundantThrows", "Duplicates"})
   @Override
   protected void processServerData(long time,
-                                   ESIAccountServerResult<CorpWalletJournal> data,
+                                   ESIAccountServerResult<Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>>> data,
                                    List<CachedData> updates) throws IOException {
     // Check for existing tracker context.  If exists, this will be a refID upper bound.  We can skip
     // enqueuing updates for any item with a refID less than this bound.  Note that we require a
@@ -153,20 +118,19 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
     }
 
     for (int division = 1; division <= 7; division++) {
-      for (GetCorporationsCorporationIdWalletsDivisionJournal200Ok next : data.getData().journals.get(division)) {
+      for (GetCorporationsCorporationIdWalletsDivisionJournal200Ok next : data.getData()
+                                                                              .get(division)) {
         // Items below the bound have already been processed
-        if (next.getRefId() <= refIDBound[division - 1])
+        if (next.getId() <= refIDBound[division - 1])
           continue;
 
-        GetCorporationsCorporationIdWalletsDivisionJournalExtraInfo extra = next.getExtraInfo();
-        updates.add(new WalletJournal(division, next.getRefId(),
+        updates.add(new WalletJournal(division,
+                                      next.getId(),
                                       next.getDate()
                                           .getMillis(),
                                       nullSafeEnum(next.getRefType(), null),
                                       nullSafeInteger(next.getFirstPartyId(), 0),
-                                      nullSafeEnum(next.getFirstPartyType(), null),
                                       nullSafeInteger(next.getSecondPartyId(), 0),
-                                      nullSafeEnum(next.getSecondPartyType(), null),
                                       null, 0,
                                       BigDecimal.valueOf(nullSafeDouble(next.getAmount(), 0D))
                                                 .setScale(2, RoundingMode.HALF_UP),
@@ -176,28 +140,20 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<ESIC
                                       nullSafeInteger(next.getTaxReceiverId(), 0),
                                       BigDecimal.valueOf(nullSafeDouble(next.getTax(), 0D))
                                                 .setScale(2, RoundingMode.HALF_UP),
-                                      extra != null ? nullSafeLong(extra.getLocationId(), 0L) : 0,
-                                      extra != null ? nullSafeLong(extra.getTransactionId(), 0L) : 0,
-                                      extra != null ? extra.getNpcName() : null,
-                                      extra != null ? nullSafeInteger(extra.getNpcId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getDestroyedShipTypeId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getCharacterId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getCorporationId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getAllianceId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getJobId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getContractId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getSystemId(), 0) : 0,
-                                      extra != null ? nullSafeInteger(extra.getPlanetId(), 0) : 0));
+                                      nullSafeLong(next.getContextId(), 0L),
+                                      nullSafeEnum(next.getContextIdType(), null),
+                                      next.getDescription()));
 
         // Update the new bound for next sync
-        newRefBound[division - 1] = Math.max(newRefBound[division - 1], next.getRefId());
+        newRefBound[division - 1] = Math.max(newRefBound[division - 1], next.getId());
       }
     }
 
     // Set next context to new ref bound
     StringBuilder contextString = new StringBuilder();
     for (long n : newRefBound)
-      contextString.append(n).append(",");
+      contextString.append(n)
+                   .append(",");
     contextString.setLength(contextString.length() - 1);
     context = contextString.toString();
   }

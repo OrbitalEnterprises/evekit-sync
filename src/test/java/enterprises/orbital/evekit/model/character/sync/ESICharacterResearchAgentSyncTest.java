@@ -68,11 +68,11 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
     // Cleanup test specific tables after each test
     EveKitUserAccountProvider.getFactory()
                              .runTransaction(() -> {
-                           EveKitUserAccountProvider.getFactory()
-                                                .getEntityManager()
-                                                .createQuery("DELETE FROM ResearchAgent ")
-                                                .executeUpdate();
-                         });
+                               EveKitUserAccountProvider.getFactory()
+                                                        .getEntityManager()
+                                                        .createQuery("DELETE FROM ResearchAgent ")
+                                                        .executeUpdate();
+                             });
     OrbitalProperties.setTimeGenerator(null);
     super.teardown();
   }
@@ -80,23 +80,27 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
   // Mock up server interface
   private void setupOkMock() throws Exception {
     List<GetCharactersCharacterIdAgentsResearch200Ok> agentList =
-        Arrays.stream(agentTestData).map(x -> {
-          GetCharactersCharacterIdAgentsResearch200Ok nextAgent = new GetCharactersCharacterIdAgentsResearch200Ok();
-          nextAgent.setAgentId((Integer) x[0]);
-          nextAgent.setPointsPerDay((Float) x[1]);
-          nextAgent.setRemainderPoints((Float) x[2]);
-          nextAgent.setStartedAt(new DateTime(new Date((Long) x[3])));
-          nextAgent.setSkillTypeId((Integer) x[4]);
-          return nextAgent;
-        }).collect(Collectors.toList());
+        Arrays.stream(agentTestData)
+              .map(x -> {
+                GetCharactersCharacterIdAgentsResearch200Ok nextAgent = new GetCharactersCharacterIdAgentsResearch200Ok();
+                nextAgent.setAgentId((Integer) x[0]);
+                nextAgent.setPointsPerDay((Float) x[1]);
+                nextAgent.setRemainderPoints((Float) x[2]);
+                nextAgent.setStartedAt(new DateTime(new Date((Long) x[3])));
+                nextAgent.setSkillTypeId((Integer) x[4]);
+                return nextAgent;
+              })
+              .collect(Collectors.toList());
     Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
     ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> apir = new ApiResponse<>(200, headers, agentList);
     mockEndpoint = EasyMock.createMock(CharacterApi.class);
-    EasyMock.expect(mockEndpoint.getCharactersCharacterIdAgentsResearchWithHttpInfo(EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
-                                                                            EasyMock.isNull(),
-                                                                            EasyMock.anyString(),
-                                                                            EasyMock.isNull(),
-                                                                            EasyMock.isNull()))
+    EasyMock.expect(mockEndpoint.getCharactersCharacterIdAgentsResearchWithHttpInfo(
+        EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+        EasyMock.isNull(),
+        EasyMock.isNull(),
+        EasyMock.anyString(),
+        EasyMock.isNull(),
+        EasyMock.isNull()))
             .andReturn(apir);
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getCharacterApi())
@@ -106,7 +110,9 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
   private void verifyDataUpdate() throws Exception {
     // Retrieve all stored data
     List<ResearchAgent> storedData = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
-        ResearchAgent.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+        ResearchAgent.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
+                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
     Assert.assertEquals(agentTestData.length, storedData.size());
@@ -136,7 +142,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
     verifyDataUpdate();
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_AGENTS);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_AGENTS);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());
@@ -182,7 +189,9 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
 
     // Verify old objects were evolved properly
     List<ResearchAgent> oldEls = AbstractESIAccountSync.retrieveAll(testTime - 1, (long contid, AttributeSelector at) ->
-        ResearchAgent.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+        ResearchAgent.accessQuery(charSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
+                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                                  AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
     Assert.assertEquals(agentTestData.length, oldEls.size());
@@ -201,7 +210,8 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
     verifyDataUpdate();
 
     // Verify tracker was updated properly
-    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_AGENTS);
+    ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
+                                                                                         ESISyncEndpoint.CHAR_AGENTS);
     Assert.assertEquals(1234L, syncTracker.getScheduled());
     Assert.assertEquals(testTime, syncTracker.getSyncStart());
     Assert.assertEquals(ESISyncState.FINISHED, syncTracker.getStatus());

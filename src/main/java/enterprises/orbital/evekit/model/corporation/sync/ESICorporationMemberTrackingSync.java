@@ -62,6 +62,7 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
       ApiResponse<Integer> result = apiInstance.getCorporationsCorporationIdMembersLimitWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           accessToken(),
           null,
           null);
@@ -74,6 +75,7 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdMembertracking200Ok>> result = apiInstance.getCorporationsCorporationIdMembertrackingWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           accessToken(),
           null,

@@ -42,7 +42,7 @@ public class ESICharacterShipSync extends AbstractESIAccountSync<GetCharactersCh
   protected ESIAccountServerResult<GetCharactersCharacterIdShipOk> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     LocationApi apiInstance = cp.getLocationApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdShipOk> result = apiInstance.getCharactersCharacterIdShipWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
+    ApiResponse<GetCharactersCharacterIdShipOk> result = apiInstance.getCharactersCharacterIdShipWithHttpInfo((int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
   }

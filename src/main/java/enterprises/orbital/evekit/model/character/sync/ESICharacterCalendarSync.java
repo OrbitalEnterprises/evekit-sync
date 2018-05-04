@@ -69,6 +69,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
         (int) account.getEveCharacterID(),
         null,
         null,
+        null,
         accessToken(),
         null,
         null);
@@ -89,6 +90,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
       result = apiInstance.getCharactersCharacterIdCalendarWithHttpInfo((int) account.getEveCharacterID(),
                                                                         null,
                                                                         eventIdLimit,
+                                                                        null,
                                                                         accessToken(),
                                                                         null,
                                                                         null);
@@ -104,6 +106,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
             (int) account.getEveCharacterID(),
             next.getEventId(),
             null,
+            null,
             accessToken(),
             null,
             null);
@@ -116,6 +119,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
           ApiResponse<List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok>> attendeesResponse = apiInstance.getCharactersCharacterIdCalendarEventIdAttendeesWithHttpInfo(
               (int) account.getEveCharacterID(),
               next.getEventId(),
+              null,
               null,
               accessToken(),
               null,

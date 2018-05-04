@@ -49,6 +49,7 @@ public class ESICharacterBlueprintsSync extends AbstractESIAccountSync<List<GetC
       return apiInstance.getCharactersCharacterIdBlueprintsWithHttpInfo(
           (int) account.getEveCharacterID(),
           null,
+          null,
           page,
           accessToken(),
           null,

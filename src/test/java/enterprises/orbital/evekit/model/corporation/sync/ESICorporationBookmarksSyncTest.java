@@ -149,6 +149,7 @@ public class ESICorporationBookmarksSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdBookmarksFoldersWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -189,6 +190,7 @@ public class ESICorporationBookmarksSyncTest extends SyncTestBase {
                                                                                                                    bookmarksPages[i]));
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdBookmarksWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

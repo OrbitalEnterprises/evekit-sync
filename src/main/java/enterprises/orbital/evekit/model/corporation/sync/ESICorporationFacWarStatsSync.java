@@ -46,6 +46,7 @@ public class ESICorporationFacWarStatsSync extends AbstractESIAccountSync<GetCor
     ApiResponse<GetCorporationsCorporationIdFwStatsOk> result = apiInstance.getCorporationsCorporationIdFwStatsWithHttpInfo(
         (int) account.getEveCorporationID(),
         null,
+        null,
         accessToken(),
         null,
         null);

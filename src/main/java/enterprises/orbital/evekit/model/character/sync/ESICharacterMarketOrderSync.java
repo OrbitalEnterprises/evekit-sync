@@ -55,7 +55,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
     // Retrieve live orders
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdOrders200Ok>> liveResult = apiInstance.getCharactersCharacterIdOrdersWithHttpInfo(
-        (int) account.getEveCharacterID(), null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(liveResult);
     long expiry = extractExpiry(liveResult, OrbitalProperties.getCurrentTime() + maxDelay());
     orders.liveOrders = liveResult.getData();
@@ -65,6 +65,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCharactersCharacterIdOrdersHistoryWithHttpInfo(
           (int) account.getEveCharacterID(),
+          null,
           null,
           page,
           accessToken(),

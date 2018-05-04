@@ -2,18 +2,14 @@ package enterprises.orbital.evekit.model.character.sync;
 
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CharacterApi;
-import enterprises.orbital.eve.esi.client.api.WalletApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdAgentsResearch200Ok;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.ResearchAgent;
-import enterprises.orbital.evekit.model.common.AccountBalance;
 
 import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,28 +40,44 @@ public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<G
   }
 
   @Override
-  protected ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
+  protected ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> getServerData(
+      ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
+    ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo(
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
+    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                        result.getData());
   }
 
   @SuppressWarnings("RedundantThrows")
   @Override
-  protected void processServerData(long time, ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> data,
+  protected void processServerData(long time,
+                                   ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> data,
                                    List<CachedData> updates) throws IOException {
     // Add and record seen agents
     Set<Integer> seenAgents = new HashSet<>();
     for (GetCharactersCharacterIdAgentsResearch200Ok next : data.getData()) {
-      ResearchAgent nextAgent = new ResearchAgent(next.getAgentId(), next.getPointsPerDay(), next.getRemainderPoints(), next.getStartedAt().getMillis(), next.getSkillTypeId());
+      ResearchAgent nextAgent = new ResearchAgent(next.getAgentId(), next.getPointsPerDay(), next.getRemainderPoints(),
+                                                  next.getStartedAt()
+                                                      .getMillis(), next.getSkillTypeId());
       seenAgents.add(nextAgent.getAgentID());
       updates.add(nextAgent);
     }
 
     // Check for agents that no longer exist and schedule for EOL
-    for (ResearchAgent existing : retrieveAll(time, (long contid, AttributeSelector at) -> ResearchAgent.accessQuery(account, contid, 1000, false, at, ANY_SELECTOR, ANY_SELECTOR, ANY_SELECTOR, ANY_SELECTOR, ANY_SELECTOR))) {
+    for (ResearchAgent existing : retrieveAll(time,
+                                              (long contid, AttributeSelector at) -> ResearchAgent.accessQuery(account,
+                                                                                                               contid,
+                                                                                                               1000,
+                                                                                                               false,
+                                                                                                               at,
+                                                                                                               ANY_SELECTOR,
+                                                                                                               ANY_SELECTOR,
+                                                                                                               ANY_SELECTOR,
+                                                                                                               ANY_SELECTOR,
+                                                                                                               ANY_SELECTOR))) {
       if (!seenAgents.contains(existing.getAgentID())) {
         existing.evolve(null, time);
         updates.add(existing);

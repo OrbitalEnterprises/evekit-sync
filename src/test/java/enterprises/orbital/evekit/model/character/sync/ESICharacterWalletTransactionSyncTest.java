@@ -143,6 +143,7 @@ public class ESICharacterWalletTransactionSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.eq(txnID),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))

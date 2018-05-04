@@ -72,6 +72,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       ApiResponse<List<GetCorporationsCorporationIdTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           accessToken(),
           null,
           null);
@@ -84,6 +85,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdMembersTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdMembersTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           accessToken(),
           null,

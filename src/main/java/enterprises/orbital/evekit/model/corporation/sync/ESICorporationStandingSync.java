@@ -49,6 +49,7 @@ public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetC
       return apiInstance.getCorporationsCorporationIdStandingsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,

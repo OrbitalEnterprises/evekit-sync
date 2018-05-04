@@ -226,6 +226,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdContractsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -259,6 +260,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(contractID),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -287,6 +289,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdContractsContractIdBidsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(contractID),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

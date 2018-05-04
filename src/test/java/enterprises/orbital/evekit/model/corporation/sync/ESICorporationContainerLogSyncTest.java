@@ -134,6 +134,7 @@ public class ESICorporationContainerLogSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContainersLogsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -207,6 +208,7 @@ public class ESICorporationContainerLogSyncTest extends SyncTestBase {
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
+  @SuppressWarnings("ConstantConditions")
   @Test
   public void testSyncUpdateExisting() throws Exception {
     setupOkMock();

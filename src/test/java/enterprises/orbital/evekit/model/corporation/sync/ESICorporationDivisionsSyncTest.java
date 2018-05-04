@@ -101,6 +101,7 @@ public class ESICorporationDivisionsSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCorporationsCorporationIdDivisionsWithHttpInfo(
         EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))

@@ -226,6 +226,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContractsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -258,6 +259,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContractsContractIdItemsWithHttpInfo(
           EasyMock.eq(contractID),
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -296,6 +298,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
         EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContractsContractIdBidsWithHttpInfo(
             EasyMock.eq(contractID),
             EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+            EasyMock.isNull(),
             EasyMock.isNull(),
             EasyMock.eq(j + 1),
             EasyMock.anyString(),

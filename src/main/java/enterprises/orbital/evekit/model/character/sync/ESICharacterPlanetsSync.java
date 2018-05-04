@@ -69,6 +69,7 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
     ApiResponse<List<GetCharactersCharacterIdPlanets200Ok>> planetResult = apiInstance.getCharactersCharacterIdPlanetsWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
+        null,
         accessToken(),
         null,
         null);
@@ -81,6 +82,7 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
       ApiResponse<GetCharactersCharacterIdPlanetsPlanetIdOk> piResult = apiInstance.getCharactersCharacterIdPlanetsPlanetIdWithHttpInfo(
           (int) account.getEveCharacterID(),
           next.getPlanetId(),
+          null,
           null,
           accessToken(),
           null,

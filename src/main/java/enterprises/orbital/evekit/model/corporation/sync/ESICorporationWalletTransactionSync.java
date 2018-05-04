@@ -82,6 +82,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
               division,
               null,
               txnIdLimit,
+              null,
               accessToken(),
               null,
               null);
@@ -105,6 +106,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
             division,
             null,
             txnIdLimit,
+            null,
             accessToken(),
             null,
             null);

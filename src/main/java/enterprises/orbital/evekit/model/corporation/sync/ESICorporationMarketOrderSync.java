@@ -57,6 +57,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
       return apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
@@ -70,6 +71,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
       ESIThrottle.throttle(endpoint().name(), account);
       return apiInstance.getCorporationsCorporationIdOrdersHistoryWithHttpInfo(
           (int) account.getEveCorporationID(),
+          null,
           null,
           page,
           accessToken(),

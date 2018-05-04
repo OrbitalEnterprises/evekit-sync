@@ -28,7 +28,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     List<GetCharactersCharacterIdMail200Ok> headers = new ArrayList<>();
     List<GetCharactersCharacterIdMailLabelsLabel> labels = new ArrayList<>();
     List<GetCharactersCharacterIdMailLists200Ok> lists = new ArrayList<>();
-    Map<Long, GetCharactersCharacterIdMailMailIdOk> bodies = new HashMap<>();
+    Map<Integer, GetCharactersCharacterIdMailMailIdOk> bodies = new HashMap<>();
   }
 
   public ESICharacterMailSync(SynchronizedEveAccount account) {
@@ -79,6 +79,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         (int) account.getEveCharacterID(),
         null,
         null,
+        null,
         (int) mailIdLimit,
         accessToken(),
         null,
@@ -97,6 +98,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
                           .getMailId();
       ESIThrottle.throttle(endpoint().name(), account);
       result = apiInstance.getCharactersCharacterIdMailWithHttpInfo((int) account.getEveCharacterID(),
+                                                                    null,
                                                                     null,
                                                                     null,
                                                                     (int) mailIdLimit,
@@ -137,8 +139,8 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         ESIThrottle.throttle(endpoint().name(), account);
         ApiResponse<GetCharactersCharacterIdMailMailIdOk> bodyResponse = apiInstance.getCharactersCharacterIdMailMailIdWithHttpInfo(
             (int) account.getEveCharacterID(),
-            next.getMailId()
-                .intValue(),
+            next.getMailId(),
+            null,
             null,
             accessToken(),
             null,
@@ -161,6 +163,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     ApiResponse<List<GetCharactersCharacterIdMailLists200Ok>> listResponse = apiInstance.getCharactersCharacterIdMailListsWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
+        null,
         accessToken(),
         null,
         null);
@@ -171,6 +174,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdMailLabelsOk> labelResponse = apiInstance.getCharactersCharacterIdMailLabelsWithHttpInfo(
         (int) account.getEveCharacterID(),
+        null,
         null,
         accessToken(),
         null,
@@ -192,16 +196,13 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     // Assemble mail messages
     for (GetCharactersCharacterIdMail200Ok nm : data.getData().headers) {
       GetCharactersCharacterIdMailMailIdOk body = data.getData().bodies.get(nm.getMailId());
-      Set<Integer> labels = nm.getLabels()
-                              .stream()
-                              .map(Long::intValue)
-                              .collect(Collectors.toSet());
+      Set<Integer> labels = new HashSet<>(nm.getLabels());
       Set<MailMessageRecipient> recipients = nm.getRecipients()
                                                .stream()
                                                .map(x -> new MailMessageRecipient(x.getRecipientType()
                                                                                    .toString(), x.getRecipientId()))
                                                .collect(Collectors.toSet());
-      CharacterMailMessage newm = new CharacterMailMessage(nullSafeLong(nm.getMailId(), 0L),
+      CharacterMailMessage newm = new CharacterMailMessage(nullSafeInteger(nm.getMailId(), 0),
                                                            nullSafeInteger(nm.getFrom(), 0),
                                                            nullSafeDateTime(nm.getTimestamp(),
                                                                             new DateTime(new Date(0L))).getMillis(),

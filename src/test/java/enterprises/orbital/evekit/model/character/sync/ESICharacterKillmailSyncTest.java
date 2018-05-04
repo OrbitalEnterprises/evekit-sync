@@ -23,6 +23,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("Duplicates")
 public class ESICharacterKillmailSyncTest extends SyncTestBase {
 
   // Local mocks and other objects
@@ -193,6 +194,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
   }
 
   // Mock up server interface
+  @SuppressWarnings("Duplicates")
   private void setupOkMock() throws Exception {
     mockEndpoint = EasyMock.createMock(KillmailsApi.class);
 
@@ -221,6 +223,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
                                                                                              data);
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdKillmailsRecentWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(killmailID),
@@ -300,6 +303,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getKillmailsKillmailIdKillmailHashWithHttpInfo(
           String.valueOf(killData.getKillmailId()),
           killData.getKillmailId(),
+          null,
           null,
           null,
           null)).andReturn(apir);

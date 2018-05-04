@@ -84,6 +84,7 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
       return apiInstance.getCorporationsCorporationIdAssetsWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,

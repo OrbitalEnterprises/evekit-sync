@@ -149,6 +149,7 @@ public class ESICorporationMedalsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdMedalsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -181,6 +182,7 @@ public class ESICorporationMedalsSyncTest extends SyncTestBase {
                                                                                                     issuedPages[i]));
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdMedalsIssuedWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

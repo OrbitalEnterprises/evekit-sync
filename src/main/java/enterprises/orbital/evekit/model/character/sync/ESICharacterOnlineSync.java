@@ -4,11 +4,9 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.LocationApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdLocationOk;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdOnlineOk;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
-import enterprises.orbital.evekit.model.character.CharacterLocation;
 import enterprises.orbital.evekit.model.character.CharacterOnline;
 import org.joda.time.DateTime;
 
@@ -41,22 +39,29 @@ public class ESICharacterOnlineSync extends AbstractESIAccountSync<GetCharacters
   }
 
   @Override
-  protected ESIAccountServerResult<GetCharactersCharacterIdOnlineOk> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
+  protected ESIAccountServerResult<GetCharactersCharacterIdOnlineOk> getServerData(
+      ESIAccountClientProvider cp) throws ApiException, IOException {
     LocationApi apiInstance = cp.getLocationApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdOnlineOk> result = apiInstance.getCharactersCharacterIdOnlineWithHttpInfo((int) account.getEveCharacterID(), null, accessToken(), null, null);
+    ApiResponse<GetCharactersCharacterIdOnlineOk> result = apiInstance.getCharactersCharacterIdOnlineWithHttpInfo(
+        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
     checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
+    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                        result.getData());
   }
 
   @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOnlineOk> data,
                                    List<CachedData> updates) throws IOException {
-    updates.add(new CharacterOnline(data.getData().getOnline(),
-                                    nullSafeDateTime(data.getData().getLastLogin(), new DateTime(new Date(0L))).getMillis(),
-                                    nullSafeDateTime(data.getData().getLastLogout(), new DateTime(new Date(0L))).getMillis(),
-                                    nullSafeInteger(data.getData().getLogins(), 0)));
+    updates.add(new CharacterOnline(data.getData()
+                                        .getOnline(),
+                                    nullSafeDateTime(data.getData()
+                                                         .getLastLogin(), new DateTime(new Date(0L))).getMillis(),
+                                    nullSafeDateTime(data.getData()
+                                                         .getLastLogout(), new DateTime(new Date(0L))).getMillis(),
+                                    nullSafeInteger(data.getData()
+                                                        .getLogins(), 0)));
   }
 
 

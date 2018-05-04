@@ -76,6 +76,7 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
     ApiResponse<List<GetCorporationsCorporationIdKillmailsRecent200Ok>> result = apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
         (int) account.getEveCorporationID(),
         null,
+        null,
         killIdLimit,
         accessToken(),
         null,
@@ -96,6 +97,7 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
       ESIThrottle.throttle(endpoint().name(), account);
       result = apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo((int) account.getEveCorporationID(),
                                                                                null,
+                                                                                   null,
                                                                                 killIdLimit,
                                                                                 accessToken(),
                                                                                null,
@@ -146,6 +148,7 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
         ApiResponse<GetKillmailsKillmailIdKillmailHashOk> nextHash = apiInstance.getKillmailsKillmailIdKillmailHashWithHttpInfo(
             next.getKillmailHash(),
             next.getKillmailId(),
+            null,
             null,
             null,
             null);

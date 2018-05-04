@@ -46,6 +46,7 @@ public class ESICharacterFacWarStatsSync extends AbstractESIAccountSync<GetChara
     ApiResponse<GetCharactersCharacterIdFwStatsOk> result = apiInstance.getCharactersCharacterIdFwStatsWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
+        null,
         accessToken(),
         null,
         null);

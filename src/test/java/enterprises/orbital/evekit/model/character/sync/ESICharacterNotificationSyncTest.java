@@ -135,6 +135,7 @@ public class ESICharacterNotificationSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdNotificationsContactsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -165,6 +166,7 @@ public class ESICharacterNotificationSyncTest extends SyncTestBase {
                                                                                              notes);
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdNotificationsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

@@ -4,10 +4,12 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.ContactsApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdContacts200Ok;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdContactsLabels200Ok;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.Contact;
+import enterprises.orbital.evekit.model.common.ContactLabel;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
@@ -30,6 +32,7 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
   private long testTime = 1238L;
 
   private static Object[][] contactsTestData;
+  private static Object[][] labelsTestData;
   private static int[] contactsPages;
 
   static {
@@ -53,6 +56,18 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
       contactsTestData[i][4] = TestBase.getRandomBoolean();
       contactsTestData[i][5] = false;
       contactsTestData[i][6] = TestBase.getRandomLong();
+    }
+
+    // Labels test data
+    // 0 String list - always set to "corporation"
+    // 1 long labelID
+    // 2 String name
+    int bkSize = 50 + TestBase.getRandomInt(50);
+    labelsTestData = new Object[bkSize][3];
+    for (int i = 0; i < bkSize; i++) {
+      labelsTestData[i][0] = "corporation";
+      labelsTestData[i][1] = TestBase.getUniqueRandomLong();
+      labelsTestData[i][2] = TestBase.getRandomText(50);
     }
 
     // Configure page separations
@@ -83,6 +98,13 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
                                EveKitUserAccountProvider.getFactory()
                                                         .getEntityManager()
                                                         .createQuery("DELETE FROM Contact ")
+                                                        .executeUpdate();
+                             });
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> {
+                               EveKitUserAccountProvider.getFactory()
+                                                        .getEntityManager()
+                                                        .createQuery("DELETE FROM ContactLabel ")
                                                         .executeUpdate();
                              });
     OrbitalProperties.setTimeGenerator(null);
@@ -117,6 +139,7 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContactsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -125,6 +148,28 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
       last = contactsPages[i];
     }
 
+    // Setup labels mock calls
+    List<GetCorporationsCorporationIdContactsLabels200Ok> bookmarksList =
+        Arrays.stream(labelsTestData)
+              .map(x -> {
+                GetCorporationsCorporationIdContactsLabels200Ok nextLabel = new GetCorporationsCorporationIdContactsLabels200Ok();
+                nextLabel.setLabelId((long) x[1]);
+                nextLabel.setLabelName((String) x[2]);
+                return nextLabel;
+              })
+              .collect(Collectors.toList());
+    Map<String, List<String>> headers = createHeaders("Expires", "Thu, 21 Dec 2017 12:00:00 GMT");
+    ApiResponse<List<GetCorporationsCorporationIdContactsLabels200Ok>> apir = new ApiResponse<>(200, headers,
+                                                                                                bookmarksList);
+    EasyMock.expect(mockEndpoint.getCorporationsCorporationIdContactsLabelsWithHttpInfo(
+        EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
+        EasyMock.isNull(),
+        EasyMock.isNull(),
+        EasyMock.anyString(),
+        EasyMock.isNull(),
+        EasyMock.isNull()))
+            .andReturn(apir);
+
     // Setup server mock
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getContactsApi())
@@ -132,57 +177,111 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
   }
 
   private void verifyDataUpdate() throws Exception {
-    // Retrieve all stored data
-    List<Contact> storedData = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
-        Contact.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
-                            AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                            AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                            AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
+    {
+      // Retrieve all stored data
+      List<Contact> storedData = AbstractESIAccountSync.retrieveAll(testTime, (long contid, AttributeSelector at) ->
+          Contact.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
+                              AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                              AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
+                              AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
-    // Check data matches test data
-    Assert.assertEquals(contactsTestData.length, storedData.size());
+      // Check data matches test data
+      Assert.assertEquals(contactsTestData.length, storedData.size());
 
-    // Check stored data
-    for (int i = 0; i < contactsTestData.length; i++) {
-      Contact nextEl = storedData.get(i);
-      Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
-      Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
-      Assert.assertEquals((float) contactsTestData[i][2], nextEl.getStanding(), 0.001);
-      Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
-      Assert.assertEquals(contactsTestData[i][4], nextEl.isInWatchlist());
-      Assert.assertEquals(contactsTestData[i][5], nextEl.isBlocked());
-      Assert.assertEquals((long) contactsTestData[i][6], nextEl.getLabelID());
+      // Check stored data
+      for (int i = 0; i < contactsTestData.length; i++) {
+        Contact nextEl = storedData.get(i);
+        Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
+        Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
+        Assert.assertEquals((float) contactsTestData[i][2], nextEl.getStanding(), 0.001);
+        Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
+        Assert.assertEquals(contactsTestData[i][4], nextEl.isInWatchlist());
+        Assert.assertEquals(contactsTestData[i][5], nextEl.isBlocked());
+        Assert.assertEquals((long) contactsTestData[i][6], nextEl.getLabelID());
+      }
     }
+
+    {
+      // Retrieve all stored data
+      List<ContactLabel> storedData = AbstractESIAccountSync.retrieveAll(testTime,
+                                                                         (long contid, AttributeSelector at) ->
+                                                                             ContactLabel.accessQuery(corpSyncAccount,
+                                                                                                      contid, 1000,
+                                                                                                      false,
+                                                                                                      at,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR));
+
+      // Check data matches test data
+      Assert.assertEquals(labelsTestData.length, storedData.size());
+
+      // Check stored data
+      for (int i = 0; i < labelsTestData.length; i++) {
+        ContactLabel nextEl = storedData.get(i);
+        Assert.assertEquals(labelsTestData[i][0], nextEl.getList());
+        Assert.assertEquals((long) labelsTestData[i][1], nextEl.getLabelID());
+        Assert.assertEquals(labelsTestData[i][2], nextEl.getName());
+      }
+    }
+
   }
 
   private void verifyOldDataUpdated() throws Exception {
-    // Retrieve all stored data
-    List<Contact> storedData = AbstractESIAccountSync.retrieveAll(testTime - 1,
-                                                                  (long contid, AttributeSelector at) ->
-                                                                      Contact.accessQuery(corpSyncAccount, contid,
-                                                                                          1000, false, at,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR,
-                                                                                          AbstractESIAccountSync.ANY_SELECTOR));
+    {
+      // Retrieve all stored data
+      List<Contact> storedData = AbstractESIAccountSync.retrieveAll(testTime - 1,
+                                                                    (long contid, AttributeSelector at) ->
+                                                                        Contact.accessQuery(corpSyncAccount, contid,
+                                                                                            1000, false, at,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                            AbstractESIAccountSync.ANY_SELECTOR));
 
-    // Check data matches test data
-    Assert.assertEquals(contactsTestData.length, storedData.size());
+      // Check data matches test data
+      Assert.assertEquals(contactsTestData.length, storedData.size());
 
-    // Check stored data
-    for (int i = 0; i < contactsTestData.length; i++) {
-      Contact nextEl = storedData.get(i);
-      Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
-      Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
-      Assert.assertEquals((float) contactsTestData[i][2] + 1F, nextEl.getStanding(), 0.001);
-      Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
-      Assert.assertEquals(!(boolean) contactsTestData[i][4], nextEl.isInWatchlist());
-      Assert.assertEquals(contactsTestData[i][5], nextEl.isBlocked());
-      Assert.assertEquals((long) contactsTestData[i][6] + 1L, nextEl.getLabelID());
+      // Check stored data
+      for (int i = 0; i < contactsTestData.length; i++) {
+        Contact nextEl = storedData.get(i);
+        Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
+        Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
+        Assert.assertEquals((float) contactsTestData[i][2] + 1F, nextEl.getStanding(), 0.001);
+        Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
+        Assert.assertEquals(!(boolean) contactsTestData[i][4], nextEl.isInWatchlist());
+        Assert.assertEquals(contactsTestData[i][5], nextEl.isBlocked());
+        Assert.assertEquals((long) contactsTestData[i][6] + 1L, nextEl.getLabelID());
+      }
     }
+
+    {
+      // Retrieve all stored data
+      List<ContactLabel> storedData = AbstractESIAccountSync.retrieveAll(testTime - 1,
+                                                                         (long contid, AttributeSelector at) ->
+                                                                             ContactLabel.accessQuery(corpSyncAccount,
+                                                                                                      contid, 1000,
+                                                                                                      false,
+                                                                                                      at,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR,
+                                                                                                      AbstractESIAccountSync.ANY_SELECTOR));
+
+      // Check data matches test data
+      Assert.assertEquals(labelsTestData.length, storedData.size());
+
+      // Check stored data
+      for (int i = 0; i < labelsTestData.length; i++) {
+        ContactLabel nextEl = storedData.get(i);
+        Assert.assertEquals(labelsTestData[i][0], nextEl.getList());
+        Assert.assertEquals((long) labelsTestData[i][1], nextEl.getLabelID());
+        Assert.assertEquals(labelsTestData[i][2] + "1", nextEl.getName());
+      }
+    }
+
   }
 
   @Test
@@ -232,6 +331,15 @@ public class ESICorporationContactsSyncTest extends SyncTestBase {
       newEl.setup(corpSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }
+
+    for (Object[] d : labelsTestData) {
+      ContactLabel newEl = new ContactLabel((String) d[0],
+                                            (long) d[1],
+                                            d[2] + "1");
+      newEl.setup(corpSyncAccount, testTime - 1);
+      CachedData.update(newEl);
+    }
+
 
     // Perform the sync
     ESICorporationContactsSync sync = new ESICorporationContactsSync(corpSyncAccount);

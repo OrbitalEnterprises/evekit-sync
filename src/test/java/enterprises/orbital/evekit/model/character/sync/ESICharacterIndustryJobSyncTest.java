@@ -154,6 +154,7 @@ public class ESICharacterIndustryJobSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdIndustryJobsWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.eq(true),
         EasyMock.anyString(),
         EasyMock.isNull(),

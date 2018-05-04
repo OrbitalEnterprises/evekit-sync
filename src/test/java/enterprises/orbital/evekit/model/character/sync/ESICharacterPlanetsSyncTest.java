@@ -176,7 +176,7 @@ public class ESICharacterPlanetsSyncTest extends SyncTestBase {
     OrbitalProperties.setTimeGenerator(() -> testTime);
   }
 
-  @SuppressWarnings("SqlNoDataSourceInspection")
+  @SuppressWarnings({"SqlNoDataSourceInspection", "SqlDialectInspection"})
   @Override
   @After
   public void teardown() throws Exception {
@@ -262,6 +262,7 @@ public class ESICharacterPlanetsSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdPlanetsWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))
@@ -344,6 +345,7 @@ public class ESICharacterPlanetsSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdPlanetsPlanetIdWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(planetID),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),

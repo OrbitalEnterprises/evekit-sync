@@ -51,7 +51,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
       // 7 String body
       //
       // We only process batch 0, so make sure all IDs end in 0
-      mailTestData[i][0] = (TestBase.getUniqueRandomLong() / 10) * 10;
+      mailTestData[i][0] = (long) ((TestBase.getUniqueRandomInteger() / 10) * 10);
       mailTestData[i][1] = TestBase.getRandomText(50);
       mailTestData[i][2] = TestBase.getRandomInt();
       mailTestData[i][3] = TestBase.getRandomLong();
@@ -122,6 +122,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
     OrbitalProperties.setTimeGenerator(() -> testTime);
   }
 
+  @SuppressWarnings({"SqlDialectInspection", "SqlNoDataSourceInspection"})
   @Override
   @After
   public void teardown() throws Exception {
@@ -171,18 +172,18 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
 
     // Setup mail headers and bodies
     List<GetCharactersCharacterIdMail200Ok> headers = new ArrayList<>();
-    Map<Long, GetCharactersCharacterIdMailMailIdOk> bodies = new HashMap<>();
+    Map<Integer, GetCharactersCharacterIdMailMailIdOk> bodies = new HashMap<>();
     for (Object[] nm : mailTestData) {
       // Add header
       GetCharactersCharacterIdMail200Ok nextHeader = new GetCharactersCharacterIdMail200Ok();
-      nextHeader.setMailId((long) nm[0]);
+      nextHeader.setMailId(((Long) nm[0]).intValue());
       nextHeader.setSubject((String) nm[1]);
       nextHeader.setFrom((int) nm[2]);
       nextHeader.setTimestamp(new DateTime(new Date((long) nm[3])));
       nextHeader.setIsRead((boolean) nm[6]);
       for (int i : (int[]) nm[4])
         nextHeader.getLabels()
-                  .add((long) i);
+                  .add(i);
       for (Object[] nr : (Object[][]) nm[5]) {
         GetCharactersCharacterIdMailRecipient.RecipientTypeEnum rt = (GetCharactersCharacterIdMailRecipient.RecipientTypeEnum) nr[0];
         int ri = (int) nr[1];
@@ -238,8 +239,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
     }
     for (int i = mailPages.length; i >= 0; i--) {
       Integer mailID = i < mailPages.length ? pages[i].get(0)
-                                                      .getMailId()
-                                                      .intValue() : Integer.MAX_VALUE;
+                                                      .getMailId() : Integer.MAX_VALUE;
       List<GetCharactersCharacterIdMail200Ok> data = i > 0 ? pages[i - 1] : Collections.emptyList();
       ApiResponse<List<GetCharactersCharacterIdMail200Ok>> apir = new ApiResponse<>(200,
                                                                                     createHeaders("Expires",
@@ -247,6 +247,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
                                                                                     data);
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdMailWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(mailID),
@@ -257,7 +258,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
     }
 
     // Now setup mail body calls
-    for (Map.Entry<Long, GetCharactersCharacterIdMailMailIdOk> nb : bodies.entrySet()) {
+    for (Map.Entry<Integer, GetCharactersCharacterIdMailMailIdOk> nb : bodies.entrySet()) {
       ApiResponse<GetCharactersCharacterIdMailMailIdOk> apir = new ApiResponse<>(200,
                                                                                  createHeaders("Expires",
                                                                                                "Thu, 21 Dec 2017 12:00:00 GMT"),
@@ -267,6 +268,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(nb.getKey()
                         .intValue()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -295,6 +297,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdMailLabelsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
           EasyMock.isNull()))
@@ -316,6 +319,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
                                                                                          listData);
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdMailListsWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
+          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.anyString(),
           EasyMock.isNull(),
@@ -371,8 +375,8 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
       }
       Assert.assertEquals(recipients.length, nextEl.getRecipients()
                                                    .size());
-      for (int j = 0; j < recipients.length; j++) {
-        MailMessageRecipient rcp = new MailMessageRecipient(String.valueOf(recipients[j][0]), (int) recipients[j][1]);
+      for (Object[] recipient : recipients) {
+        MailMessageRecipient rcp = new MailMessageRecipient(String.valueOf(recipient[0]), (int) recipient[1]);
         Assert.assertTrue(nextEl.getRecipients()
                                 .contains(rcp));
       }

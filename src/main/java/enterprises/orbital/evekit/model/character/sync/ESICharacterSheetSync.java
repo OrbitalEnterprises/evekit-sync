@@ -45,13 +45,14 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, null);
+        (int) account.getEveCharacterID(), null, null, null, null);
     checkCommonProblems(result);
 
     // Also cache corporation ID and name in case these changed
     corporationID = result.getData().getCorporationId();
     ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi().getCorporationsCorporationIdWithHttpInfo(
         (int) corporationID,
+        null,
         null,
         null,
         null);

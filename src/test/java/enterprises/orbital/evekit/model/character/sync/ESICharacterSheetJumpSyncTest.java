@@ -4,11 +4,9 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CharacterApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
 import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdFatigueOk;
-import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdOk;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
-import enterprises.orbital.evekit.model.character.CharacterSheet;
 import enterprises.orbital.evekit.model.character.CharacterSheetJump;
 import org.easymock.EasyMock;
 import org.joda.time.DateTime;
@@ -69,6 +67,7 @@ public class ESICharacterSheetJumpSyncTest extends SyncTestBase {
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdFatigueWithHttpInfo(
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.anyString(),
         EasyMock.isNull(),
         EasyMock.isNull()))
@@ -92,9 +91,12 @@ public class ESICharacterSheetJumpSyncTest extends SyncTestBase {
     CharacterSheetJump result = CharacterSheetJump.get(charSyncAccount, testTime);
     Assert.assertEquals(testTime, result.getLifeStart());
     Assert.assertEquals(Long.MAX_VALUE, result.getLifeEnd());
-    Assert.assertEquals(testFatigue.getLastJumpDate().getMillis(), result.getJumpActivation());
-    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate().getMillis(), result.getJumpFatigue());
-    Assert.assertEquals(testFatigue.getLastUpdateDate().getMillis(), result.getJumpLastUpdate());
+    Assert.assertEquals(testFatigue.getLastJumpDate()
+                                   .getMillis(), result.getJumpActivation());
+    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate()
+                                   .getMillis(), result.getJumpFatigue());
+    Assert.assertEquals(testFatigue.getLastUpdateDate()
+                                   .getMillis(), result.getJumpLastUpdate());
 
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,
@@ -117,9 +119,12 @@ public class ESICharacterSheetJumpSyncTest extends SyncTestBase {
     EasyMock.replay(mockServer, mockEndpoint);
 
     // Populate existing
-    CharacterSheetJump existing = new CharacterSheetJump(testFatigue.getLastJumpDate().getMillis() + 1,
-                                                         testFatigue.getJumpFatigueExpireDate().getMillis() + 1,
-                                                         testFatigue.getLastUpdateDate().getMillis() + 1);
+    CharacterSheetJump existing = new CharacterSheetJump(testFatigue.getLastJumpDate()
+                                                                    .getMillis() + 1,
+                                                         testFatigue.getJumpFatigueExpireDate()
+                                                                    .getMillis() + 1,
+                                                         testFatigue.getLastUpdateDate()
+                                                                    .getMillis() + 1);
     existing.setup(charSyncAccount, testTime - 1);
     CachedData.update(existing);
 
@@ -132,17 +137,23 @@ public class ESICharacterSheetJumpSyncTest extends SyncTestBase {
     CharacterSheetJump result = CharacterSheetJump.get(charSyncAccount, testTime - 1);
     Assert.assertEquals(testTime - 1, result.getLifeStart());
     Assert.assertEquals(testTime, result.getLifeEnd());
-    Assert.assertEquals(testFatigue.getLastJumpDate().getMillis() + 1, result.getJumpActivation());
-    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate().getMillis() + 1, result.getJumpFatigue());
-    Assert.assertEquals(testFatigue.getLastUpdateDate().getMillis() + 1, result.getJumpLastUpdate());
+    Assert.assertEquals(testFatigue.getLastJumpDate()
+                                   .getMillis() + 1, result.getJumpActivation());
+    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate()
+                                   .getMillis() + 1, result.getJumpFatigue());
+    Assert.assertEquals(testFatigue.getLastUpdateDate()
+                                   .getMillis() + 1, result.getJumpLastUpdate());
 
     // Verify updated properly
     result = CharacterSheetJump.get(charSyncAccount, testTime);
     Assert.assertEquals(testTime, result.getLifeStart());
     Assert.assertEquals(Long.MAX_VALUE, result.getLifeEnd());
-    Assert.assertEquals(testFatigue.getLastJumpDate().getMillis(), result.getJumpActivation());
-    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate().getMillis(), result.getJumpFatigue());
-    Assert.assertEquals(testFatigue.getLastUpdateDate().getMillis(), result.getJumpLastUpdate());
+    Assert.assertEquals(testFatigue.getLastJumpDate()
+                                   .getMillis(), result.getJumpActivation());
+    Assert.assertEquals(testFatigue.getJumpFatigueExpireDate()
+                                   .getMillis(), result.getJumpFatigue());
+    Assert.assertEquals(testFatigue.getLastUpdateDate()
+                                   .getMillis(), result.getJumpLastUpdate());
 
     // Verify tracker was updated properly
     ESIEndpointSyncTracker syncTracker = ESIEndpointSyncTracker.getLatestFinishedTracker(charSyncAccount,

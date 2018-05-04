@@ -63,6 +63,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
         (int) account.getEveCharacterID(),
         null,
         txnIdLimit,
+        null,
         accessToken(),
         null,
         null);
@@ -83,6 +84,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
       result = apiInstance.getCharactersCharacterIdWalletTransactionsWithHttpInfo((int) account.getEveCharacterID(),
                                                                                   null,
                                                                                   txnIdLimit,
+                                                                                  null,
                                                                                   accessToken(),
                                                                                   null,
                                                                                   null);

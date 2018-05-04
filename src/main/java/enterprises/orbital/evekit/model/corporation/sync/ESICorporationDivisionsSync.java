@@ -47,6 +47,7 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
     ApiResponse<GetCorporationsCorporationIdDivisionsOk> result = apiInstance.getCorporationsCorporationIdDivisionsWithHttpInfo(
         (int) account.getEveCorporationID(),
         null,
+        null,
         accessToken(),
         null,
         null);

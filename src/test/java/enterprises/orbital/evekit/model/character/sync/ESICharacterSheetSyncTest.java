@@ -85,6 +85,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
+        EasyMock.isNull(),
         EasyMock.isNull()))
             .andReturn(apir);
 
@@ -92,6 +93,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     mockCorpEndpoint = EasyMock.createMock(CorporationApi.class);
     EasyMock.expect(mockCorpEndpoint.getCorporationsCorporationIdWithHttpInfo(
         EasyMock.eq((int) testSheet.getCorporationId()),
+        EasyMock.isNull(),
         EasyMock.isNull(),
         EasyMock.isNull(),
         EasyMock.isNull()))

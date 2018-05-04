@@ -166,6 +166,7 @@ public class ESICorporationIndustryJobSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdIndustryJobsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
+          EasyMock.isNull(),
           EasyMock.eq(true),
           EasyMock.eq(i + 1),
           EasyMock.anyString(),

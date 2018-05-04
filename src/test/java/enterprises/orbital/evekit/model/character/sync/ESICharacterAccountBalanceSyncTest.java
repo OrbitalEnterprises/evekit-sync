@@ -61,6 +61,7 @@ public class ESICharacterAccountBalanceSyncTest extends SyncTestBase {
     mockEndpoint = EasyMock.createMock(WalletApi.class);
     EasyMock.expect(mockEndpoint.getCharactersCharacterIdWalletWithHttpInfo(EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
                                                                             EasyMock.isNull(),
+                                                                            EasyMock.isNull(),
                                                                             EasyMock.anyString(),
                                                                             EasyMock.isNull(),
                                                                             EasyMock.isNull()))

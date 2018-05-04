@@ -47,6 +47,7 @@ public class ESICorporationFacilitiesSync extends AbstractESIAccountSync<List<Ge
     ApiResponse<List<GetCorporationsCorporationIdFacilities200Ok>> result = apiInstance.getCorporationsCorporationIdFacilitiesWithHttpInfo(
         (int) account.getEveCorporationID(),
         null,
+        null,
         accessToken(),
         null,
         null);

@@ -49,6 +49,7 @@ public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<Lis
       return apiInstance.getCorporationsCorporationIdCustomsOfficesWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
+          null,
           page,
           accessToken(),
           null,
