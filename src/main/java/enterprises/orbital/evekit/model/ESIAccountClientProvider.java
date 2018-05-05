@@ -47,4 +47,6 @@ public interface ESIAccountClientProvider {
   CalendarApi getCalendarApi();
 
   FittingsApi getFittingsApi();
+
+  LoyaltyApi getLoyaltyApi();
 }

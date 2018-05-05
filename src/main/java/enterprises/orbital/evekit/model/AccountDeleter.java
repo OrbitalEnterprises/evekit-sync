@@ -63,6 +63,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "Implant");
     CachedData.cleanup(toDelete, "JumpClone");
     CachedData.cleanup(toDelete, "JumpCloneImplant");
+    CachedData.cleanup(toDelete, "LoyaltyPoints");
     CachedData.cleanup(toDelete, "MailingList");
     CachedData.cleanup(toDelete, "MailLabel");
     CachedData.cleanup(toDelete, "PlanetaryColony");

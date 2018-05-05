@@ -50,7 +50,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       // 5 Object[] killvictim
       // 6 Object[][] killattackers
       // 7 Object[][] killitems
-      killmailTestData[i][0] = (TestBase.getUniqueRandomInteger() / 10) * 10;
+      killmailTestData[i][0] = TestBase.getUniqueRandomInteger() * 10;
       killmailTestData[i][1] = TestBase.getRandomLong();
       killmailTestData[i][2] = TestBase.getRandomInt();
       killmailTestData[i][3] = TestBase.getRandomInt();
