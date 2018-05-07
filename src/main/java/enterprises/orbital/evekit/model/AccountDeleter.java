@@ -66,6 +66,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "LoyaltyPoints");
     CachedData.cleanup(toDelete, "MailingList");
     CachedData.cleanup(toDelete, "MailLabel");
+    CachedData.cleanup(toDelete, "MiningLedger");
     CachedData.cleanup(toDelete, "PlanetaryColony");
     CachedData.cleanup(toDelete, "PlanetaryLink");
     CachedData.cleanup(toDelete, "PlanetaryPin");
@@ -111,6 +112,9 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "MemberRoleHistory");
     CachedData.cleanup(toDelete, "MemberTitle");
     CachedData.cleanup(toDelete, "MemberTracking");
+    CachedData.cleanup(toDelete, "MiningExtraction");
+    CachedData.cleanup(toDelete, "MiningObserver");
+    CachedData.cleanup(toDelete, "MiningObservation");
     CachedData.cleanup(toDelete, "Shareholder");
     CachedData.cleanup(toDelete, "Starbase");
     try {
