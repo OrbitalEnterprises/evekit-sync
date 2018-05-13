@@ -4,6 +4,7 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
+import enterprises.orbital.evekit.account.AccountNotFoundException;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import org.apache.commons.lang3.tuple.Pair;
@@ -373,6 +374,21 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     log.fine("Starting synchronization: " + getContext());
 
     try {
+      // We may have been queued for a while and may have a stale account reference.
+      // Refresh to make sure we have proper credentials.
+      try {
+        account = SynchronizedEveAccount.getSynchronizedAccount(account.getUserAccount(), account.getAid(), false);
+      } catch (AccountNotFoundException e) {
+        // This could potentially happen if this account was marked for delete while we had a tracker
+        // queued.  In this case, just finish the tracker and exit.
+        log.log(Level.FINE, "Error refreshing account, ending synch: " + getContext(), e);
+        ESIEndpointSyncTracker tracker = getCurrentTracker();
+        tracker.setStatus(ESISyncState.ERROR);
+        tracker.setDetail("Account appears to be in a bad state, this synch will be skipped");
+        ESIEndpointSyncTracker.finishTracker(tracker);
+        return;
+      }
+
       // Get the current tracker.  If no tracker exists, then we'll exit in the catch block below.
       ESIEndpointSyncTracker tracker = getCurrentTracker();
 
