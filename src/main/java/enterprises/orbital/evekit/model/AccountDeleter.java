@@ -75,7 +75,6 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "SkillInQueue");
     CachedData.cleanup(toDelete, "UpcomingCalendarEvent");
     CachedData.cleanup(toDelete, "AccountBalance");
-    CachedData.cleanup(toDelete, "AccountStatus");
     CachedData.cleanup(toDelete, "Asset");
     CachedData.cleanup(toDelete, "Blueprint");
     CachedData.cleanup(toDelete, "Bookmark");
