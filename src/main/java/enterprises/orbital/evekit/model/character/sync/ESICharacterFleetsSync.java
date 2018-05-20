@@ -12,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,8 +25,8 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
   static class FleetData {
     GetCharactersCharacterIdFleetOk charFleet;
     GetFleetsFleetIdOk fleetInfo;
-    List<GetFleetsFleetIdMembers200Ok> fleetMembers;
-    List<GetFleetsFleetIdWings200Ok> fleetWings;
+    List<GetFleetsFleetIdMembers200Ok> fleetMembers = Collections.emptyList();
+    List<GetFleetsFleetIdWings200Ok> fleetWings = Collections.emptyList();
   }
 
   public ESICharacterFleetsSync(SynchronizedEveAccount account) {
@@ -107,16 +108,26 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
     // Retrieve fleet info
     ESIThrottle.throttle(endpoint().name(), account);
     {
-      ApiResponse<GetFleetsFleetIdOk> result = apiInstance.getFleetsFleetIdWithHttpInfo(
-          data.charFleet.getFleetId(),
-          null,
-          null,
-          accessToken(),
-          null,
-          null);
-      checkCommonProblems(result);
-      data.fleetInfo = result.getData();
-      expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
+      try {
+        ApiResponse<GetFleetsFleetIdOk> result = apiInstance.getFleetsFleetIdWithHttpInfo(
+            data.charFleet.getFleetId(),
+            null,
+            null,
+            accessToken(),
+            null,
+            null);
+        checkCommonProblems(result);
+        data.fleetInfo = result.getData();
+        expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
+      } catch (ApiException e) {
+        // This call will 404 if the character is in a fleet, but we're not allowed to access fleet info.
+        // This is benign, so just return our results so far.
+        if (e.getCode() == HttpStatus.SC_NOT_FOUND)
+          return new ESIAccountServerResult<>(expiry, data);
+
+        // Otherwise, something we didn't expect so throw it
+        throw e;
+      }
     }
 
     // Retrieve fleet members
@@ -174,43 +185,48 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
                                      source.charFleet.getSquadId(),
                                      source.charFleet.getWingId()));
 
-      updates.add(new FleetInfo(currentFleet,
-                                source.fleetInfo.getIsFreeMove(),
-                                source.fleetInfo.getIsRegistered(),
-                                source.fleetInfo.getIsVoiceEnabled(),
-                                source.fleetInfo.getMotd()));
-
       Set<Integer> seenMembers = new HashSet<>();
-      for (GetFleetsFleetIdMembers200Ok mem : source.fleetMembers) {
-        updates.add(new FleetMember(currentFleet,
-                                    mem.getCharacterId(),
-                                    mem.getJoinTime()
-                                       .getMillis(),
-                                    mem.getRole()
-                                       .toString(),
-                                    mem.getRoleName(),
-                                    mem.getShipTypeId(),
-                                    mem.getSolarSystemId(),
-                                    mem.getSquadId(),
-                                    nullSafeLong(mem.getStationId(), 0),
-                                    mem.getTakesFleetWarp(),
-                                    mem.getWingId()));
-        seenMembers.add(mem.getCharacterId());
-      }
-
       Set<Long> seenWings = new HashSet<>();
       Set<Pair<Long, Long>> seenSquads = new HashSet<>();
-      for (GetFleetsFleetIdWings200Ok wing : source.fleetWings) {
-        updates.add(new FleetWing(currentFleet,
-                                  wing.getId(),
-                                  wing.getName()));
-        seenWings.add(wing.getId());
-        for (GetFleetsFleetIdWingsSquad squad : wing.getSquads()) {
-          updates.add(new FleetSquad(currentFleet,
-                                     wing.getId(),
-                                     squad.getId(),
-                                     squad.getName()));
-          seenSquads.add(Pair.of(wing.getId(), squad.getId()));
+
+      if (source.fleetInfo != null) {
+        // We may be in a fleet, but not have access to the details.  Only populate
+        // info and wings if we have that info.
+        updates.add(new FleetInfo(currentFleet,
+                                  source.fleetInfo.getIsFreeMove(),
+                                  source.fleetInfo.getIsRegistered(),
+                                  source.fleetInfo.getIsVoiceEnabled(),
+                                  source.fleetInfo.getMotd()));
+
+        for (GetFleetsFleetIdMembers200Ok mem : source.fleetMembers) {
+          updates.add(new FleetMember(currentFleet,
+                                      mem.getCharacterId(),
+                                      mem.getJoinTime()
+                                         .getMillis(),
+                                      mem.getRole()
+                                         .toString(),
+                                      mem.getRoleName(),
+                                      mem.getShipTypeId(),
+                                      mem.getSolarSystemId(),
+                                      mem.getSquadId(),
+                                      nullSafeLong(mem.getStationId(), 0),
+                                      mem.getTakesFleetWarp(),
+                                      mem.getWingId()));
+          seenMembers.add(mem.getCharacterId());
+        }
+
+        for (GetFleetsFleetIdWings200Ok wing : source.fleetWings) {
+          updates.add(new FleetWing(currentFleet,
+                                    wing.getId(),
+                                    wing.getName()));
+          seenWings.add(wing.getId());
+          for (GetFleetsFleetIdWingsSquad squad : wing.getSquads()) {
+            updates.add(new FleetSquad(currentFleet,
+                                       wing.getId(),
+                                       squad.getId(),
+                                       squad.getName()));
+            seenSquads.add(Pair.of(wing.getId(), squad.getId()));
+          }
         }
       }
 
