@@ -41,6 +41,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "CalendarEventAttendee");
     CachedData.cleanup(toDelete, "Capsuleer");
     CachedData.cleanup(toDelete, "CharacterContactNotification");
+    CachedData.cleanup(toDelete, "CharacterFleet");
     CachedData.cleanup(toDelete, "CharacterMailMessage");
     CachedData.cleanup(toDelete, "CharacterMedal");
     CachedData.cleanup(toDelete, "CharacterMedalGraphic");
@@ -60,6 +61,10 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "ChatChannelMember");
     CachedData.cleanup(toDelete, "Fitting");
     CachedData.cleanup(toDelete, "FittingItem");
+    CachedData.cleanup(toDelete, "FleetInfo");
+    CachedData.cleanup(toDelete, "FleetMember");
+    CachedData.cleanup(toDelete, "FleetSquad");
+    CachedData.cleanup(toDelete, "FleetWing");
     CachedData.cleanup(toDelete, "Implant");
     CachedData.cleanup(toDelete, "JumpClone");
     CachedData.cleanup(toDelete, "JumpCloneImplant");
@@ -67,6 +72,7 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "MailingList");
     CachedData.cleanup(toDelete, "MailLabel");
     CachedData.cleanup(toDelete, "MiningLedger");
+    CachedData.cleanup(toDelete, "Opportunity");
     CachedData.cleanup(toDelete, "PlanetaryColony");
     CachedData.cleanup(toDelete, "PlanetaryLink");
     CachedData.cleanup(toDelete, "PlanetaryPin");
@@ -116,6 +122,8 @@ public class AccountDeleter {
     CachedData.cleanup(toDelete, "MiningObservation");
     CachedData.cleanup(toDelete, "Shareholder");
     CachedData.cleanup(toDelete, "Starbase");
+    CachedData.cleanup(toDelete, "Structure");
+    CachedData.cleanup(toDelete, "StructureService");
     try {
       SynchronizedEveAccount.remove(toDelete);
     } catch (IOException e) {

@@ -348,7 +348,6 @@ public class ESICorporationStarbasesSyncTest extends SyncTestBase {
     int roleSize = GetCorporationsCorporationIdStarbasesStarbaseIdOk.UnanchorEnum.values().length;
     for (int i = 0; i < basesTestData.length; i++) {
       oldData[i][0] = i % 2 == 0 ? basesTestData[i][0] : TestBase.getUniqueRandomLong();
-      oldData[i][0] = TestBase.getUniqueRandomLong();
       oldData[i][1] = TestBase.getRandomInt();
       oldData[i][2] = TestBase.getRandomInt();
       oldData[i][3] = TestBase.getRandomInt();

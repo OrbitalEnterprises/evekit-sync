@@ -49,4 +49,8 @@ public interface ESIAccountClientProvider {
   FittingsApi getFittingsApi();
 
   LoyaltyApi getLoyaltyApi();
+
+  OpportunitiesApi getOpportunitiesApi();
+
+  FleetsApi getFleetsApi();
 }

@@ -46,6 +46,7 @@
         <class>enterprises.orbital.evekit.model.character.CalendarEventAttendee</class>
         <class>enterprises.orbital.evekit.model.character.Capsuleer</class>
         <class>enterprises.orbital.evekit.model.character.CharacterContactNotification</class>
+        <class>enterprises.orbital.evekit.model.character.CharacterFleet</class>
         <class>enterprises.orbital.evekit.model.character.CharacterLocation</class>
         <class>enterprises.orbital.evekit.model.character.CharacterMailMessage</class>
         <class>enterprises.orbital.evekit.model.character.CharacterMedal</class>
@@ -65,6 +66,10 @@
         <class>enterprises.orbital.evekit.model.character.ChatChannelMember</class>
         <class>enterprises.orbital.evekit.model.character.Fitting</class>
         <class>enterprises.orbital.evekit.model.character.FittingItem</class>
+        <class>enterprises.orbital.evekit.model.character.FleetInfo</class>
+        <class>enterprises.orbital.evekit.model.character.FleetMember</class>
+        <class>enterprises.orbital.evekit.model.character.FleetWing</class>
+        <class>enterprises.orbital.evekit.model.character.FleetSquad</class>
         <class>enterprises.orbital.evekit.model.character.Implant</class>
         <class>enterprises.orbital.evekit.model.character.JumpClone</class>
         <class>enterprises.orbital.evekit.model.character.JumpCloneImplant</class>
@@ -72,6 +77,7 @@
         <class>enterprises.orbital.evekit.model.character.MailingList</class>
         <class>enterprises.orbital.evekit.model.character.MailLabel</class>
         <class>enterprises.orbital.evekit.model.character.MiningLedger</class>
+        <class>enterprises.orbital.evekit.model.character.Opportunity</class>
         <class>enterprises.orbital.evekit.model.character.PlanetaryColony</class>
         <class>enterprises.orbital.evekit.model.character.PlanetaryLink</class>
         <class>enterprises.orbital.evekit.model.character.PlanetaryPin</class>
@@ -101,6 +107,8 @@
         <class>enterprises.orbital.evekit.model.corporation.MiningObservation</class>
         <class>enterprises.orbital.evekit.model.corporation.Shareholder</class>
         <class>enterprises.orbital.evekit.model.corporation.Starbase</class>
+        <class>enterprises.orbital.evekit.model.corporation.Structure</class>
+        <class>enterprises.orbital.evekit.model.corporation.StructureService</class>
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver"/>
