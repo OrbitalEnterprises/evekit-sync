@@ -214,7 +214,7 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
                                  ));
 
       int sequence = 0;
-      for (GetKillmailsKillmailIdKillmailHashItem1 nextTopItem : nextVictim.getItems()) {
+      for (GetKillmailsKillmailIdKillmailHashItem nextTopItem : nextVictim.getItems()) {
         KillItem newTopItem = new KillItem(nextKill.getKillmailId(),
                                            nextTopItem.getItemTypeId(),
                                            nextTopItem.getFlag(),
@@ -224,7 +224,7 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
                                            sequence++,
                                            KillItem.TOP_LEVEL);
         updates.add(newTopItem);
-        for (GetKillmailsKillmailIdKillmailHashItem nextChildItem : nextTopItem.getItems()) {
+        for (GetKillmailsKillmailIdKillmailHashItemsItem nextChildItem : nextTopItem.getItems()) {
           updates.add(new KillItem(nextKill.getKillmailId(),
                                              nextChildItem.getItemTypeId(),
                                              nextChildItem.getFlag(),

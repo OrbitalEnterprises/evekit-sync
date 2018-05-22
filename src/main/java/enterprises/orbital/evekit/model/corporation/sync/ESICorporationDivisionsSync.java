@@ -4,9 +4,9 @@ import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CorporationApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsHangar;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsHangarHangar;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsOk;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsWallet;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsWalletWallet;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.corporation.Division;
@@ -61,16 +61,16 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
   protected void processServerData(long time, ESIAccountServerResult<GetCorporationsCorporationIdDivisionsOk> data,
                                    List<CachedData> updates) throws IOException {
     // Update wallet divisions
-    for (GetCorporationsCorporationIdDivisionsHangar next : data.getData()
-                                                                .getHangar()) {
+    for (GetCorporationsCorporationIdDivisionsHangarHangar next : data.getData()
+                                                                      .getHangar()) {
       updates.add(new Division(false,
                                nullSafeInteger(next.getDivision(), 0),
                                next.getName()));
     }
 
     // Update hangar divisions
-    for (GetCorporationsCorporationIdDivisionsWallet next : data.getData()
-                                                                .getWallet()) {
+    for (GetCorporationsCorporationIdDivisionsWalletWallet next : data.getData()
+                                                                      .getWallet()) {
       updates.add(new Division(true,
                                nullSafeInteger(next.getDivision(), 0),
                                next.getName()));

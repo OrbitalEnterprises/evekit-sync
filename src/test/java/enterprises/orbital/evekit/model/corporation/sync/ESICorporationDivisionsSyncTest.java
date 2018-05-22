@@ -3,9 +3,9 @@ package enterprises.orbital.evekit.model.corporation.sync;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.eve.esi.client.api.CorporationApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsHangar;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsHangarHangar;
 import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsOk;
-import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsWallet;
+import enterprises.orbital.eve.esi.client.model.GetCorporationsCorporationIdDivisionsWalletWallet;
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
@@ -81,13 +81,13 @@ public class ESICorporationDivisionsSyncTest extends SyncTestBase {
       int division = (int) aDivisionTestData[1];
       String name = (String) aDivisionTestData[2];
       if (wallet) {
-        GetCorporationsCorporationIdDivisionsWallet el = new GetCorporationsCorporationIdDivisionsWallet();
+        GetCorporationsCorporationIdDivisionsWalletWallet el = new GetCorporationsCorporationIdDivisionsWalletWallet();
         el.setDivision(division);
         el.setName(name);
         testDivs.getWallet()
                 .add(el);
       } else {
-        GetCorporationsCorporationIdDivisionsHangar el = new GetCorporationsCorporationIdDivisionsHangar();
+        GetCorporationsCorporationIdDivisionsHangarHangar el = new GetCorporationsCorporationIdDivisionsHangarHangar();
         el.setDivision(division);
         el.setName(name);
         testDivs.getHangar()

@@ -169,7 +169,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings({"RedundantThrows", "Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetKillmailsKillmailIdKillmailHashOk>> data,
@@ -216,7 +216,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
                                  ));
 
       int sequence = 0;
-      for (GetKillmailsKillmailIdKillmailHashItem1 nextTopItem : nextVictim.getItems()) {
+      for (GetKillmailsKillmailIdKillmailHashItem nextTopItem : nextVictim.getItems()) {
         KillItem newTopItem = new KillItem(nextKill.getKillmailId(),
                                            nextTopItem.getItemTypeId(),
                                            nextTopItem.getFlag(),
@@ -226,7 +226,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
                                            sequence++,
                                            KillItem.TOP_LEVEL);
         updates.add(newTopItem);
-        for (GetKillmailsKillmailIdKillmailHashItem nextChildItem : nextTopItem.getItems()) {
+        for (GetKillmailsKillmailIdKillmailHashItemsItem nextChildItem : nextTopItem.getItems()) {
           updates.add(new KillItem(nextKill.getKillmailId(),
                                              nextChildItem.getItemTypeId(),
                                              nextChildItem.getFlag(),

@@ -260,12 +260,12 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
       killVictimPos.setY((Double) nv[8]);
       killVictimPos.setZ((Double) nv[9]);
 
-      List<GetKillmailsKillmailIdKillmailHashItem1> topItems = new ArrayList<>();
+      List<GetKillmailsKillmailIdKillmailHashItem> topItems = new ArrayList<>();
       killVictim.setItems(topItems);
       for (Object[] ni : (Object[][]) nk[7]) {
         int containerSequence = (Integer) ni[7];
         if (containerSequence == -1) {
-          GetKillmailsKillmailIdKillmailHashItem1 newTI = new GetKillmailsKillmailIdKillmailHashItem1();
+          GetKillmailsKillmailIdKillmailHashItem newTI = new GetKillmailsKillmailIdKillmailHashItem();
           newTI.setItemTypeId((Integer) ni[1]);
           newTI.setFlag((Integer) ni[2]);
           newTI.setQuantityDestroyed((Long) ni[3]);
@@ -273,7 +273,7 @@ public class ESICorporationKillmaillSyncTest extends SyncTestBase {
           newTI.setSingleton((Integer) ni[5]);
           topItems.add(newTI);
         } else {
-          GetKillmailsKillmailIdKillmailHashItem newTI = new GetKillmailsKillmailIdKillmailHashItem();
+          GetKillmailsKillmailIdKillmailHashItemsItem newTI = new GetKillmailsKillmailIdKillmailHashItemsItem();
           newTI.setItemTypeId((Integer) ni[1]);
           newTI.setFlag((Integer) ni[2]);
           newTI.setQuantityDestroyed((Long) ni[3]);
