@@ -142,9 +142,7 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = contactsPages[i];
     }
@@ -166,9 +164,7 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
 
     // Setup server mock

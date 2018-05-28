@@ -154,9 +154,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = foldersPages[i];
     }
@@ -196,9 +194,7 @@ public class ESICharacterBookmarksSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = bookmarksPages[i];
     }

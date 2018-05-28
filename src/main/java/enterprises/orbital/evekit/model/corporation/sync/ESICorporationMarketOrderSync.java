@@ -59,9 +59,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = liveResult.getLeft() > 0 ? liveResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     orders.liveOrders = liveResult.getRight();
@@ -74,9 +72,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     expiry = histResult.getLeft() > 0 ? Math.max(histResult.getLeft(), expiry) : expiry;
     orders.historicalOrders = histResult.getRight();

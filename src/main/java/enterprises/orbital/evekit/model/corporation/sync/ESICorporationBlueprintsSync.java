@@ -50,9 +50,7 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),

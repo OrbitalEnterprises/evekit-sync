@@ -196,9 +196,7 @@ public class ESICorporationMiningLedgerSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = extractionPages[i];
     }
@@ -228,9 +226,7 @@ public class ESICorporationMiningLedgerSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
 
       for (int j = last; j < observerPages[i]; j++) {
@@ -263,9 +259,7 @@ public class ESICorporationMiningLedgerSyncTest extends SyncTestBase {
               EasyMock.isNull(),
               EasyMock.isNull(),
               EasyMock.eq(k + 1),
-              EasyMock.anyString(),
-              EasyMock.isNull(),
-              EasyMock.isNull()))
+              EasyMock.anyString()))
                   .andReturn(obvApir);
 
           obvLast = obvPages[k];

@@ -156,9 +156,7 @@ public class ESICharacterIndustryJobSyncTest extends SyncTestBase {
         EasyMock.isNull(),
         EasyMock.isNull(),
         EasyMock.eq(true),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
     // Setup server mock
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);

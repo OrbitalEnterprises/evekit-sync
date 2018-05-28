@@ -76,9 +76,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     // Retrieve contract items for bases with type: unknown, item_exchange, auction, courier
@@ -97,9 +95,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
                 (int) account.getEveCorporationID(),
                 null,
                 null,
-                accessToken(),
-                null,
-                null);
+                accessToken());
             checkCommonProblems(items);
             resultData.contractItems.put(nextContract.getContractId(), items.getData());
           } catch (ApiException e) {
@@ -124,9 +120,7 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
                     null,
                     null,
                     page,
-                    accessToken(),
-                    null,
-                    null);
+                    accessToken());
               });
               resultData.contractBids.put(nextContract.getContractId(), bids.getRight());
             } catch (ApiException e) {

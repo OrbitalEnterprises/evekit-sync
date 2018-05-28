@@ -51,9 +51,7 @@ public class ESICorporationShareholdersSync extends AbstractESIAccountSync<List<
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
 
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();

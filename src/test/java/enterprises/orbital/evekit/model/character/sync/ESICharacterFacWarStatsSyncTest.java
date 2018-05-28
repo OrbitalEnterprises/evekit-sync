@@ -82,9 +82,7 @@ public class ESICharacterFacWarStatsSyncTest extends SyncTestBase {
         EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getFactionWarfareApi())

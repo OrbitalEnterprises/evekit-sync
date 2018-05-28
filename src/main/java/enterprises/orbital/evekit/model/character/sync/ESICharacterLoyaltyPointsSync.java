@@ -45,9 +45,7 @@ public class ESICharacterLoyaltyPointsSync extends AbstractESIAccountSync<List<G
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

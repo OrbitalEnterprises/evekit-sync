@@ -47,7 +47,7 @@ public class ESICharacterStandingSync extends AbstractESIAccountSync<List<GetCha
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdStandings200Ok>> result = apiInstance.getCharactersCharacterIdStandingsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

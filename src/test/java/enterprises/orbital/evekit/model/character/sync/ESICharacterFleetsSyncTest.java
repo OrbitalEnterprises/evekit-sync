@@ -191,9 +191,7 @@ public class ESICharacterFleetsSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -213,9 +211,7 @@ public class ESICharacterFleetsSyncTest extends SyncTestBase {
           EasyMock.eq((long) charFleetTestData[0]),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -248,9 +244,8 @@ public class ESICharacterFleetsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
           EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -285,9 +280,8 @@ public class ESICharacterFleetsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
           EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 

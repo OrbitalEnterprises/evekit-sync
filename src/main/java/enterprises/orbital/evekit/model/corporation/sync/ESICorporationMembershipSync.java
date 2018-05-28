@@ -74,9 +74,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(apir);
       resultData.members = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
@@ -88,9 +86,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(apir);
       resultData.roles = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));
@@ -104,9 +100,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
             null,
             null,
             page,
-            accessToken(),
-            null,
-            null);
+            accessToken());
       });
       expiry = Math.max(expiry,
                         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());

@@ -50,7 +50,7 @@ public class ESICharacterIndustryJobSync extends AbstractESIAccountSync<List<Get
     IndustryApi apiInstance = cp.getIndustryApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdIndustryJobs200Ok>> result = apiInstance.getCharactersCharacterIdIndustryJobsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, true, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, true, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

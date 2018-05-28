@@ -69,9 +69,7 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<
                 null,
                 null,
                 page,
-                accessToken(),
-                null,
-                null);
+                accessToken());
           });
       resultMap.put(division, result.getRight());
       expiry = Math.max(expiry,

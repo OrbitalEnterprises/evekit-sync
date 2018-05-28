@@ -157,9 +157,7 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = pages[i];
     }
@@ -201,18 +199,14 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(idList),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(new ApiResponse<>(200, headers, locationBatch));
       //noinspection ConstantConditions
       EasyMock.expect(mockEndpoint.postCharactersCharacterIdAssetsNamesWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.eq(idList),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(new ApiResponse<>(200, headers, nameBatch));
     }
     // Setup server mock

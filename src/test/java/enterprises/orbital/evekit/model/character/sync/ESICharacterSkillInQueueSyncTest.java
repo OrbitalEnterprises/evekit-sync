@@ -113,9 +113,7 @@ public class ESICharacterSkillInQueueSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
     // Setup server mock
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);

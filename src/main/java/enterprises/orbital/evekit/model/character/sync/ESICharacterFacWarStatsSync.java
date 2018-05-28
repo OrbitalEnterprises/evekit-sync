@@ -47,9 +47,7 @@ public class ESICharacterFacWarStatsSync extends AbstractESIAccountSync<GetChara
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

@@ -46,7 +46,7 @@ public class ESICharacterLocationSync extends AbstractESIAccountSync<GetCharacte
   protected ESIAccountServerResult<GetCharactersCharacterIdLocationOk> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     LocationApi apiInstance = cp.getLocationApi();
     ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdLocationOk> result = apiInstance.getCharactersCharacterIdLocationWithHttpInfo((int) account.getEveCharacterID(), null,null,  accessToken(), null, null);
+    ApiResponse<GetCharactersCharacterIdLocationOk> result = apiInstance.getCharactersCharacterIdLocationWithHttpInfo((int) account.getEveCharacterID(), null,null,  accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()), result.getData());
   }

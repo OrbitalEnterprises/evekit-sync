@@ -48,7 +48,7 @@ public class ESICharacterOpportunitiesSync extends AbstractESIAccountSync<List<G
     // Retrieve opportunities
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdOpportunities200Ok>> result = apiInstance.getCharactersCharacterIdOpportunitiesWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 

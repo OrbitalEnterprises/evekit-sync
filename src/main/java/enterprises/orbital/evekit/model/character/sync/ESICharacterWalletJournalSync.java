@@ -62,9 +62,7 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
               null,
               null,
               page,
-              accessToken(),
-              null,
-              null);
+              accessToken());
         });
 
     List<GetCharactersCharacterIdWalletJournal200Ok> results = result.getRight();

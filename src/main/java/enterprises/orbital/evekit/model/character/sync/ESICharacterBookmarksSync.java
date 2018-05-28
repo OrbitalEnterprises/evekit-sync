@@ -60,9 +60,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.folders = result.getRight();
@@ -74,9 +72,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long bkExpiry = bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.bookmarks = bkResult.getRight();

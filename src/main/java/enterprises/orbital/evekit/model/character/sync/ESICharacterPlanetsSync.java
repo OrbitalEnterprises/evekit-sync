@@ -70,9 +70,7 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(planetResult);
     data.planets = planetResult.getData();
     long expiry = extractExpiry(planetResult, OrbitalProperties.getCurrentTime() + maxDelay());
@@ -84,9 +82,7 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
           next.getPlanetId(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(piResult);
       data.planetData.put(next.getPlanetId(), piResult.getData());
       expiry = Math.max(expiry, extractExpiry(piResult, OrbitalProperties.getCurrentTime() + maxDelay()));

@@ -56,8 +56,6 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
       ApiResponse<GetCorporationsCorporationIdOk> result = apiInstance.getCorporationsCorporationIdWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
-          null,
-          null,
           null);
       checkCommonProblems(result);
       data.sheet = result.getData();
@@ -68,8 +66,6 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<GetCorporationsCorporationIdIconsOk> result = apiInstance.getCorporationsCorporationIdIconsWithHttpInfo(
           (int) account.getEveCorporationID(),
-          null,
-          null,
           null,
           null);
       checkCommonProblems(result);

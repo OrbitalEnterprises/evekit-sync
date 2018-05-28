@@ -46,7 +46,7 @@ public class ESICharacterSkillInQueueSync extends AbstractESIAccountSync<List<Ge
     SkillsApi apiInstance = cp.getSkillsApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdSkillqueue200Ok>> result = apiInstance.getCharactersCharacterIdSkillqueueWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

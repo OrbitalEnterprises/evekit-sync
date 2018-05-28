@@ -98,9 +98,7 @@ public class ESICharacterResearchAgentSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
     mockServer = EasyMock.createMock(ESIAccountClientProvider.class);
     EasyMock.expect(mockServer.getCharacterApi())

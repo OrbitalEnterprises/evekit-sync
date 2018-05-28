@@ -72,9 +72,7 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.extractions = result.getRight();
@@ -86,9 +84,7 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     expiry = Math.max(expiry,
                       bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
@@ -105,9 +101,7 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
                 null,
                 null,
                 page,
-                accessToken(),
-                null,
-                null);
+                accessToken());
           });
       expiry = Math.max(expiry,
                         observerResult.getLeft() > 0 ? observerResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());

@@ -44,7 +44,7 @@ public class ESICharacterOnlineSync extends AbstractESIAccountSync<GetCharacters
     LocationApi apiInstance = cp.getLocationApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdOnlineOk> result = apiInstance.getCharactersCharacterIdOnlineWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

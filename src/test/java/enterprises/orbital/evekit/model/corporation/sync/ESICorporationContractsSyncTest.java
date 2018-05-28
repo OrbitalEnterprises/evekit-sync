@@ -228,9 +228,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = pages[i];
     }
@@ -261,9 +259,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
     // Setup contract bid retrieval mock calls
@@ -301,9 +297,7 @@ public class ESICorporationContractsSyncTest extends SyncTestBase {
             EasyMock.isNull(),
             EasyMock.isNull(),
             EasyMock.eq(j + 1),
-            EasyMock.anyString(),
-            EasyMock.isNull(),
-            EasyMock.isNull()))
+            EasyMock.anyString()))
                 .andReturn(apir);
         lastBidPage = bidPageOffsets[j];
       }

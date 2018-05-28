@@ -177,9 +177,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
 
     // Setup historic order calls
@@ -218,9 +216,7 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(histApir);
       last = pages[i];
     }

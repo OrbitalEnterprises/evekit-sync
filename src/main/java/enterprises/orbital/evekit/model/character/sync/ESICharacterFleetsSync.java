@@ -86,9 +86,7 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
             (int) account.getEveCharacterID(),
             null,
             null,
-            accessToken(),
-            null,
-            null);
+            accessToken());
         // Otherwise, check for other problems and continue
         checkCommonProblems(result);
         data.charFleet = result.getData();
@@ -113,9 +111,7 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
             data.charFleet.getFleetId(),
             null,
             null,
-            accessToken(),
-            null,
-            null);
+            accessToken());
         checkCommonProblems(result);
         data.fleetInfo = result.getData();
         expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
@@ -138,9 +134,8 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
           null,
           null,
           null,
-          accessToken(),
           null,
-          null);
+          accessToken());
       checkCommonProblems(result);
       data.fleetMembers = result.getData();
       expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
@@ -154,9 +149,8 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
           null,
           null,
           null,
-          accessToken(),
           null,
-          null);
+          accessToken());
       checkCommonProblems(result);
       data.fleetWings = result.getData();
       expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));

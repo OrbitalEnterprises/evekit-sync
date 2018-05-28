@@ -49,9 +49,7 @@ public class ESICharacterMiningLedgerSync extends AbstractESIAccountSync<List<Ge
               null,
               null,
               page,
-              accessToken(),
-              null,
-              null);
+              accessToken());
         });
 
     List<GetCharactersCharacterIdMining200Ok> results = result.getRight();

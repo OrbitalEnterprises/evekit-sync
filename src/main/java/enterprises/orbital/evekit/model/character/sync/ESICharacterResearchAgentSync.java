@@ -45,7 +45,7 @@ public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<G
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

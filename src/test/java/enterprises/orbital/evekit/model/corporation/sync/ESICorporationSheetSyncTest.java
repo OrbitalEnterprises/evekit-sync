@@ -86,8 +86,6 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
-          EasyMock.isNull(),
-          EasyMock.isNull(),
           EasyMock.isNull()))
               .andReturn(apir);
     }
@@ -95,8 +93,6 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
       ApiResponse<GetCorporationsCorporationIdIconsOk> apir = new ApiResponse<>(200, headers, testIcons);
       EasyMock.expect(mockEndpoint.getCorporationsCorporationIdIconsWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
-          EasyMock.isNull(),
-          EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.isNull()))
               .andReturn(apir);

@@ -63,8 +63,6 @@ public class ESICharacterAllianceContactsSync extends AbstractESIAccountSync<ESI
     ApiResponse<GetCharactersCharacterIdOk> cResult = capiInstance.getCharactersCharacterIdWithHttpInfo(
         (int) account.getEveCharacterID(),
         null,
-        null,
-        null,
         null);
     checkCommonProblems(cResult);
     Integer allianceID = cResult.getData()
@@ -90,9 +88,7 @@ public class ESICharacterAllianceContactsSync extends AbstractESIAccountSync<ESI
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.contacts = result.getRight();
@@ -101,9 +97,7 @@ public class ESICharacterAllianceContactsSync extends AbstractESIAccountSync<ESI
         allianceID,
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(clResult);
     expiry = Math.max(expiry, extractExpiry(clResult, OrbitalProperties.getCurrentTime() + maxDelay()));
     data.labels = clResult.getData();

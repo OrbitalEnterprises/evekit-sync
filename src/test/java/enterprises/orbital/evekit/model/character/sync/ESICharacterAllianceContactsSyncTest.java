@@ -125,8 +125,6 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
       EasyMock.expect(capiMock.getCharactersCharacterIdWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
-          EasyMock.isNull(),
-          EasyMock.isNull(),
           EasyMock.isNull()))
               .andReturn(apir);
     }
@@ -158,9 +156,7 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = contactsPages[i];
     }
@@ -182,9 +178,7 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
         EasyMock.eq(allianceID),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
 
     // Setup server mock

@@ -66,9 +66,7 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
 
@@ -82,9 +80,7 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
           nextBase.getSystemId(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(item);
       resultData.baseInfo.put(nextBase.getStarbaseId(), item.getData());
       expiry = Math.max(expiry, extractExpiry(item, OrbitalProperties.getCurrentTime() + maxDelay()));

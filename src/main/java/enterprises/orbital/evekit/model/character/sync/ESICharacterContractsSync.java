@@ -76,9 +76,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     // Retrieve contract items for contracts with type: unknown, item_exchange, auction, courier
@@ -97,9 +95,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
                 nextContract.getContractId(),
                 null,
                 null,
-                accessToken(),
-                null,
-                null);
+                accessToken());
             checkCommonProblems(items);
             resultData.contractItems.put(nextContract.getContractId(), items.getData());
           } catch (ApiException e) {
@@ -122,9 +118,7 @@ public class ESICharacterContractsSync extends AbstractESIAccountSync<ESICharact
                   nextContract.getContractId(),
                   null,
                   null,
-                  accessToken(),
-                  null,
-                  null);
+                  accessToken());
               checkCommonProblems(bids);
               resultData.contractBids.put(nextContract.getContractId(), bids.getData());
             } catch (ApiException e) {

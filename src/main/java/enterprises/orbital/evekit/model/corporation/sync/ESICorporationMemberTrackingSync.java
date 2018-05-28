@@ -63,9 +63,7 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(result);
       data.limit = result.getData();
       expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
@@ -77,9 +75,7 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(result);
       data.members = result.getData();
       expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));

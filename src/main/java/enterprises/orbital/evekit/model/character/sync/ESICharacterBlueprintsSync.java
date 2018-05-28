@@ -51,9 +51,7 @@ public class ESICharacterBlueprintsSync extends AbstractESIAccountSync<List<GetC
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),

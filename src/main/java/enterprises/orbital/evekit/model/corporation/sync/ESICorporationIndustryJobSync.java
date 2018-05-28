@@ -53,9 +53,7 @@ public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<G
           null,
           true,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     return new ESIAccountServerResult<>(
         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),

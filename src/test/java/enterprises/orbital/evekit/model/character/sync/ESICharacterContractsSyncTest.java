@@ -228,9 +228,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = pages[i];
     }
@@ -261,9 +259,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
           EasyMock.eq(contractID),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
     // Setup contract bid retrieval mock calls
@@ -291,9 +287,7 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
           EasyMock.eq(contractID),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
     // Setup server mock

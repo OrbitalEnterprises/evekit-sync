@@ -73,9 +73,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(apir);
       resultData.titles = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
@@ -87,9 +85,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
           (int) account.getEveCorporationID(),
           null,
           null,
-          accessToken(),
-          null,
-          null);
+          accessToken());
       checkCommonProblems(apir);
       resultData.members = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));

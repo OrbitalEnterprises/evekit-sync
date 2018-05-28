@@ -35,7 +35,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
   private static int[] killmailPages;
 
   static {
-    // Comparator for sorting test data in decreasing order by killID (testData[i][1])
+    // Comparator for sorting test data in increasing order by killID (testData[i][1])
     Comparator<Object[]> killDataCompare = Comparator.comparingInt(x -> (Integer) x[0]);
 
     int size = 100 + TestBase.getRandomInt(100);
@@ -134,14 +134,14 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
       }
     }
 
-    // Sort test data in decreasing order by killID (killmailTestData[i][0])
+    // Sort test data in increasing order by killID (killmailTestData[i][0])
     Arrays.sort(killmailTestData, 0, killmailTestData.length, killDataCompare);
 
     // Divide data into pages to test paging sync feature
     int pageCount = 3 + TestBase.getRandomInt(3);
     killmailPages = new int[pageCount];
-    for (int i = 0; i < pageCount; i++) {
-      killmailPages[i] = i * size / pageCount;
+    for (int i = pageCount - 1; i >= 0; i--) {
+      killmailPages[i] = size - (pageCount - i - 1) * (size / pageCount);
     }
   }
 
@@ -209,28 +209,24 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
 
     // First setup kill list mock
     @SuppressWarnings("unchecked")
-    List<GetCharactersCharacterIdKillmailsRecent200Ok>[] pages = new List[killmailPages.length];
+    int last = 0;
     for (int i = 0; i < killmailPages.length; i++) {
-      int limit = i + 1 == killmailPages.length ? killmailTestData.length : killmailPages[i + 1];
-      pages[i] = killmailList.subList(killmailPages[i], limit);
-    }
-    for (int i = killmailPages.length; i >= 0; i--) {
-      Integer killmailID = i < killmailPages.length ? pages[i].get(0).getKillmailId() : Integer.MAX_VALUE;
-      List<GetCharactersCharacterIdKillmailsRecent200Ok> data = i > 0 ? pages[i - 1] : Collections.emptyList();
       ApiResponse<List<GetCharactersCharacterIdKillmailsRecent200Ok>> apir = new ApiResponse<>(200,
                                                                                              createHeaders("Expires",
-                                                                                                           "Thu, 21 Dec 2017 12:00:00 GMT"),
-                                                                                             data);
+                                                                                                           "Thu, 21 Dec 2017 12:00:00 GMT",
+                                                                                                           "X-Pages",
+                                                                                                           String.valueOf(killmailPages.length)),
+                                                                                               killmailList.subList(
+                                                                                                   last,
+                                                                                                   killmailPages[i]));
       EasyMock.expect(mockEndpoint.getCharactersCharacterIdKillmailsRecentWithHttpInfo(
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.isNull(),
-          EasyMock.eq(killmailID),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.eq(i + 1),
+          EasyMock.anyString()))
               .andReturn(apir);
+      last = killmailPages[i];
     }
 
     // Now setup kill hash calls
@@ -303,8 +299,6 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
       EasyMock.expect(mockEndpoint.getKillmailsKillmailIdKillmailHashWithHttpInfo(
           String.valueOf(killData.getKillmailId()),
           killData.getKillmailId(),
-          null,
-          null,
           null,
           null)).andReturn(apir);
     }

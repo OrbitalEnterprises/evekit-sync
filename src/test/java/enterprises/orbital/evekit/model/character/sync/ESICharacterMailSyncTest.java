@@ -251,9 +251,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(mailID),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -270,9 +268,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
                         .intValue()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir)
               .anyTimes();
     }
@@ -298,9 +294,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -321,9 +315,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
           EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 

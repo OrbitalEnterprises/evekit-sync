@@ -11,6 +11,7 @@ import enterprises.orbital.evekit.model.common.Kill;
 import enterprises.orbital.evekit.model.common.KillAttacker;
 import enterprises.orbital.evekit.model.common.KillItem;
 import enterprises.orbital.evekit.model.common.KillVictim;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -68,43 +69,21 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
   protected ESIAccountServerResult<List<GetKillmailsKillmailIdKillmailHashOk>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     KillmailsApi apiInstance = cp.getKillmailsApi();
-    List<GetCorporationsCorporationIdKillmailsRecent200Ok> results = new ArrayList<>();
-    int killIdLimit = Integer.MAX_VALUE;
 
-    // Retrieve initial batch
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<List<GetCorporationsCorporationIdKillmailsRecent200Ok>> result = apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
-        (int) account.getEveCorporationID(),
-        null,
-        null,
-        killIdLimit,
-        accessToken(),
-        null,
-        null);
-    checkCommonProblems(result);
-    long expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
+    // Retrieve recent kill mails
+    Pair<Long, List<GetCorporationsCorporationIdKillmailsRecent200Ok>> result = pagedResultRetriever(
+        (page) -> {
+          ESIThrottle.throttle(endpoint().name(), account);
+          return apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
+              (int) account.getEveCorporationID(),
+              null,
+              null,
+              page,
+              accessToken());
+        });
 
-    // Crawl kill mails backwards until no more entries are retrieved
-    while (!result.getData()
-                  .isEmpty()) {
-      results.addAll(result.getData());
-      //noinspection ConstantConditions
-      killIdLimit = result.getData()
-                         .stream()
-                         .min(Comparator.comparingInt(GetCorporationsCorporationIdKillmailsRecent200Ok::getKillmailId))
-                         .get()
-                         .getKillmailId();
-      ESIThrottle.throttle(endpoint().name(), account);
-      result = apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo((int) account.getEveCorporationID(),
-                                                                               null,
-                                                                                   null,
-                                                                                killIdLimit,
-                                                                                accessToken(),
-                                                                               null,
-                                                                               null);
-      checkCommonProblems(result);
-      expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
-    }
+    List<GetCorporationsCorporationIdKillmailsRecent200Ok> results = result.getRight();
+    long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
 
     // Sort results in increasing order by killID so we insert in order
     results.sort(Comparator.comparingInt(GetCorporationsCorporationIdKillmailsRecent200Ok::getKillmailId));
@@ -148,8 +127,6 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
         ApiResponse<GetKillmailsKillmailIdKillmailHashOk> nextHash = apiInstance.getKillmailsKillmailIdKillmailHashWithHttpInfo(
             next.getKillmailHash(),
             next.getKillmailId(),
-            null,
-            null,
             null,
             null);
         checkCommonProblems(nextHash);

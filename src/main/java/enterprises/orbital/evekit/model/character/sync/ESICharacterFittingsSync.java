@@ -50,7 +50,7 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
     FittingsApi apiInstance = cp.getFittingsApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<GetCharactersCharacterIdFittings200Ok>> result = apiInstance.getCharactersCharacterIdFittingsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

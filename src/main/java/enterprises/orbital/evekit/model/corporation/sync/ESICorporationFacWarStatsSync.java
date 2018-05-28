@@ -47,9 +47,7 @@ public class ESICorporationFacWarStatsSync extends AbstractESIAccountSync<GetCor
         (int) account.getEveCorporationID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

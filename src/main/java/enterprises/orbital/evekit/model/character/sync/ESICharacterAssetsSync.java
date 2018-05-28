@@ -65,12 +65,12 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
                                      List<PostCharactersCharacterIdAssetsNames200Ok> assetNames) throws ApiException, IOException {
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCharactersCharacterIdAssetsLocations200Ok>> nextLocationBatch = apiInstance.postCharactersCharacterIdAssetsLocationsWithHttpInfo(
-      (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
+      (int) account.getEveCharacterID(), itemBatch, null, accessToken());
     checkCommonProblems(nextLocationBatch);
     assetLocations.addAll(nextLocationBatch.getData());
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<List<PostCharactersCharacterIdAssetsNames200Ok>> nextNameBatch = apiInstance.postCharactersCharacterIdAssetsNamesWithHttpInfo(
-      (int) account.getEveCharacterID(), itemBatch, null, accessToken(), null, null);
+      (int) account.getEveCharacterID(), itemBatch, null, accessToken());
     checkCommonProblems(nextNameBatch);
     assetNames.addAll(nextNameBatch.getData());
   }
@@ -88,9 +88,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
           null,
           null,
           page,
-          accessToken(),
-          null,
-          null);
+          accessToken());
     });
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     resultData.assets = result.getRight();

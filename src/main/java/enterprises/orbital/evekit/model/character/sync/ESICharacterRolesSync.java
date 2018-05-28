@@ -46,7 +46,7 @@ public class ESICharacterRolesSync extends AbstractESIAccountSync<GetCharactersC
     CharacterApi apiInstance = cp.getCharacterApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdRolesOk> result = apiInstance.getCharactersCharacterIdRolesWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

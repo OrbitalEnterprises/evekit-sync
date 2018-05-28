@@ -67,9 +67,7 @@ public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESIChar
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     resultData.contacts = result.getData();
     long expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
@@ -80,9 +78,7 @@ public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESIChar
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(noteResult);
     resultData.notes = noteResult.getData();
     expiry = Math.max(expiry, extractExpiry(noteResult, OrbitalProperties.getCurrentTime() + maxDelay()));

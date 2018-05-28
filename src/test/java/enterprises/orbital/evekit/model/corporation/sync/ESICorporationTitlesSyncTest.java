@@ -222,9 +222,7 @@ public class ESICorporationTitlesSyncTest extends SyncTestBase {
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 
@@ -248,9 +246,7 @@ public class ESICorporationTitlesSyncTest extends SyncTestBase {
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 

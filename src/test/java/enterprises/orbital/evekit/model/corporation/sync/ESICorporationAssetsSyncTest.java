@@ -156,9 +156,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = pages[i];
     }
@@ -200,18 +198,14 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.eq(idList),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(new ApiResponse<>(200, headers, locationBatch));
       //noinspection ConstantConditions
       EasyMock.expect(mockEndpoint.postCorporationsCorporationIdAssetsNamesWithHttpInfo(
           EasyMock.eq((int) corpSyncAccount.getEveCorporationID()),
           EasyMock.eq(idList),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(new ApiResponse<>(200, headers, nameBatch));
     }
     // Setup server mock

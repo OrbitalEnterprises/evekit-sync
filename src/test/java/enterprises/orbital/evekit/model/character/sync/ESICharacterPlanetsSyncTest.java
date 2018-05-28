@@ -263,9 +263,7 @@ public class ESICharacterPlanetsSyncTest extends SyncTestBase {
         EasyMock.eq((int) charSyncAccount.getEveCharacterID()),
         EasyMock.isNull(),
         EasyMock.isNull(),
-        EasyMock.anyString(),
-        EasyMock.isNull(),
-        EasyMock.isNull()))
+        EasyMock.anyString()))
             .andReturn(apir);
 
     // Setup planet info calls
@@ -347,9 +345,7 @@ public class ESICharacterPlanetsSyncTest extends SyncTestBase {
           EasyMock.eq(planetID),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apirPlanet);
     }
 

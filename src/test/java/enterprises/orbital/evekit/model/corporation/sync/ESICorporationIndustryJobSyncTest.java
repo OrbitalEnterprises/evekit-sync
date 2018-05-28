@@ -169,9 +169,7 @@ public class ESICorporationIndustryJobSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.eq(true),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = pages[i];
     }

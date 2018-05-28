@@ -185,9 +185,7 @@ public class ESICorporationStarbasesSyncTest extends SyncTestBase {
           EasyMock.isNull(),
           EasyMock.isNull(),
           EasyMock.eq(i + 1),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
       last = basesPages[i];
     }
@@ -231,9 +229,7 @@ public class ESICorporationStarbasesSyncTest extends SyncTestBase {
           EasyMock.eq((int) nextBase[2]),
           EasyMock.isNull(),
           EasyMock.isNull(),
-          EasyMock.anyString(),
-          EasyMock.isNull(),
-          EasyMock.isNull()))
+          EasyMock.anyString()))
               .andReturn(apir);
     }
 

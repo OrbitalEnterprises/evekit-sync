@@ -40,7 +40,7 @@ public class ESICharacterWalletBalanceSync extends AbstractESIAccountSync<Double
     WalletApi apiInstance = cp.getWalletApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<Double> result = apiInstance.getCharactersCharacterIdWalletWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());

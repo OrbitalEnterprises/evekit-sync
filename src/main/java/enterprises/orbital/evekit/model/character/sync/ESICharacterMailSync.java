@@ -81,9 +81,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         null,
         null,
         (int) mailIdLimit,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
 
     // Crawl mail backwards until no more entries are retrieved
@@ -102,9 +100,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
                                                                     null,
                                                                     null,
                                                                     (int) mailIdLimit,
-                                                                    accessToken(),
-                                                                    null,
-                                                                    null);
+                                                                    accessToken());
       checkCommonProblems(result);
     }
 
@@ -142,9 +138,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
             next.getMailId(),
             null,
             null,
-            accessToken(),
-            null,
-            null);
+            accessToken());
         checkCommonProblems(bodyResponse);
 
         // If we succeed then record this header and body for possible storage
@@ -164,9 +158,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(listResponse);
     resultData.lists = listResponse.getData();
 
@@ -176,9 +168,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
         (int) account.getEveCharacterID(),
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(listResponse);
     long expiry = extractExpiry(labelResponse, OrbitalProperties.getCurrentTime() + maxDelay());
     resultData.labels = labelResponse.getData()

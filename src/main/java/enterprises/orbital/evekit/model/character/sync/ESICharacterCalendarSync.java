@@ -70,9 +70,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
         null,
         null,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     long expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 
@@ -91,9 +89,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
                                                                         null,
                                                                         eventIdLimit,
                                                                         null,
-                                                                        accessToken(),
-                                                                        null,
-                                                                        null);
+                                                                        accessToken());
       checkCommonProblems(result);
       expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
     }
@@ -107,9 +103,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
             next.getEventId(),
             null,
             null,
-            accessToken(),
-            null,
-            null);
+            accessToken());
         checkCommonProblems(eventResponse);
         expiry = Math.max(expiry, extractExpiry(eventResponse, OrbitalProperties.getCurrentTime() + maxDelay()));
 
@@ -121,9 +115,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
               next.getEventId(),
               null,
               null,
-              accessToken(),
-              null,
-              null);
+              accessToken());
           checkCommonProblems(attendeesResponse);
           expiry = Math.max(expiry, extractExpiry(attendeesResponse, OrbitalProperties.getCurrentTime() + maxDelay()));
           resultData.attendees.put(next.getEventId(), attendeesResponse.getData());

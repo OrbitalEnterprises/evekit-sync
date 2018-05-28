@@ -64,9 +64,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
         null,
         txnIdLimit,
         null,
-        accessToken(),
-        null,
-        null);
+        accessToken());
     checkCommonProblems(result);
     long expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 
@@ -85,9 +83,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
                                                                                   null,
                                                                                   txnIdLimit,
                                                                                   null,
-                                                                                  accessToken(),
-                                                                                  null,
-                                                                                  null);
+                                                                                  accessToken());
       checkCommonProblems(result);
       expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 

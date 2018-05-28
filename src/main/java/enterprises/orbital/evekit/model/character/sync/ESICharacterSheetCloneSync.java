@@ -60,7 +60,7 @@ public class ESICharacterSheetCloneSync extends AbstractESIAccountSync<GetCharac
     ClonesApi apiInstance = cp.getClonesApi();
     ESIThrottle.throttle(endpoint().name(), account);
     ApiResponse<GetCharactersCharacterIdClonesOk> result = apiInstance.getCharactersCharacterIdClonesWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken(), null, null);
+        (int) account.getEveCharacterID(), null, null, accessToken());
     checkCommonProblems(result);
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());
