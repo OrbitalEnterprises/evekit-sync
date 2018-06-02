@@ -176,7 +176,8 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
       Asset nextAsset = new Asset(next.getItemId(), next.getLocationId(), next.getLocationType()
                                                                               .toString(), next.getLocationFlag()
                                                                                                .toString(),
-                                  next.getTypeId(), next.getQuantity(), next.getIsSingleton(), null);
+                                  next.getTypeId(), next.getQuantity(), next.getIsSingleton(), null,
+                                  nullSafeBoolean(next.getIsBlueprintCopy(), false));
       seenAssets.add(nextAsset.getItemID());
       updates.add(nextAsset);
     }
@@ -208,6 +209,7 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
     for (Asset existing : retrieveAll(time,
                                       (long contid, AttributeSelector at) -> Asset.accessQuery(account, contid, 1000,
                                                                                                false, at, ANY_SELECTOR,
+                                                                                               ANY_SELECTOR,
                                                                                                ANY_SELECTOR,
                                                                                                ANY_SELECTOR,
                                                                                                ANY_SELECTOR,

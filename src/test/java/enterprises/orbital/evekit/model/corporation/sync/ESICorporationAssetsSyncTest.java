@@ -53,8 +53,9 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
     // 5 int quantity;
     // 6 boolean singleton;
     // 7 String blueprintType;
+    // 8 boolean blueprintCopy;
     int size = 1000 + TestBase.getRandomInt(500);
-    assetsTestData = new Object[size][8];
+    assetsTestData = new Object[size][9];
     int locationTypeLen = GetCorporationsCorporationIdAssets200Ok.LocationTypeEnum.values().length;
     int locationFlagLen = GetCorporationsCorporationIdAssets200Ok.LocationFlagEnum.values().length;
     for (int i = 0; i < size; i++) {
@@ -68,6 +69,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
       assetsTestData[i][5] = TestBase.getRandomInt();
       assetsTestData[i][6] = true;
       assetsTestData[i][7] = TestBase.getRandomText(50);
+      assetsTestData[i][8] = TestBase.getRandomBoolean();
     }
 
     // Locations test data
@@ -141,6 +143,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
                 nextAsset.setTypeId((Integer) x[4]);
                 nextAsset.setQuantity((Integer) x[5]);
                 nextAsset.setIsSingleton((Boolean) x[6]);
+                nextAsset.setIsBlueprintCopy((Boolean) x[8]);
                 return nextAsset;
               })
               .collect(Collectors.toList());
@@ -251,7 +254,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                          AbstractESIAccountSync.ANY_SELECTOR));
+                          AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
     Assert.assertEquals(assetsTestData.length, storedData.size());
@@ -267,6 +270,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
       Assert.assertEquals((int) (Integer) assetsTestData[i][5], nextEl.getQuantity());
       Assert.assertEquals(assetsTestData[i][6], nextEl.isSingleton());
       Assert.assertNull(nextEl.getBlueprintType());
+      Assert.assertEquals(assetsTestData[i][8], nextEl.isBlueprintCopy());
     }
 
     // Retrieve all stored data
@@ -347,7 +351,8 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
                               (Integer) assetsTestData[i][4] + 1,
                               (Integer) assetsTestData[i][5] + 1,
                               (Boolean) assetsTestData[i][6],
-                              (String) assetsTestData[i][7]);
+                              (String) assetsTestData[i][7],
+                              !((Boolean) assetsTestData[i][8]));
       newEl.setup(corpSyncAccount, testTime - 1);
       CachedData.update(newEl);
 
@@ -371,7 +376,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
                           AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
-                          AbstractESIAccountSync.ANY_SELECTOR));
+                          AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR));
     List<Location> oldLs = AbstractESIAccountSync.retrieveAll(testTime - 1, (long contid, AttributeSelector at) ->
         Location.accessQuery(corpSyncAccount, contid, 1000, false, at, AbstractESIAccountSync.ANY_SELECTOR,
                              AbstractESIAccountSync.ANY_SELECTOR, AbstractESIAccountSync.ANY_SELECTOR,
@@ -395,6 +400,7 @@ public class ESICorporationAssetsSyncTest extends SyncTestBase {
       Assert.assertEquals((Integer) assetsTestData[i][5] + 1, nextEl.getQuantity());
       Assert.assertEquals(assetsTestData[i][6], nextEl.isSingleton());
       Assert.assertEquals(assetsTestData[i][7], nextEl.getBlueprintType());
+      Assert.assertEquals(!((Boolean) assetsTestData[i][8]), nextEl.isBlueprintCopy());
 
       Location nextL = locMap.get(nextEl.getItemID());
       Assert.assertNotNull(nextL);
