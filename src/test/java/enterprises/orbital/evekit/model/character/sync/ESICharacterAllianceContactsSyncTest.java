@@ -20,9 +20,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
@@ -44,7 +42,7 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
     // 1 int contactID
     // 2 float standing
     // 3 String contactType
-    // 4 long labelID
+    // 4 long[] labels
     int size = 100 + TestBase.getRandomInt(100);
     int typeLengths = GetAlliancesAllianceIdContacts200Ok.ContactTypeEnum.values().length;
     contactsTestData = new Object[size][5];
@@ -54,7 +52,11 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
       contactsTestData[i][2] = TestBase.getRandomFloat(10);
       contactsTestData[i][3] = GetAlliancesAllianceIdContacts200Ok.ContactTypeEnum.values()[TestBase.getRandomInt(
           typeLengths)];
-      contactsTestData[i][4] = TestBase.getRandomLong();
+      int labelLength = 5 + TestBase.getRandomInt(5);
+      long[] labels = new long[labelLength];
+      for (int j = 0; j < labelLength; j++)
+        labels[j] = TestBase.getUniqueRandomLong();
+      contactsTestData[i][4] = labels;
     }
 
     // Labels test data
@@ -93,6 +95,13 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
   @After
   public void teardown() throws Exception {
     // Cleanup test specific tables after each test
+    EveKitUserAccountProvider.getFactory()
+                             .runTransaction(() -> {
+                               EveKitUserAccountProvider.getFactory()
+                                                        .getEntityManager()
+                                                        .createNativeQuery("DELETE FROM contact_label ")
+                                                        .executeUpdate();
+                             });
     EveKitUserAccountProvider.getFactory()
                              .runTransaction(() -> {
                                EveKitUserAccountProvider.getFactory()
@@ -139,7 +148,9 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
                 nextContact.setContactId((int) x[1]);
                 nextContact.setStanding((float) x[2]);
                 nextContact.setContactType((GetAlliancesAllianceIdContacts200Ok.ContactTypeEnum) x[3]);
-                nextContact.setLabelId((long) x[4]);
+                for (long next : (long[]) x[4])
+                  nextContact.getLabelIds()
+                             .add(next);
                 return nextContact;
               })
               .collect(Collectors.toList());
@@ -204,13 +215,19 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
       // Check stored data
       for (int i = 0; i < contactsTestData.length; i++) {
         Contact nextEl = storedData.get(i);
+        long[] labels = (long[]) contactsTestData[i][4];
         Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
         Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
         Assert.assertEquals((float) contactsTestData[i][2], nextEl.getStanding(), 0.001);
         Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
         Assert.assertFalse(nextEl.isInWatchlist());
         Assert.assertFalse(nextEl.isBlocked());
-        Assert.assertEquals((long) contactsTestData[i][4], nextEl.getLabelID());
+        Assert.assertEquals(labels.length, nextEl.getLabels()
+                                                 .size());
+        for (long j : labels) {
+          Assert.assertTrue(nextEl.getLabels()
+                                  .contains(j));
+        }
       }
     }
 
@@ -261,13 +278,19 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
       // Check stored data
       for (int i = 0; i < contactsTestData.length; i++) {
         Contact nextEl = storedData.get(i);
+        long[] labels = (long[]) contactsTestData[i][4];
         Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
         Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
         Assert.assertEquals((float) contactsTestData[i][2] + 1F, nextEl.getStanding(), 0.001);
         Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
         Assert.assertFalse(nextEl.isInWatchlist());
         Assert.assertFalse(nextEl.isBlocked());
-        Assert.assertEquals((long) contactsTestData[i][4] + 1L, nextEl.getLabelID());
+        Assert.assertEquals(labels.length, nextEl.getLabels()
+                                                 .size());
+        for (long j : labels) {
+          Assert.assertTrue(nextEl.getLabels()
+                                  .contains(j));
+        }
       }
     }
 
@@ -334,13 +357,16 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
     //
     // All of these objects are not in the server data so we can test deletion.
     for (Object[] d : contactsTestData) {
+      Set<Long> labels = new HashSet<>();
+      for (long next : (long[]) d[4])
+        labels.add(next);
       Contact newEl = new Contact((String) d[0],
                                   (int) d[1],
                                   (float) d[2] + 1F,
                                   String.valueOf(d[3]),
                                   false,
                                   false,
-                                  (long) d[4] + 1L);
+                                  labels);
       newEl.setup(charSyncAccount, testTime - 1);
       CachedData.update(newEl);
     }

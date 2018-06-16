@@ -121,7 +121,7 @@ public class ESICharacterAllianceContactsSync extends AbstractESIAccountSync<ESI
                                   .toString(),
                               false,
                               false,
-                              nullSafeLong(next.getLabelId(), 0L)));
+                              new HashSet<>(next.getLabelIds())));
     }
 
     // Check for contacts that no longer exist and schedule for EOL
