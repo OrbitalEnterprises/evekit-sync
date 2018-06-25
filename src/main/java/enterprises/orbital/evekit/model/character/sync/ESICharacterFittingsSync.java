@@ -10,7 +10,7 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.Fitting;
 import enterprises.orbital.evekit.model.character.FittingItem;
-import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,9 +36,11 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
 
     CachedData existing;
     if (item instanceof Fitting) {
-      existing = Fitting.get(account, time, ((Fitting) item).getFittingID());
+      Fitting val = (Fitting) item;
+      existing = Fitting.get(account, time, val.getFittingID());
     } else {
-      existing = FittingItem.get(account, time, ((FittingItem) item).getFittingID(), ((FittingItem) item).getTypeID());
+      FittingItem val = (FittingItem) item;
+      existing = FittingItem.get(account, time, val.getFittingID(), val.getTypeID(), val.getFlag());
     }
 
     evolveOrAdd(time, existing, item);
@@ -75,25 +77,28 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                                          .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey,
                                                                                    AbstractMap.SimpleEntry::getValue));
 
-    Map<Pair<Integer, Integer>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
-                                                                                      (contid, at) -> FittingItem.accessQuery(
-                                                                                          account,
-                                                                                          contid, 1000,
-                                                                                          false, at,
-                                                                                          AttributeSelector.any(),
-                                                                                          AttributeSelector.any(),
-                                                                                          AttributeSelector.any(),
-                                                                                          AttributeSelector.any()))
-                                                                         .stream()
-                                                                         .map(x -> new AbstractMap.SimpleEntry<>(
-                                                                             Pair.of(x.getFittingID(), x.getTypeID()),
-                                                                             x))
-                                                                         .collect(Collectors.toMap(
-                                                                             AbstractMap.SimpleEntry::getKey,
-                                                                             AbstractMap.SimpleEntry::getValue));
+    Map<Triple<Integer, Integer, Integer>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
+                                                                                                 (contid, at) -> FittingItem.accessQuery(
+                                                                                                     account,
+                                                                                                     contid, 1000,
+                                                                                                     false, at,
+                                                                                                     AttributeSelector.any(),
+                                                                                                     AttributeSelector.any(),
+                                                                                                     AttributeSelector.any(),
+                                                                                                     AttributeSelector.any()))
+                                                                                    .stream()
+                                                                                    .map(
+                                                                                        x -> new AbstractMap.SimpleEntry<>(
+                                                                                            Triple.of(x.getFittingID(),
+                                                                                                      x.getTypeID(),
+                                                                                                      x.getFlag()),
+                                                                                            x))
+                                                                                    .collect(Collectors.toMap(
+                                                                                        AbstractMap.SimpleEntry::getKey,
+                                                                                        AbstractMap.SimpleEntry::getValue));
 
     Set<Integer> seenFittings = new HashSet<>();
-    Set<Pair<Integer, Integer>> seenItems = new HashSet<>();
+    Set<Triple<Integer, Integer, Integer>> seenItems = new HashSet<>();
 
     for (GetCharactersCharacterIdFittings200Ok next : data.getData()) {
       Fitting nextFitting = new Fitting(next.getFittingId(),
@@ -112,10 +117,10 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                                item.getFlag(),
                                                item.getQuantity());
         // Only update if there is a change to reduce DB contention
-        if (!existingItemMap.containsKey(Pair.of(nextItem.getFittingID(), nextItem.getTypeID())) ||
-            !nextItem.equivalent(existingItemMap.get(Pair.of(nextItem.getFittingID(), nextItem.getTypeID()))))
+        if (!existingItemMap.containsKey(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag())) ||
+            !nextItem.equivalent(existingItemMap.get(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag()))))
           updates.add(nextItem);
-        seenItems.add(Pair.of(next.getFittingId(), item.getTypeId()));
+        seenItems.add(Triple.of(next.getFittingId(), item.getTypeId(), item.getFlag()));
       }
     }
 
@@ -129,7 +134,7 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
 
     // Check for deleted items
     for (FittingItem stored : existingItemMap.values()) {
-      if (!seenItems.contains(Pair.of(stored.getFittingID(), stored.getTypeID()))) {
+      if (!seenItems.contains(Triple.of(stored.getFittingID(), stored.getTypeID(), stored.getFlag()))) {
         stored.evolve(null, time);
         updates.add(stored);
       }
