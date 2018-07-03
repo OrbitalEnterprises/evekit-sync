@@ -12,8 +12,7 @@ import enterprises.orbital.evekit.model.character.CharacterContactNotification;
 import enterprises.orbital.evekit.model.character.CharacterNotification;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESICharacterNotificationSync.NotificationData> {
@@ -92,28 +91,69 @@ public class ESICharacterNotificationSync extends AbstractESIAccountSync<ESIChar
                                    ESIAccountServerResult<NotificationData> data,
                                    List<CachedData> updates) throws IOException {
 
+    // Get list of current contact notifications.  Since these are immutable, we can
+    // skip ones we already know about.
+    Set<Integer> seenContactNotifications = new HashSet<>();
+    for (CharacterContactNotification existing : retrieveAll(time,
+                                                             (long contid, AttributeSelector at) -> CharacterContactNotification.accessQuery(
+                                                                 account, contid,
+                                                                 1000,
+                                                                 false, at,
+                                                                 ANY_SELECTOR,
+                                                                 ANY_SELECTOR,
+                                                                 ANY_SELECTOR,
+                                                                 ANY_SELECTOR,
+                                                                 ANY_SELECTOR))) {
+      seenContactNotifications.add(existing.getNotificationID());
+    }
+
     // Assemble contact notifications
     for (GetCharactersCharacterIdNotificationsContacts200Ok nm : data.getData().contacts) {
-      updates.add(new CharacterContactNotification(nm.getNotificationId(),
-                                                   nm.getSenderCharacterId(),
-                                                   nm.getSendDate()
-                                                     .getMillis(),
-                                                   nm.getStandingLevel(),
-                                                   nm.getMessage()));
+      if (!seenContactNotifications.contains(nm.getNotificationId())) {
+        // Haven't seen this one yet, add it.
+        updates.add(new CharacterContactNotification(nm.getNotificationId(),
+                                                     nm.getSenderCharacterId(),
+                                                     nm.getSendDate()
+                                                       .getMillis(),
+                                                     nm.getStandingLevel(),
+                                                     nm.getMessage()));
+      }
     }
 
     // Assemble notifications
+    Map<Long, CharacterNotification> seenNotifications = new HashMap<>();
+    for (CharacterNotification existing : retrieveAll(time,
+                                                      (long contid, AttributeSelector at) -> CharacterNotification.accessQuery(
+                                                          account, contid,
+                                                          1000,
+                                                          false, at,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR,
+                                                          ANY_SELECTOR))) {
+      seenNotifications.put(existing.getNotificationID(), existing);
+    }
+
     for (GetCharactersCharacterIdNotifications200Ok nm : data.getData().notes) {
-      updates.add(new CharacterNotification(nm.getNotificationId(),
-                                            nm.getType()
-                                              .toString(),
-                                            nm.getSenderId(),
-                                            nm.getSenderType()
-                                              .toString(),
-                                            nm.getTimestamp()
-                                              .getMillis(),
-                                            nullSafeBoolean(nm.getIsRead(), false),
-                                            nm.getText()));
+      CharacterNotification newNote = new CharacterNotification(nm.getNotificationId(),
+                                                                nm.getType()
+                                                                  .toString(),
+                                                                nm.getSenderId(),
+                                                                nm.getSenderType()
+                                                                  .toString(),
+                                                                nm.getTimestamp()
+                                                                  .getMillis(),
+                                                                nullSafeBoolean(nm.getIsRead(), false),
+                                                                nm.getText());
+      // Only add if we've never seen this notification before, or if something has changed.
+      if (!seenNotifications.containsKey(newNote.getNotificationID()) ||
+          !seenNotifications.get(newNote.getNotificationID())
+                            .equivalent(newNote)) {
+        updates.add(newNote);
+      }
     }
 
   }
