@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 
 public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMailSync.MailData> {
   protected static final Logger log = Logger.getLogger(ESICharacterMailSync.class.getName());
+  public static final int MAIL_SHARDS = 20;
   private String context;
 
   // Capture data for mail headers, mail bodies, mail labels and mailing lists
@@ -115,18 +116,18 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
       mailFilter = Math.max(mailFilter, 0);
     } catch (Exception e) {
       // No filter exists, assign a random filter
-      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % 10);
+      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % MAIL_SHARDS);
     }
 
     // Filter headers by mail ID to create a smaller processing batch.
     // Eventually, all headers will be processed as the filter cycles.
     final int mailBatch = mailFilter;
     prelimResults = prelimResults.stream()
-                                 .filter(x -> (x.getMailId() % 10) == mailBatch)
+                                 .filter(x -> (x.getMailId() % MAIL_SHARDS) == mailBatch)
                                  .collect(Collectors.toList());
 
     // Prepare filter and context for next tracker
-    mailFilter = (mailFilter + 1) % 10;
+    mailFilter = (mailFilter + 1) % MAIL_SHARDS;
     context = String.valueOf(mailFilter);
 
     // Now retrieve message bodies
