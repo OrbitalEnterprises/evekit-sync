@@ -51,7 +51,7 @@ public class ESICharacterMailSyncTest extends SyncTestBase {
       // 7 String body
       //
       // We only process batch 0, so make sure all IDs end in 0
-      mailTestData[i][0] = (long) (TestBase.getUniqueRandomInteger() * 10);
+      mailTestData[i][0] = (long) (TestBase.getUniqueRandomInteger() * ESICharacterMailSync.MAIL_SHARDS);
       mailTestData[i][1] = TestBase.getRandomText(50);
       mailTestData[i][2] = TestBase.getRandomInt();
       mailTestData[i][3] = TestBase.getRandomLong();

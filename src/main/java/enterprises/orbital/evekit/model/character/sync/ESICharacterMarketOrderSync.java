@@ -91,6 +91,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
                                                         .setScale(2, RoundingMode.HALF_UP),
                                               next.getIssued()
                                                   .getMillis(),
+                                              0,
                                               nullSafeInteger(next.getMinVolume(), 1),
                                               "open",
                                               BigDecimal.valueOf(next.getPrice())
@@ -124,6 +125,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
                                                   next.getEscrow() == null ? existing.getEscrow() : BigDecimal.valueOf(next.getEscrow())
                                                                                                               .setScale(2, RoundingMode.HALF_UP),
                                                   next.getIssued().getMillis(),
+                                                  0,
                                                   existing.getMinVolume(),
                                                   next.getState().toString(),
                                                   BigDecimal.valueOf(next.getPrice())

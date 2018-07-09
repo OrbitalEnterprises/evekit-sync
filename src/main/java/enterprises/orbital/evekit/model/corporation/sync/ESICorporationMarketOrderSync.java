@@ -97,6 +97,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
                                                         .setScale(2, RoundingMode.HALF_UP),
                                               next.getIssued()
                                                   .getMillis(),
+                                              next.getIssuedBy(),
                                               nullSafeInteger(next.getMinVolume(), 1),
                                               "open",
                                               BigDecimal.valueOf(next.getPrice())
@@ -139,6 +140,7 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
                                                                                                                   RoundingMode.HALF_UP),
                                                   next.getIssued()
                                                       .getMillis(),
+                                                  next.getIssuedBy(),
                                                   existing.getMinVolume(),
                                                   next.getState()
                                                       .toString(),
