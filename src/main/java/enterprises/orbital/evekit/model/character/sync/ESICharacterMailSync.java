@@ -1,6 +1,7 @@
 package enterprises.orbital.evekit.model.character.sync;
 
 import enterprises.orbital.base.OrbitalProperties;
+import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.api.MailApi;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.eve.esi.client.invoker.ApiResponse;
@@ -21,7 +22,8 @@ import java.util.stream.Collectors;
 
 public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMailSync.MailData> {
   protected static final Logger log = Logger.getLogger(ESICharacterMailSync.class.getName());
-  public static final int MAIL_SHARDS = 20;
+  private static final String PROP_MAIL_SHARD_COUNT = "enterprises.orbital.evekit.sync.mail_shard_count";
+  public static final int DEF_MAIL_SHARD_COUNT = 20;
   private String context;
 
   // Capture data for mail headers, mail bodies, mail labels and mailing lists
@@ -72,6 +74,7 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
     MailApi apiInstance = cp.getMailApi();
     MailData resultData = new MailData();
     long mailIdLimit = Integer.MAX_VALUE;
+    final int mailShardCount = PersistentProperty.getIntegerPropertyWithFallback(PROP_MAIL_SHARD_COUNT, DEF_MAIL_SHARD_COUNT);
 
     // Retrieve mail headers
     List<GetCharactersCharacterIdMail200Ok> prelimResults = new ArrayList<>();
@@ -116,18 +119,18 @@ public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMai
       mailFilter = Math.max(mailFilter, 0);
     } catch (Exception e) {
       // No filter exists, assign a random filter
-      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % MAIL_SHARDS);
+      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % mailShardCount);
     }
 
     // Filter headers by mail ID to create a smaller processing batch.
     // Eventually, all headers will be processed as the filter cycles.
     final int mailBatch = mailFilter;
     prelimResults = prelimResults.stream()
-                                 .filter(x -> (x.getMailId() % MAIL_SHARDS) == mailBatch)
+                                 .filter(x -> (x.getMailId() % mailShardCount) == mailBatch)
                                  .collect(Collectors.toList());
 
     // Prepare filter and context for next tracker
-    mailFilter = (mailFilter + 1) % MAIL_SHARDS;
+    mailFilter = (mailFilter + 1) % mailShardCount;
     context = String.valueOf(mailFilter);
 
     // Now retrieve message bodies
