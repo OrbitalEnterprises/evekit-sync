@@ -1,5 +1,6 @@
 package enterprises.orbital.evekit.model;
 
+import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
 import enterprises.orbital.evekit.account.SynchronizedEveAccount;
@@ -119,9 +120,19 @@ public class ESIThrottle {
     if (remain < PersistentProperty.getIntegerPropertyWithFallback(PROP_DEFAULT_ERROR_LIMIT_REMAIN,
                                                                    DEF_DEFAULT_ERROR_LIMIT_REMAIN)) {
       // Too close to error limit, force current thread to sleep
+      long startTime = OrbitalProperties.getCurrentTime();
       long delay = extractErrorLimitReset(e, 5) * 1000 + 2000;
       try {
         globalThrottle.lockInterruptibly();
+
+        // Decrease our delay based on when we decided to throttle in case someone else already throttled for
+        // us.  If we don't do this, then we may over throttle unnecessarily.
+        delay -= OrbitalProperties.getCurrentTime() - startTime;
+        if (delay <= 0) {
+          log.fine("Cancelled throttling due to previous throttler: " + Thread.currentThread().getName());
+          return;
+        }
+
         log.fine("Near error rate threshold, throttling thread: " + Thread.currentThread()
                                                                           .getName() + " sleeping for " + delay + " ms");
         try {
