@@ -119,7 +119,7 @@ public class ESIThrottle {
     if (remain < PersistentProperty.getIntegerPropertyWithFallback(PROP_DEFAULT_ERROR_LIMIT_REMAIN,
                                                                    DEF_DEFAULT_ERROR_LIMIT_REMAIN)) {
       // Too close to error limit, force current thread to sleep
-      long delay = extractErrorLimitReset(e, 5) * 1000 + 5000;
+      long delay = extractErrorLimitReset(e, 5) * 1000 + 2000;
       try {
         globalThrottle.lockInterruptibly();
         log.fine("Near error rate threshold, throttling thread: " + Thread.currentThread()
@@ -129,6 +129,7 @@ public class ESIThrottle {
         } catch (InterruptedException f) {
           // NOP
         }
+        log.fine("Throttling complete: " + Thread.currentThread().getName());
       } catch (InterruptedException g) {
         log.log(Level.FINE, "Interrupted while throttling", g);
       } finally {
