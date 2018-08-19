@@ -13,7 +13,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 import java.util.logging.Logger;
 
 public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICorporationMarketOrderSync.OrderSet> {
@@ -113,10 +116,44 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
       updates.add(nextOrder);
     }
 
+    // For efficiency, we do a bulk retrieve of all stored orders according to the history we just
+    // retrieved.  This avoids an individual DB get call for each order we need to check.
+    OptionalLong minResult = data.getData().historicalOrders.stream()
+                                                            .mapToLong(
+                                                                GetCorporationsCorporationIdOrdersHistory200Ok::getOrderId)
+                                                            .min();
+    Map<Long, MarketOrder> marketHistory = new HashMap<>();
+    if (minResult.isPresent()) {
+      long minOrderId = minResult.getAsLong();
+      for (MarketOrder hval : retrieveAll(time,
+                                          (contid, at) -> MarketOrder.accessQuery(account, contid, 1000, false, at,
+                                                                                  AttributeSelector.range(minOrderId,
+                                                                                                          Long.MAX_VALUE),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any()))) {
+        marketHistory.put(hval.getOrderID(), hval);
+      }
+    }
+
     for (GetCorporationsCorporationIdOrdersHistory200Ok next : data.getData().historicalOrders) {
       // Only process order if we've already recorded this order.  This is necessary in order to account
       // for optional fields.
-      MarketOrder existing = MarketOrder.get(account, time, next.getOrderId());
+      MarketOrder existing = marketHistory.get(next.getOrderId());
       if (existing != null) {
         if (next.getPrice() != existing.getPrice()
                                        .doubleValue() ||

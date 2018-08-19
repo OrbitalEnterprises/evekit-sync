@@ -14,7 +14,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 import java.util.logging.Logger;
 
 public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESICharacterMarketOrderSync.OrderSet> {
@@ -95,7 +98,7 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
                                               nullSafeInteger(next.getMinVolume(), 1),
                                               "open",
                                               BigDecimal.valueOf(next.getPrice())
-                                                                         .setScale(2, RoundingMode.HALF_UP),
+                                                        .setScale(2, RoundingMode.HALF_UP),
                                               next.getRange()
                                                   .toString(),
                                               next.getTypeId(),
@@ -107,27 +110,71 @@ public class ESICharacterMarketOrderSync extends AbstractESIAccountSync<ESIChara
       updates.add(nextOrder);
     }
 
+    // For efficiency, we do a bulk retrieve of all stored orders according to the history we just
+    // retrieved.  This avoids an individual DB get call for each order we need to check.
+    OptionalLong minResult = data.getData().historicalOrders.stream()
+                                                            .mapToLong(
+                                                                GetCharactersCharacterIdOrdersHistory200Ok::getOrderId)
+                                                            .min();
+    Map<Long, MarketOrder> marketHistory = new HashMap<>();
+    if (minResult.isPresent()) {
+      long minOrderId = minResult.getAsLong();
+      for (MarketOrder hval : retrieveAll(time,
+                                          (contid, at) -> MarketOrder.accessQuery(account, contid, 1000, false, at,
+                                                                                  AttributeSelector.range(minOrderId,
+                                                                                                          Long.MAX_VALUE),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any(),
+                                                                                  AttributeSelector.any()))) {
+        marketHistory.put(hval.getOrderID(), hval);
+      }
+    }
+
     for (GetCharactersCharacterIdOrdersHistory200Ok next : data.getData().historicalOrders) {
       // Only process order if we've already recorded this order.  This is necessary in order to account
       // for optional fields.
-      MarketOrder existing = MarketOrder.get(account, time, next.getOrderId());
+      MarketOrder existing = marketHistory.get(next.getOrderId());
       if (existing != null) {
-        if (next.getPrice() != existing.getPrice().doubleValue() ||
+        if (next.getPrice() != existing.getPrice()
+                                       .doubleValue() ||
             next.getVolumeRemain() != existing.getVolRemaining() ||
-            next.getIssued().getMillis() != existing.getIssued() ||
-            (next.getEscrow() != null && next.getEscrow() != existing.getEscrow().doubleValue()) ||
-            !next.getState().toString().equals(existing.getOrderState())) {
+            next.getIssued()
+                .getMillis() != existing.getIssued() ||
+            (next.getEscrow() != null && next.getEscrow() != existing.getEscrow()
+                                                                     .doubleValue()) ||
+            !next.getState()
+                 .toString()
+                 .equals(existing.getOrderState())) {
           MarketOrder nextOrder = new MarketOrder(existing.getOrderID(),
                                                   1,
                                                   existing.isBid(),
                                                   0,
                                                   existing.getDuration(),
-                                                  next.getEscrow() == null ? existing.getEscrow() : BigDecimal.valueOf(next.getEscrow())
-                                                                                                              .setScale(2, RoundingMode.HALF_UP),
-                                                  next.getIssued().getMillis(),
+                                                  next.getEscrow() == null ? existing.getEscrow() : BigDecimal.valueOf(
+                                                      next.getEscrow())
+                                                                                                              .setScale(
+                                                                                                                  2,
+                                                                                                                  RoundingMode.HALF_UP),
+                                                  next.getIssued()
+                                                      .getMillis(),
                                                   0,
                                                   existing.getMinVolume(),
-                                                  next.getState().toString(),
+                                                  next.getState()
+                                                      .toString(),
                                                   BigDecimal.valueOf(next.getPrice())
                                                             .setScale(2, RoundingMode.HALF_UP),
                                                   existing.getOrderRange(),

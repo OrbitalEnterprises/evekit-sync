@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 public class ESICharacterMailSync extends AbstractESIAccountSync<ESICharacterMailSync.MailData> {
   protected static final Logger log = Logger.getLogger(ESICharacterMailSync.class.getName());
   private static final String PROP_MAIL_SHARD_COUNT = "enterprises.orbital.evekit.sync.mail_shard_count";
-  public static final int DEF_MAIL_SHARD_COUNT = 20;
+  public static final int DEF_MAIL_SHARD_COUNT = 10;
   private String context;
 
   // Capture data for mail headers, mail bodies, mail labels and mailing lists
