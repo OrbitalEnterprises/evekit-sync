@@ -372,6 +372,14 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   @Override
   public void synch(ESIAccountClientProvider cp) {
     log.fine("Starting synchronization: " + getContext());
+    long syncStart = OrbitalProperties.getCurrentTime();
+    long syncEnd = 0;
+    long syncServerCallStart = 0;
+    long syncServerCallEnd = 0;
+    long syncProcessDataStart = 0;
+    long syncProcessDataEnd = 0;
+    long syncCommitStart = 0;
+    long syncCommitEnd = 0;
 
     try {
       // We may have been queued for a while and may have a stale account reference.
@@ -434,15 +442,20 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         // returned by the data processor is used.
         List<CachedData> updateList = new ArrayList<>();
         log.fine("Retrieving server data: " + getContext());
+        syncServerCallStart = OrbitalProperties.getCurrentTime();
         ESIAccountServerResult<ServerDataType> serverData = getServerData(cp);
+        syncServerCallEnd = OrbitalProperties.getCurrentTime();
         nextEvent = serverData.getExpiryTime();
         log.fine("Processing server data: " + getContext());
+        syncProcessDataStart = OrbitalProperties.getCurrentTime();
         processServerData(syncTime, serverData, updateList);
+        syncProcessDataEnd = OrbitalProperties.getCurrentTime();
         nextContext = getNextSyncContext();
 
         // Commit all updates.  We process updates in batches with sizes that can be varied dynamically by the
         // admin as needed.  Smaller batches prevent long running transactions from tying up contended resources.
         log.fine("Storing updates: " + getContext());
+        syncCommitStart = OrbitalProperties.getCurrentTime();
         int batchSize = PersistentProperty.getIntegerPropertyWithFallback(PROP_REF_COMMIT_BATCH_SIZE,
                                                                           DEF_REF_COMMIT_BATCH_SIZE);
         int count = updateList.size();
@@ -476,6 +489,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
             }
           }
         }
+        syncCommitEnd = OrbitalProperties.getCurrentTime();
 
         log.fine("Update and store finished normally: " + getContext());
         tracker.setStatus(ESISyncState.FINISHED);
@@ -501,6 +515,25 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
       // Complete the tracker
       ESIEndpointSyncTracker.finishTracker(tracker);
+      syncEnd = OrbitalProperties.getCurrentTime();
+
+      // Report timing
+      if (log.isLoggable(Level.INFO)) {
+        long totalSync = syncEnd - syncStart;
+        long serverTime = syncServerCallEnd > 0 ? syncServerCallEnd - syncServerCallStart : -1;
+        long processTime = syncProcessDataEnd > 0 ? syncProcessDataEnd - syncProcessDataStart : -1;
+        long commitTime = syncCommitEnd > 0 ? syncCommitEnd - syncCommitStart : -1;
+        StringBuilder builder = new StringBuilder();
+        builder.append("SYNC STATS:");
+        builder.append(" ENDPOINT: ").append(endpoint().name());
+        builder.append(" OUTCOME: ").append(tracker.getStatus().name());
+        builder.append(" AID: ").append(account.getAid());
+        builder.append(" TOTAL SYNC (ms): ").append(totalSync);
+        if (serverTime > -1) builder.append(" SERVER (ms): ").append(serverTime);
+        if (processTime > -1) builder.append(" PROCESS (ms): ").append(processTime);
+        if (commitTime > -1) builder.append(" COMMIT (ms): ").append(commitTime);
+        log.log(Level.INFO, builder.toString());
+      }
 
       // Exit without scheduling if:
       // - account no longer has credentials
