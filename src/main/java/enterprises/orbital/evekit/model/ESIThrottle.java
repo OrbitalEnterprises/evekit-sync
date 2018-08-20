@@ -1,6 +1,5 @@
 package enterprises.orbital.evekit.model;
 
-import com.sun.tools.corba.se.idl.constExpr.Or;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
@@ -8,12 +7,10 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
-import javafx.animation.PathTransition;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
