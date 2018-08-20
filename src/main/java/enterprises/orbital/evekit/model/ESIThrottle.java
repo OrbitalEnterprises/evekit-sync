@@ -97,11 +97,20 @@ public class ESIThrottle {
     // then this synchronize call will block until the thread which hit the error
     // limit has finished sleeping.
     try {
+      int queueLength = -1;
       if (globalThrottle.isLocked()) {
         log.fine("Global throttle active for thread: " + Thread.currentThread()
                                                                .getName());
+        queueLength = globalThrottle.getQueueLength();
       }
       globalThrottle.lockInterruptibly();
+      if (queueLength > 0) {
+        // Wait an additional 100ms for every thread in front of us capped at 20 seconds.
+        // This avoids a surge after the throttle is lifted so that we don't immediately hit
+        // the rate limit again.
+        long delay = Math.min(queueLength * 100, 20000);
+        Thread.sleep(delay);
+      }
     } catch (InterruptedException e) {
       log.log(Level.FINE, "Interrupted while waiting on global throttle", e);
     } finally {
