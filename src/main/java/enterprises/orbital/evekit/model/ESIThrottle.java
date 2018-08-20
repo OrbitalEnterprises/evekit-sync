@@ -1,5 +1,6 @@
 package enterprises.orbital.evekit.model;
 
+import com.sun.tools.corba.se.idl.constExpr.Or;
 import enterprises.orbital.base.OrbitalProperties;
 import enterprises.orbital.base.PersistentProperty;
 import enterprises.orbital.eve.esi.client.invoker.ApiException;
@@ -7,10 +8,12 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Bucket4j;
+import javafx.animation.PathTransition;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -106,10 +109,11 @@ public class ESIThrottle {
       globalThrottle.lockInterruptibly();
       globalThrottle.unlock();
       if (queueLength > 0) {
-        // Wait an additional 100ms for every thread in front of us capped at 20 seconds.
+        // Wait an additional 200ms for every thread in front of us capped at 20-30 seconds.
         // This avoids a surge after the throttle is lifted so that we don't immediately hit
         // the rate limit again.
-        long delay = Math.min(queueLength * 100, 20000);
+        long randomDelay = OrbitalProperties.getCurrentTime() % 10000;
+        long delay = Math.min(queueLength * 200, 20000 + randomDelay);
         Thread.sleep(delay);
       }
     } catch (InterruptedException e) {
@@ -131,7 +135,7 @@ public class ESIThrottle {
                                                                    DEF_DEFAULT_ERROR_LIMIT_REMAIN)) {
       // Too close to error limit, force current thread to sleep
       long startTime = OrbitalProperties.getCurrentTime();
-      long delay = extractErrorLimitReset(e, 5) * 1000 + 2000;
+      long delay = extractErrorLimitReset(e, 5) * 1000 + 5000;
       try {
         globalThrottle.lockInterruptibly();
 
