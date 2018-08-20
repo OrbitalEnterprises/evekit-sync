@@ -104,6 +104,7 @@ public class ESIThrottle {
         queueLength = globalThrottle.getQueueLength();
       }
       globalThrottle.lockInterruptibly();
+      globalThrottle.unlock();
       if (queueLength > 0) {
         // Wait an additional 100ms for every thread in front of us capped at 20 seconds.
         // This avoids a surge after the throttle is lifted so that we don't immediately hit
