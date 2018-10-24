@@ -59,11 +59,6 @@ public class SyncTestBase {
     EveKitUserAccountProvider.getFactory()
                              .runTransaction(() -> EveKitUserAccountProvider.getFactory()
                                                                             .getEntityManager()
-                                                                            .createQuery("DELETE FROM SyncTracker")
-                                                                            .executeUpdate());
-    EveKitUserAccountProvider.getFactory()
-                             .runTransaction(() -> EveKitUserAccountProvider.getFactory()
-                                                                            .getEntityManager()
                                                                             .createQuery("DELETE FROM SynchronizedEveAccount")
                                                                             .executeUpdate());
     EveKitUserAccountProvider.getFactory()
