@@ -366,6 +366,13 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   }
 
   /**
+   * This method is called if the commit phase completes without exception.
+   * This gives the concrete subclass a chance to update any commit-dependent state
+   * (e.g. refreshing cached values).
+   */
+  protected void commitComplete() {}
+
+  /**
    * {@inheritDoc}
    */
   @SuppressWarnings("Duplicates")
@@ -490,6 +497,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
           }
         }
         syncCommitEnd = OrbitalProperties.getCurrentTime();
+        commitComplete();
 
         log.fine("Update and store finished normally: " + getContext());
         tracker.setStatus(ESISyncState.FINISHED);

@@ -11,6 +11,7 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -18,6 +19,7 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   protected static final Logger log = Logger.getLogger(ESICharacterSheetSync.class.getName());
   private long corporationID;
   private String corporationName;
+  private CachedCharacterSheet cacheUpdate;
 
   public ESICharacterSheetSync(SynchronizedEveAccount account) {
     super(account);
@@ -65,32 +67,34 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
+    cacheUpdate = null;
+
     // Add update for processing
-    updates.add(new CharacterSheet(account.getEveCharacterID(),
-                                   data.getData()
-                                       .getName(),
-                                   data.getData()
-                                       .getCorporationId(),
-                                   data.getData()
-                                       .getRaceId(),
-                                   data.getData()
-                                       .getBirthday()
-                                       .getMillis(),
-                                   data.getData()
-                                       .getBloodlineId(),
-                                   nullSafeInteger(data.getData()
-                                                       .getAncestryId(), 0),
-                                   data.getData()
-                                       .getGender()
-                                       .toString(),
-                                   nullSafeInteger(data.getData()
-                                                       .getAllianceId(), 0),
-                                   nullSafeInteger(data.getData()
-                                                       .getFactionId(), 0),
-                                   data.getData()
-                                       .getDescription(),
-                                   nullSafeFloat(data.getData()
-                                                     .getSecurityStatus(), 0F)));
+    CharacterSheet newSheet = new CharacterSheet(account.getEveCharacterID(),
+                                                                 data.getData()
+                                                                     .getName(),
+                                                                 data.getData()
+                                                                     .getCorporationId(),
+                                                                 data.getData()
+                                                                     .getRaceId(),
+                                                                 data.getData()
+                                                                     .getBirthday()
+                                                                     .getMillis(),
+                                                                 data.getData()
+                                                                     .getBloodlineId(),
+                                                                 nullSafeInteger(data.getData()
+                                                                                     .getAncestryId(), 0),
+                                                                 data.getData()
+                                                                     .getGender()
+                                                                     .toString(),
+                                                                 nullSafeInteger(data.getData()
+                                                                                     .getAllianceId(), 0),
+                                                                 nullSafeInteger(data.getData()
+                                                                                     .getFactionId(), 0),
+                                                                 data.getData()
+                                                                     .getDescription(),
+                                                                 nullSafeFloat(data.getData()
+                                                                                   .getSecurityStatus(), 0F));
 
     // Check whether the corporation has changed.  If so, update the SynchronizedEveAccount
     if (account.getEveCorporationID() != corporationID) {
@@ -99,7 +103,41 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
       account.setEveCorporationName(corporationName);
       account = SynchronizedEveAccount.update(account);
     }
+
+    // Only queue update if something has changed.
+    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SHEET);
+    @SuppressWarnings("ConstantConditions")
+    CharacterSheet existing = ref != null ? ((CachedCharacterSheet) ref.get()).cachedData : null;
+    if (existing == null || !existing.equivalent(newSheet)) {
+      updates.add(newSheet);
+      cacheUpdate = new CachedCharacterSheet(newSheet);
+    }
   }
 
+  @Override
+  protected void commitComplete() {
+    // Update the character sheet cache if we updated the value
+    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_SHEET, cacheUpdate);
+    super.commitComplete();
+  }
+
+  private static class CachedCharacterSheet implements ModelCacheData {
+    CharacterSheet cachedData;
+
+    CachedCharacterSheet(CharacterSheet source) {
+      cachedData = new CharacterSheet(source.getCharacterID(),
+                                                   source.getName(),
+                                                   source.getCorporationID(),
+                                                   source.getRaceID(),
+                                                   source.getDoB(),
+                                                   source.getBloodlineID(),
+                                                   source.getAncestryID(),
+                                                   source.getGender(),
+                                                   source.getAllianceID(),
+                                                   source.getFactionID(),
+                                                   source.getDescription(),
+                                                   source.getSecurityStatus());
+    }
+  }
 
 }
