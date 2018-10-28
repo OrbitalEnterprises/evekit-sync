@@ -372,6 +372,22 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    */
   protected void commitComplete() {}
 
+  // Cache counters for stats during synchronization
+  private int cacheHits;
+  private int cacheMisses;
+
+  protected void resetCacheCounters() {
+    cacheHits = cacheMisses = 0;
+  }
+
+  protected void cacheHit() {
+    cacheHits++;
+  }
+
+  protected void cacheMiss() {
+    cacheMisses++;
+  }
+
   /**
    * {@inheritDoc}
    */
@@ -387,6 +403,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     long syncProcessDataEnd = 0;
     long syncCommitStart = 0;
     long syncCommitEnd = 0;
+    resetCacheCounters();
 
     try {
       // We may have been queued for a while and may have a stale account reference.
@@ -540,6 +557,8 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         if (serverTime > -1) builder.append(" SERVER (ms): ").append(serverTime);
         if (processTime > -1) builder.append(" PROCESS (ms): ").append(processTime);
         if (commitTime > -1) builder.append(" COMMIT (ms): ").append(commitTime);
+        builder.append(" CACHE HITS: ").append(cacheHits);
+        builder.append(" CACHE MISSES: ").append(cacheMisses);
         log.log(Level.INFO, builder.toString());
       }
 

@@ -111,6 +111,9 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     if (existing == null || !existing.equivalent(newSheet)) {
       updates.add(newSheet);
       cacheUpdate = new CachedCharacterSheet(newSheet);
+      if (existing != null) cacheMiss();
+    } else {
+      cacheHit();
     }
   }
 
