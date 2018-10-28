@@ -67,8 +67,6 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
-    cacheUpdate = null;
-
     // Add update for processing
     CharacterSheet newSheet = new CharacterSheet(account.getEveCharacterID(),
                                                                  data.getData()
@@ -106,12 +104,17 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
 
     // Only queue update if something has changed.
     WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SHEET);
-    @SuppressWarnings("ConstantConditions")
-    CharacterSheet existing = ref != null ? ((CachedCharacterSheet) ref.get()).cachedData : null;
-    if (existing == null || !existing.equivalent(newSheet)) {
+    cacheUpdate = ref != null ? (CachedCharacterSheet) ref.get() : null;
+    if (cacheUpdate == null) {
+      // No cache yet, populate from latest stored balance
+      cacheUpdate = new CachedCharacterSheet();
+      cacheUpdate.cachedData = CharacterSheet.get(account, time);
+    }
+
+    if (cacheUpdate.cachedData == null || !cacheUpdate.cachedData.equivalent(newSheet)) {
       updates.add(newSheet);
-      cacheUpdate = new CachedCharacterSheet(newSheet);
-      if (existing != null) cacheMiss();
+      cacheUpdate.cachedData = newSheet;
+      cacheMiss();
     } else {
       cacheHit();
     }
@@ -126,21 +129,6 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
 
   private static class CachedCharacterSheet implements ModelCacheData {
     CharacterSheet cachedData;
-
-    CachedCharacterSheet(CharacterSheet source) {
-      cachedData = new CharacterSheet(source.getCharacterID(),
-                                                   source.getName(),
-                                                   source.getCorporationID(),
-                                                   source.getRaceID(),
-                                                   source.getDoB(),
-                                                   source.getBloodlineID(),
-                                                   source.getAncestryID(),
-                                                   source.getGender(),
-                                                   source.getAllianceID(),
-                                                   source.getFactionID(),
-                                                   source.getDescription(),
-                                                   source.getSecurityStatus());
-    }
   }
 
 }

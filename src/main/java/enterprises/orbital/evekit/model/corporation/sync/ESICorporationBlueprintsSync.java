@@ -114,13 +114,14 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
           // Update and replace in cache
           updates.add(next);
           cacheUpdate.addBlueprint(next);
-          if (ref != null) cacheMiss();
+          cacheMiss();
         } else {
-          if (ref != null) cacheHit();
+          // Cached value is still correct
+          cacheHit();
         }
       } else {
         // A blueprint we've never seen before
-        if (ref != null) cacheMiss();
+        cacheMiss();
         updates.add(next);
         cacheUpdate.addBlueprint(next);
       }
