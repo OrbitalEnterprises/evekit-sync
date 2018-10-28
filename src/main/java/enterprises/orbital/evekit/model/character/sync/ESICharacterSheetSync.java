@@ -106,7 +106,8 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SHEET);
     cacheUpdate = ref != null ? (CachedCharacterSheet) ref.get() : null;
     if (cacheUpdate == null) {
-      // No cache yet, populate from latest stored balance
+      // No cache yet, populate from latest character sheet
+      cacheMiss();
       cacheUpdate = new CachedCharacterSheet();
       cacheUpdate.cachedData = CharacterSheet.get(account, time);
     }

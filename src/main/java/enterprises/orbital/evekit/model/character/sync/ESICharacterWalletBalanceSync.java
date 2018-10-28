@@ -61,6 +61,7 @@ public class ESICharacterWalletBalanceSync extends AbstractESIAccountSync<Double
     cacheUpdate = ref != null ? (CachedCharacterWalletBalance) ref.get() : null;
     if (cacheUpdate == null) {
       // No cache yet, populate from latest stored balance
+      cacheMiss();
       cacheUpdate = new CachedCharacterWalletBalance();
       cacheUpdate.cachedBalance = AccountBalance.get(account, time, 1);
     }

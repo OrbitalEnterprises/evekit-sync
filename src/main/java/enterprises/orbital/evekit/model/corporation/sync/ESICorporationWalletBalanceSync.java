@@ -71,6 +71,7 @@ public class ESICorporationWalletBalanceSync extends AbstractESIAccountSync<List
     cacheUpdate = ref != null ? (CachedCorporationWalletBalance) ref.get() : null;
     if (cacheUpdate == null) {
       // If we don't have a cache yet, then create one from all active stored balances
+      cacheMiss();
       cacheUpdate = new CachedCorporationWalletBalance();
       for (AccountBalance next : retrieveAll(time,
                                         (long contid, AttributeSelector at) -> AccountBalance.accessQuery(account, contid,

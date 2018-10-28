@@ -79,6 +79,7 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
     cacheUpdate = ref != null ? (CachedCorpBlueprints) ref.get() : null;
     if (cacheUpdate == null) {
       // If we don't have a cache yet, then create one from all active stored blueprints.
+      cacheMiss();
       cacheUpdate = new CachedCorpBlueprints();
       for (Blueprint next : retrieveAll(time,
                                         (long contid, AttributeSelector at) -> Blueprint.accessQuery(account, contid,
