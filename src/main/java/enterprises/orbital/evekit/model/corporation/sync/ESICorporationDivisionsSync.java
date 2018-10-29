@@ -12,11 +12,17 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.corporation.Division;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Logger;
 
 public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorporationsCorporationIdDivisionsOk> {
   protected static final Logger log = Logger.getLogger(ESICorporationDivisionsSync.class.getName());
+
+  private CachedCorporationDivisions cacheUpdate;
 
   public ESICorporationDivisionsSync(SynchronizedEveAccount account) {
     super(account);
@@ -58,21 +64,109 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCorporationsCorporationIdDivisionsOk> data,
                                    List<CachedData> updates) throws IOException {
-    // Update wallet divisions
+    // Prepare lists of updates
+    List<Division> hangarDivs = new ArrayList<>();
+    List<Division> walletDivs = new ArrayList<>();
+
     for (GetCorporationsCorporationIdDivisionsHangarHangar next : data.getData()
                                                                       .getHangar()) {
-      updates.add(new Division(false,
-                               nullSafeInteger(next.getDivision(), 0),
-                               next.getName()));
+      hangarDivs.add(new Division(false,
+                                  nullSafeInteger(next.getDivision(), 0),
+                                  next.getName()));
     }
 
-    // Update hangar divisions
     for (GetCorporationsCorporationIdDivisionsWalletWallet next : data.getData()
                                                                       .getWallet()) {
-      updates.add(new Division(true,
-                               nullSafeInteger(next.getDivision(), 0),
-                               next.getName()));
+      walletDivs.add(new Division(true,
+                                  nullSafeInteger(next.getDivision(), 0),
+                                  next.getName()));
     }
+
+    // Retrieve or construct cache
+    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CORP_DIVISIONS);
+    cacheUpdate = ref != null ? (CachedCorporationDivisions) ref.get() : null;
+    if (cacheUpdate == null) {
+      // No cache yet, create one from stored data.
+      cacheInit();
+      cacheUpdate = new CachedCorporationDivisions();
+      for (Division next : retrieveAll(time,
+                                       (long contid, AttributeSelector at) -> Division.accessQuery(account, contid,
+                                                                                                   1000,
+                                                                                                   false, at,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR))) {
+        if (next.isWallet()) {
+          cacheUpdate.addWalletDivision(next);
+        } else {
+          cacheUpdate.addHangarDivision(next);
+        }
+      }
+    }
+
+    // Process hangar divisions
+    for (Division next : hangarDivs) {
+      if (cacheUpdate.cachedHangarDivisions.containsKey(next.getDivision())) {
+        if (!cacheUpdate.cachedHangarDivisions.get(next.getDivision())
+                                              .equivalent(next)) {
+          // Data changed, add update and update cache
+          cacheMiss();
+          updates.add(next);
+          cacheUpdate.addHangarDivision(next);
+        } else {
+          // Nothing changed, cached value is still correct
+          cacheHit();
+        }
+      } else {
+        // New, add it and save in cache
+        cacheMiss();
+        updates.add(next);
+        cacheUpdate.addHangarDivision(next);
+      }
+    }
+
+    // Process wallet divisions
+    for (Division next : walletDivs) {
+      if (cacheUpdate.cachedWalletDivisions.containsKey(next.getDivision())) {
+        if (!cacheUpdate.cachedWalletDivisions.get(next.getDivision())
+                                              .equivalent(next)) {
+          // Data changed, add update and update cache
+          cacheMiss();
+          updates.add(next);
+          cacheUpdate.addWalletDivision(next);
+        } else {
+          // Nothing changed, cached value is still correct
+          cacheHit();
+        }
+      } else {
+        // New, add it and save in cache
+        cacheMiss();
+        updates.add(next);
+        cacheUpdate.addWalletDivision(next);
+      }
+    }
+
+  }
+
+  @Override
+  protected void commitComplete() {
+    // Update the character sheet cache if we updated the value
+    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CORP_DIVISIONS, cacheUpdate);
+    super.commitComplete();
+  }
+
+  private static class CachedCorporationDivisions implements ModelCacheData {
+    Map<Integer, Division> cachedWalletDivisions = new HashMap<>();
+    Map<Integer, Division> cachedHangarDivisions = new HashMap<>();
+
+    void addWalletDivision(Division s) {
+      cachedWalletDivisions.put(s.getDivision(), s);
+    }
+
+    void addHangarDivision(Division s) {
+      cachedHangarDivisions.put(s.getDivision(), s);
+    }
+
   }
 
 }

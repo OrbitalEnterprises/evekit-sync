@@ -107,7 +107,7 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     cacheUpdate = ref != null ? (CachedCharacterSheet) ref.get() : null;
     if (cacheUpdate == null) {
       // No cache yet, populate from latest character sheet
-      cacheMiss();
+      cacheInit();
       cacheUpdate = new CachedCharacterSheet();
       cacheUpdate.cachedData = CharacterSheet.get(account, time);
     }
