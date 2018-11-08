@@ -10,6 +10,7 @@ import io.github.bucket4j.Bucket4j;
 
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
@@ -64,10 +65,10 @@ public class ESIThrottle {
 
   private static int extractErrorLimitRemain(ApiException e, int def) {
     try {
-      String expireHeader = e.getResponseHeaders()
-                             .get("X-Esi-Error-Limit-Remain")
-                             .get(0);
-      return Integer.valueOf(expireHeader);
+      List<String> errorLimits = e.getResponseHeaders()
+                                  .get("X-Esi-Error-Limit-Remain");
+      if (errorLimits != null && !errorLimits.isEmpty())
+        return Integer.valueOf(errorLimits.get(0));
     } catch (Exception f) {
       log.log(Level.FINE, "Error parsing header, will return default: " + def, f);
     }
@@ -76,10 +77,10 @@ public class ESIThrottle {
 
   private static int extractErrorLimitReset(ApiException e, int def) {
     try {
-      String expireHeader = e.getResponseHeaders()
-                             .get("X-Esi-Error-Limit-Reset")
-                             .get(0);
-      return Integer.valueOf(expireHeader);
+      List<String> errorLimits = e.getResponseHeaders()
+                                  .get("X-Esi-Error-Limit-Reset");
+      if (errorLimits != null && !errorLimits.isEmpty())
+        return Integer.valueOf(errorLimits.get(0));
     } catch (Exception f) {
       log.log(Level.FINE, "Error parsing header, will return default: " + def, f);
     }
@@ -140,7 +141,8 @@ public class ESIThrottle {
         // us.  If we don't do this, then we may over throttle unnecessarily.
         delay -= OrbitalProperties.getCurrentTime() - startTime;
         if (delay <= 0) {
-          log.fine("Cancelled throttling due to previous throttler: " + Thread.currentThread().getName());
+          log.fine("Cancelled throttling due to previous throttler: " + Thread.currentThread()
+                                                                              .getName());
           return;
         }
 
@@ -151,7 +153,8 @@ public class ESIThrottle {
         } catch (InterruptedException f) {
           // NOP
         }
-        log.fine("Throttling complete: " + Thread.currentThread().getName());
+        log.fine("Throttling complete: " + Thread.currentThread()
+                                                 .getName());
       } catch (InterruptedException g) {
         log.log(Level.FINE, "Interrupted while throttling", g);
       } finally {
