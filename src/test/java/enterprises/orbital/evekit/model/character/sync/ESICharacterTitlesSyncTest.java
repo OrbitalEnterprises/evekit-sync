@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -111,10 +112,13 @@ public class ESICharacterTitlesSyncTest extends SyncTestBase {
 
     // Compare against test data
     Assert.assertEquals(testData.length, storedTitles.size());
+    Map<Integer, String> testMap = new HashMap<>();
     for (int i = 0; i < testData.length; i++) {
-      CharacterTitle nextTitle = storedTitles.get(i);
-      Assert.assertEquals((int) testData[i][0], nextTitle.getTitleID());
-      Assert.assertEquals(testData[i][1], nextTitle.getTitleName());
+      testMap.put((int) testData[i][0], (String) testData[i][1]);
+    }
+    for (CharacterTitle stored : storedTitles) {
+      Assert.assertTrue(testMap.containsKey(stored.getTitleID()));
+      Assert.assertEquals(testMap.get(stored.getTitleID()), stored.getTitleName());
     }
   }
 
@@ -169,7 +173,7 @@ public class ESICharacterTitlesSyncTest extends SyncTestBase {
     sync.synch(mockServer);
     EasyMock.verify(mockServer, mockEndpoint);
 
-    // Verify updates which will also verify that all old alliances were properly end of life
+    // Verify updates which will also verify that all old titles were properly end of life
     verifyDataUpdate(testTime - 1, newTestData);
     verifyDataUpdate(testTime, titlesTestData);
 

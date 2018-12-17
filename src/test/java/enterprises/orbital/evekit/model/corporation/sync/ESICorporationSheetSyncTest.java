@@ -73,6 +73,7 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
     testSheet.setDateFounded(new DateTime(new Date(TestBase.getRandomLong())));
     testSheet.setCreatorId(TestBase.getRandomInt());
     testSheet.setFactionId(TestBase.getRandomInt());
+    testSheet.setWarEligible(TestBase.getRandomBoolean());
 
     testIcons = new GetCorporationsCorporationIdIconsOk();
     testIcons.setPx64x64(TestBase.getRandomText(50));
@@ -133,6 +134,7 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
                                  .getMillis(), result.getDateFounded());
     Assert.assertEquals((int) testSheet.getCreatorId(), result.getCreatorID());
     Assert.assertEquals((int) testSheet.getFactionId(), result.getFactionID());
+    Assert.assertEquals(testSheet.getWarEligible(), result.isWarEligible());
     Assert.assertEquals(testIcons.getPx64x64(), result.getPx64x64());
     Assert.assertEquals(testIcons.getPx128x128(), result.getPx128x128());
     Assert.assertEquals(testIcons.getPx256x256(), result.getPx256x256());
@@ -176,7 +178,8 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
         testSheet.getFactionId() + 1,
         testIcons.getPx64x64() + "1",
         testIcons.getPx128x128() + "1",
-        testIcons.getPx256x256() + "1"
+        testIcons.getPx256x256() + "1",
+        !testSheet.getWarEligible()
     );
     existing.setup(corpSyncAccount, testTime - 1);
     CachedData.update(existing);
@@ -211,6 +214,7 @@ public class ESICorporationSheetSyncTest extends SyncTestBase {
                                  .getMillis(), result.getDateFounded());
     Assert.assertEquals((int) testSheet.getCreatorId(), result.getCreatorID());
     Assert.assertEquals((int) testSheet.getFactionId(), result.getFactionID());
+    Assert.assertEquals(testSheet.getWarEligible(), result.isWarEligible());
     Assert.assertEquals(testIcons.getPx64x64(), result.getPx64x64());
     Assert.assertEquals(testIcons.getPx128x128(), result.getPx128x128());
     Assert.assertEquals(testIcons.getPx256x256(), result.getPx256x256());

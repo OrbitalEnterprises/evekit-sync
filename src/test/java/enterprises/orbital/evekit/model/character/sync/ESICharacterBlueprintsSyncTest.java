@@ -17,6 +17,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -144,8 +145,14 @@ public class ESICharacterBlueprintsSyncTest extends SyncTestBase {
     Assert.assertEquals(blueprintsTestData.length, storedData.size());
 
     // Check stored data
+    Map<Long, Integer> testMap = new HashMap<>();
     for (int i = 0; i < blueprintsTestData.length; i++) {
-      Blueprint nextEl = storedData.get(i);
+      testMap.put((Long) blueprintsTestData[i][0], i);
+    }
+
+    for (Blueprint nextEl : storedData) {
+      Assert.assertTrue(testMap.containsKey(nextEl.getItemID()));
+      int i = testMap.get(nextEl.getItemID());
       Assert.assertEquals((long) (Long) blueprintsTestData[i][0], nextEl.getItemID());
       Assert.assertEquals((long) (Long) blueprintsTestData[i][1], nextEl.getLocationID());
       Assert.assertEquals(String.valueOf(blueprintsTestData[i][2]), nextEl.getLocationFlag());

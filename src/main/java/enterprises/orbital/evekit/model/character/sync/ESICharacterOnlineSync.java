@@ -11,12 +11,15 @@ import enterprises.orbital.evekit.model.character.CharacterOnline;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class ESICharacterOnlineSync extends AbstractESIAccountSync<GetCharactersCharacterIdOnlineOk> {
   protected static final Logger log = Logger.getLogger(ESICharacterOnlineSync.class.getName());
+
+  private CachedCharacterOnline cacheUpdate;
 
   public ESICharacterOnlineSync(SynchronizedEveAccount account) {
     super(account);
@@ -54,15 +57,45 @@ public class ESICharacterOnlineSync extends AbstractESIAccountSync<GetCharacters
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOnlineOk> data,
                                    List<CachedData> updates) throws IOException {
-    updates.add(new CharacterOnline(data.getData()
-                                        .getOnline(),
-                                    nullSafeDateTime(data.getData()
-                                                         .getLastLogin(), new DateTime(new Date(0L))).getMillis(),
-                                    nullSafeDateTime(data.getData()
-                                                         .getLastLogout(), new DateTime(new Date(0L))).getMillis(),
-                                    nullSafeInteger(data.getData()
-                                                        .getLogins(), 0)));
+    CharacterOnline onlineUpdate = new CharacterOnline(data.getData()
+                                                           .getOnline(),
+                                                       nullSafeDateTime(data.getData()
+                                                                            .getLastLogin(),
+                                                                        new DateTime(new Date(0L))).getMillis(),
+                                                       nullSafeDateTime(data.getData()
+                                                                            .getLastLogout(),
+                                                                        new DateTime(new Date(0L))).getMillis(),
+                                                       nullSafeInteger(data.getData()
+                                                                           .getLogins(), 0));
+
+    // Only queue update if something has changed.
+    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_ONLINE);
+    cacheUpdate = ref != null ? (CachedCharacterOnline) ref.get() : null;
+    if (cacheUpdate == null) {
+      // No cache yet, populate from latest character online
+      cacheInit();
+      cacheUpdate = new CachedCharacterOnline();
+      cacheUpdate.cachedData = CharacterOnline.get(account, time);
+    }
+
+    if (cacheUpdate.cachedData == null || !cacheUpdate.cachedData.equivalent(onlineUpdate)) {
+      updates.add(onlineUpdate);
+      cacheUpdate.cachedData = onlineUpdate;
+      cacheMiss();
+    } else {
+      cacheHit();
+    }
   }
 
+  @Override
+  protected void commitComplete() {
+    // Update the character online cache if we updated the value
+    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_ONLINE, cacheUpdate);
+    super.commitComplete();
+  }
+
+  private static class CachedCharacterOnline implements ModelCacheData {
+    CharacterOnline cachedData;
+  }
 
 }
