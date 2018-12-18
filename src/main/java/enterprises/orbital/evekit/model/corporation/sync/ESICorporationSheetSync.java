@@ -98,7 +98,7 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
                                      data.getData().icons.getPx64x64(),
                                      data.getData().icons.getPx128x128(),
                                      data.getData().icons.getPx256x256(),
-                                     data.getData().sheet.getWarEligible()));
+                                     nullSafeBoolean(data.getData().sheet.getWarEligible(), false)));
   }
 
 
