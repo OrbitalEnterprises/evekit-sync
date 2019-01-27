@@ -43,19 +43,38 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
   @Override
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdBlueprints200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
-    CorporationApi apiInstance = cp.getCorporationApi();
-    Pair<Long, List<GetCorporationsCorporationIdBlueprints200Ok>> result = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdBlueprintsWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
-    return new ESIAccountServerResult<>(
-        result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
-        result.getRight());
+    try {
+      CorporationApi apiInstance = cp.getCorporationApi();
+      Pair<Long, List<GetCorporationsCorporationIdBlueprints200Ok>> result = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdBlueprintsWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+      return new ESIAccountServerResult<>(
+          result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
+          result.getRight());
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        // Return an empty result list with no sync until max delay.
+        log.info("Trapped 403 - Character does not have required role");
+        return new ESIAccountServerResult<>(OrbitalProperties.getCurrentTime() + maxDelay(),
+                                            Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
   }
 
   @SuppressWarnings("RedundantThrows")
