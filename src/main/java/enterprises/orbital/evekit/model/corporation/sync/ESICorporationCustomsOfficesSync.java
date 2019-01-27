@@ -10,9 +10,11 @@ import enterprises.orbital.evekit.model.corporation.CustomsOffice;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdCustomsOffices200Ok>> {
@@ -39,23 +41,42 @@ public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<Lis
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdCustomsOffices200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     PlanetaryInteractionApi apiInstance = cp.getPlanetaryInteractionApi();
 
-    Pair<Long, List<GetCorporationsCorporationIdCustomsOffices200Ok>> result = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdCustomsOfficesWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    try {
+      Pair<Long, List<GetCorporationsCorporationIdCustomsOffices200Ok>> result = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdCustomsOfficesWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
 
-    long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
-    return new ESIAccountServerResult<>(expiry, result.getRight());
+      long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
+      return new ESIAccountServerResult<>(expiry, result.getRight());
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        return new ESIAccountServerResult<>(expiry, Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
   }
 
   @SuppressWarnings({"RedundantThrows", "Duplicates"})

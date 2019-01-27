@@ -12,10 +12,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>>> {
@@ -60,17 +58,36 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<
 
     for (int division = 1; division <= 7; division++) {
       final int nextDivision = division;
-      Pair<Long, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> result = pagedResultRetriever(
-          (page) -> {
-            ESIThrottle.throttle(endpoint().name(), account);
-            return apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
-                (int) account.getEveCorporationID(),
-                nextDivision,
-                null,
-                null,
-                page,
-                accessToken());
-          });
+      Pair<Long, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>> result;
+      try {
+        result = pagedResultRetriever(
+            (page) -> {
+              ESIThrottle.throttle(endpoint().name(), account);
+              return apiInstance.getCorporationsCorporationIdWalletsDivisionJournalWithHttpInfo(
+                  (int) account.getEveCorporationID(),
+                  nextDivision,
+                  null,
+                  null,
+                  page,
+                  accessToken());
+            });
+      } catch (ApiException e) {
+        final String errTrap = "Character does not have required role";
+        if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                  .contains(errTrap)) {
+          // Trap 403 - Character does not have required role(s)
+          log.info("Trapped 403 - Character does not have required role");
+          result = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                           Collections.emptyList());
+        } else {
+          // Any other error will be rethrown.
+          // Document other 403 error response bodies in case we should add these in the future.
+          if (e.getCode() == 403) {
+            log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+          }
+          throw e;
+        }
+      }
       resultMap.put(division, result.getRight());
       expiry = Math.max(expiry,
                         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());

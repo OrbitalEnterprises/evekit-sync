@@ -21,6 +21,7 @@ import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -70,16 +71,35 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
       ESIAccountClientProvider cp) throws ApiException, IOException {
     ContractData resultData = new ContractData();
     ContractsApi apiInstance = cp.getContractsApi();
-    // Retrieve bases info
-    Pair<Long, List<GetCorporationsCorporationIdContracts200Ok>> result = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdContractsWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    Pair<Long, List<GetCorporationsCorporationIdContracts200Ok>> result;
+    try {
+      // Retrieve bases info
+      result = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdContractsWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        result = Pair.of(expiry, Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     // Retrieve contract items for bases with type: unknown, item_exchange, auction, courier
     // Retrieve contract bids for bases with type: auction

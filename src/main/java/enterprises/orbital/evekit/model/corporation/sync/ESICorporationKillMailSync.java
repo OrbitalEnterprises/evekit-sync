@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -69,18 +70,37 @@ public class ESICorporationKillMailSync extends AbstractESIAccountSync<List<GetK
   protected ESIAccountServerResult<List<GetKillmailsKillmailIdKillmailHashOk>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     KillmailsApi apiInstance = cp.getKillmailsApi();
+    Pair<Long, List<GetCorporationsCorporationIdKillmailsRecent200Ok>> result;
 
-    // Retrieve recent kill mails
-    Pair<Long, List<GetCorporationsCorporationIdKillmailsRecent200Ok>> result = pagedResultRetriever(
-        (page) -> {
-          ESIThrottle.throttle(endpoint().name(), account);
-          return apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
-              (int) account.getEveCorporationID(),
-              null,
-              null,
-              page,
-              accessToken());
-        });
+    try {
+      // Retrieve recent kill mails
+      result = pagedResultRetriever(
+          (page) -> {
+            ESIThrottle.throttle(endpoint().name(), account);
+            return apiInstance.getCorporationsCorporationIdKillmailsRecentWithHttpInfo(
+                (int) account.getEveCorporationID(),
+                null,
+                null,
+                page,
+                accessToken());
+          });
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        result = Pair.of(expiry, Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
 
     List<GetCorporationsCorporationIdKillmailsRecent200Ok> results = result.getRight();
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();

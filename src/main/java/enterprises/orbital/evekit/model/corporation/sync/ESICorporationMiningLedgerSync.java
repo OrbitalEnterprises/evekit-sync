@@ -16,6 +16,7 @@ import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -59,33 +60,71 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<MiningLedgerData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
+    final String errTrap = "Character does not have required role";
     MiningLedgerData data = new MiningLedgerData();
     IndustryApi apiInstance = cp.getIndustryApi();
 
-    Pair<Long, List<GetCorporationCorporationIdMiningExtractions200Ok>> result = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationCorporationIdMiningExtractionsWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    Pair<Long, List<GetCorporationCorporationIdMiningExtractions200Ok>> result;
+    try {
+      result = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationCorporationIdMiningExtractionsWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        result = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                         Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.extractions = result.getRight();
 
-    Pair<Long, List<GetCorporationCorporationIdMiningObservers200Ok>> bkResult = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationCorporationIdMiningObserversWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    Pair<Long, List<GetCorporationCorporationIdMiningObservers200Ok>> bkResult;
+    try {
+      bkResult = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationCorporationIdMiningObserversWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        bkResult = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                           Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     expiry = Math.max(expiry,
                       bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
     data.observers = bkResult.getRight();

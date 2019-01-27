@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<ESICorporationWalletTransactionSync.CorpWalletTransaction> {
@@ -74,54 +75,71 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
       long txnIdLimit = Long.MAX_VALUE;
       resultObject.ensureDivision(division);
 
-      // Retrieve initial batch
-      ESIThrottle.throttle(endpoint().name(), account);
-      ApiResponse<List<GetCorporationsCorporationIdWalletsDivisionTransactions200Ok>> result =
-          apiInstance.getCorporationsCorporationIdWalletsDivisionTransactionsWithHttpInfo(
+      try {
+        // Retrieve initial batch
+        ESIThrottle.throttle(endpoint().name(), account);
+        ApiResponse<List<GetCorporationsCorporationIdWalletsDivisionTransactions200Ok>> result =
+            apiInstance.getCorporationsCorporationIdWalletsDivisionTransactionsWithHttpInfo(
+                (int) account.getEveCorporationID(),
+                division,
+                null,
+                txnIdLimit,
+                null,
+                accessToken());
+        checkCommonProblems(result);
+        expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
+
+        // Crawl transactions backwards until no more entries are retrieved
+        while (!result.getData()
+                      .isEmpty()) {
+          resultObject.appendDivision(division, result.getData());
+          //noinspection ConstantConditions
+          txnIdLimit = result.getData()
+                             .stream()
+                             .min(Comparator.comparingLong(
+                                 GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
+                             .get()
+                             .getTransactionId();
+          ESIThrottle.throttle(endpoint().name(), account);
+          result = apiInstance.getCorporationsCorporationIdWalletsDivisionTransactionsWithHttpInfo(
               (int) account.getEveCorporationID(),
               division,
               null,
               txnIdLimit,
               null,
               accessToken());
-      checkCommonProblems(result);
-      expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
+          checkCommonProblems(result);
+          expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 
-      // Crawl transactions backwards until no more entries are retrieved
-      while (!result.getData()
-                    .isEmpty()) {
-        resultObject.appendDivision(division, result.getData());
-        //noinspection ConstantConditions
-        txnIdLimit = result.getData()
-                           .stream()
-                           .min(Comparator.comparingLong(
-                               GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
-                           .get()
-                           .getTransactionId();
-        ESIThrottle.throttle(endpoint().name(), account);
-        result = apiInstance.getCorporationsCorporationIdWalletsDivisionTransactionsWithHttpInfo(
-            (int) account.getEveCorporationID(),
-            division,
-            null,
-            txnIdLimit,
-            null,
-            accessToken());
-        checkCommonProblems(result);
-        expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
-
-        // Workaround for https://github.com/ccpgames/esi-issues/issues/715
-        if (!result.getData()
-                   .isEmpty()) {
-          // Check whether min transaction ID is less than previous transaction ID.  If it's not
-          // then we're seeing the bug and we need to empty the result set.
-          @SuppressWarnings("ConstantConditions") long testLimit = result.getData()
-                                                                         .stream()
-                                                                         .min(Comparator.comparingLong(
-                                     GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
-                                                                         .get()
-                                                                         .getTransactionId();
-          if (testLimit >= txnIdLimit) result.getData()
-                                             .clear();
+          // Workaround for https://github.com/ccpgames/esi-issues/issues/715
+          if (!result.getData()
+                     .isEmpty()) {
+            // Check whether min transaction ID is less than previous transaction ID.  If it's not
+            // then we're seeing the bug and we need to empty the result set.
+            @SuppressWarnings("ConstantConditions") long testLimit = result.getData()
+                                                                           .stream()
+                                                                           .min(Comparator.comparingLong(
+                                                                               GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
+                                                                           .get()
+                                                                           .getTransactionId();
+            if (testLimit >= txnIdLimit) result.getData()
+                                               .clear();
+          }
+        }
+      } catch (ApiException e) {
+        final String errTrap = "Character does not have required role";
+        if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                  .contains(errTrap)) {
+          // Trap 403 - Character does not have required role(s)
+          log.info("Trapped 403 - Character does not have required role");
+          expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        } else {
+          // Any other error will be rethrown.
+          // Document other 403 error response bodies in case we should add these in the future.
+          if (e.getCode() == 403) {
+            log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+          }
+          throw e;
         }
       }
 

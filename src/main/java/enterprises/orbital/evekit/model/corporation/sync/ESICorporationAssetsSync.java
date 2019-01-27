@@ -18,6 +18,7 @@ import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,17 +80,37 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
       ESIAccountClientProvider cp) throws ApiException, IOException {
     AssetData resultData = new AssetData();
     AssetsApi apiInstance = cp.getAssetsApi();
-    Pair<Long, List<GetCorporationsCorporationIdAssets200Ok>> result = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdAssetsWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
-    long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
-    resultData.assets = result.getRight();
+    long expiry;
+
+    try {
+      Pair<Long, List<GetCorporationsCorporationIdAssets200Ok>> result = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdAssetsWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+      expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
+      resultData.assets = result.getRight();
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        resultData.assets = Collections.emptyList();
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     int BATCH_SIZE = PersistentProperty.getIntegerPropertyWithFallback(PROP_LOCATION_BATCH_SIZE,
                                                                        DEF_LOCATION_BATCH_SIZE);
     resultData.assetLocations = new ArrayList<>();

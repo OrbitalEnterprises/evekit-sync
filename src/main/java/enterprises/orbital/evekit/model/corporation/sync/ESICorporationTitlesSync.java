@@ -15,9 +15,11 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporationTitlesSync.TitleData> {
@@ -60,14 +62,16 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<TitleData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
+    final String errTrap = "Character does not have required role";
     CorporationApi apiInstance = cp.getCorporationApi();
     TitleData resultData = new TitleData();
     long expiry;
 
-    {
+    try {
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
@@ -77,9 +81,24 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       checkCommonProblems(apir);
       resultData.titles = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        resultData.titles = Collections.emptyList();
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
     }
 
-    {
+    try {
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdMembersTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdMembersTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
@@ -89,6 +108,21 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       checkCommonProblems(apir);
       resultData.members = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        resultData.members = Collections.emptyList();
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
     }
 
     return new ESIAccountServerResult<>(expiry, resultData);

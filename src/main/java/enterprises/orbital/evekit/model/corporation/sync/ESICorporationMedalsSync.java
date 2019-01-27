@@ -12,9 +12,11 @@ import enterprises.orbital.evekit.model.corporation.CorporationMemberMedal;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporationMedalsSync.MedalsData> {
@@ -74,17 +76,36 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
     long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     data.medals = result.getRight();
 
-    Pair<Long, List<GetCorporationsCorporationIdMedalsIssued200Ok>> bkResult = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdMedalsIssuedWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
-    long bkExpiry = bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
-    data.issued = bkResult.getRight();
+    long bkExpiry;
+    try {
+      Pair<Long, List<GetCorporationsCorporationIdMedalsIssued200Ok>> bkResult = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdMedalsIssuedWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+      bkExpiry = bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
+      data.issued = bkResult.getRight();
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        bkExpiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        data.issued = Collections.emptyList();
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
 
     return new ESIAccountServerResult<>(Math.max(expiry, bkExpiry), data);
   }

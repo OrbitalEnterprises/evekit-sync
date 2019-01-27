@@ -12,6 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdBlueprints200Ok>> {
@@ -40,6 +41,7 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<List<GetCorporationsCorporationIdBlueprints200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -62,10 +64,9 @@ public class ESICorporationBlueprintsSync extends AbstractESIAccountSync<List<Ge
       if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
                                                                 .contains(errTrap)) {
         // Trap 403 - Character does not have required role(s)
-        // Return an empty result list with no sync until max delay.
         log.info("Trapped 403 - Character does not have required role");
-        return new ESIAccountServerResult<>(OrbitalProperties.getCurrentTime() + maxDelay(),
-                                            Collections.emptyList());
+        long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        return new ESIAccountServerResult<>(expiry, Collections.emptyList());
       } else {
         // Any other error will be rethrown.
         // Document other 403 error response bodies in case we should add these in the future.

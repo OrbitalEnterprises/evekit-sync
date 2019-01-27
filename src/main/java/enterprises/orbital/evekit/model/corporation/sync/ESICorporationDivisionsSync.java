@@ -13,10 +13,8 @@ import enterprises.orbital.evekit.model.corporation.Division;
 
 import java.io.IOException;
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorporationsCorporationIdDivisionsOk> {
@@ -44,20 +42,39 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<GetCorporationsCorporationIdDivisionsOk> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CorporationApi apiInstance = cp.getCorporationApi();
 
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCorporationsCorporationIdDivisionsOk> result = apiInstance.getCorporationsCorporationIdDivisionsWithHttpInfo(
-        (int) account.getEveCorporationID(),
-        null,
-        null,
-        accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<GetCorporationsCorporationIdDivisionsOk> result = apiInstance.getCorporationsCorporationIdDivisionsWithHttpInfo(
+          (int) account.getEveCorporationID(),
+          null,
+          null,
+          accessToken());
+      checkCommonProblems(result);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      final String errTrap = "Character does not have required role";
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        return new ESIAccountServerResult<>(expiry, null);
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
   }
 
   @SuppressWarnings("RedundantThrows")
@@ -68,18 +85,20 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
     List<Division> hangarDivs = new ArrayList<>();
     List<Division> walletDivs = new ArrayList<>();
 
-    for (GetCorporationsCorporationIdDivisionsHangarHangar next : data.getData()
-                                                                      .getHangar()) {
-      hangarDivs.add(new Division(false,
-                                  nullSafeInteger(next.getDivision(), 0),
-                                  next.getName()));
-    }
+    if (data.getData() != null) {
+      for (GetCorporationsCorporationIdDivisionsHangarHangar next : data.getData()
+                                                                        .getHangar()) {
+        hangarDivs.add(new Division(false,
+                                    nullSafeInteger(next.getDivision(), 0),
+                                    next.getName()));
+      }
 
-    for (GetCorporationsCorporationIdDivisionsWalletWallet next : data.getData()
-                                                                      .getWallet()) {
-      walletDivs.add(new Division(true,
-                                  nullSafeInteger(next.getDivision(), 0),
-                                  next.getName()));
+      for (GetCorporationsCorporationIdDivisionsWalletWallet next : data.getData()
+                                                                        .getWallet()) {
+        walletDivs.add(new Division(true,
+                                    nullSafeInteger(next.getDivision(), 0),
+                                    next.getName()));
+      }
     }
 
     // Retrieve or construct cache

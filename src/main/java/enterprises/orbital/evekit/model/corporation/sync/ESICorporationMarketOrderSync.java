@@ -13,10 +13,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalLong;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICorporationMarketOrderSync.OrderSet> {
@@ -48,35 +46,73 @@ public class ESICorporationMarketOrderSync extends AbstractESIAccountSync<ESICor
     evolveOrAdd(time, existing, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<OrderSet> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
+    final String errTrap = "Character does not have required role";
     OrderSet orders = new OrderSet();
     MarketApi apiInstance = cp.getMarketApi();
 
     // Retrieve live orders
-    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> liveResult = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    Pair<Long, List<GetCorporationsCorporationIdOrders200Ok>> liveResult;
+    try {
+      liveResult = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdOrdersWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        liveResult = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                             Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     long expiry = liveResult.getLeft() > 0 ? liveResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
     orders.liveOrders = liveResult.getRight();
 
     // Retrieve historical orders
-    Pair<Long, List<GetCorporationsCorporationIdOrdersHistory200Ok>> histResult = pagedResultRetriever((page) -> {
-      ESIThrottle.throttle(endpoint().name(), account);
-      return apiInstance.getCorporationsCorporationIdOrdersHistoryWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          null,
-          null,
-          page,
-          accessToken());
-    });
+    Pair<Long, List<GetCorporationsCorporationIdOrdersHistory200Ok>> histResult;
+    try {
+      histResult = pagedResultRetriever((page) -> {
+        ESIThrottle.throttle(endpoint().name(), account);
+        return apiInstance.getCorporationsCorporationIdOrdersHistoryWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            null,
+            null,
+            page,
+            accessToken());
+      });
+    } catch (ApiException e) {
+      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
+                                                                .contains(errTrap)) {
+        // Trap 403 - Character does not have required role(s)
+        log.info("Trapped 403 - Character does not have required role");
+        histResult = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
+                             Collections.emptyList());
+      } else {
+        // Any other error will be rethrown.
+        // Document other 403 error response bodies in case we should add these in the future.
+        if (e.getCode() == 403) {
+          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+        }
+        throw e;
+      }
+    }
     expiry = histResult.getLeft() > 0 ? Math.max(histResult.getLeft(), expiry) : expiry;
     orders.historicalOrders = histResult.getRight();
 
