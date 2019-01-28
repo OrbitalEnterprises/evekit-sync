@@ -29,4 +29,11 @@ public class ModelCache {
       modelMap.put(Pair.of(owner, strategy), new WeakReference<>(data));
     }
   }
+
+  public static void clear(SynchronizedEveAccount owner, ESISyncEndpoint strategy) {
+    synchronized (modelMap) {
+      modelMap.remove(Pair.of(owner, strategy));
+    }
+  }
+
 }

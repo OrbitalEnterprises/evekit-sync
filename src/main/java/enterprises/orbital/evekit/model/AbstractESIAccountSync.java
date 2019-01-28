@@ -337,6 +337,24 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   }
 
   /**
+   * Utility method to extract ETag from an ESI ApiResponse.
+   *
+   * @param result the ApiResponse which may contain an "ETag" header.
+   * @param def    value to return if header does not contain "ETag".
+   * @return ETag header, or the default.
+   */
+  protected static String extractETag(ApiResponse<?> result, String def) {
+    try {
+      return result.getHeaders()
+                   .get("ETag")
+                   .get(0);
+    } catch (Exception e) {
+      log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
+    }
+    return def;
+  }
+
+  /**
    * Utility method to check for common problems with API responses.  The current list of common problems are:
    * <p>
    * <ul>

@@ -83,9 +83,11 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       resultData.members = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      String roleGrantError = "Character cannot grant roles";
+      if (e.getCode() == 403 && e.getResponseBody() != null &&
+          (e.getResponseBody().contains(errTrap) || e.getResponseBody().contains(roleGrantError))) {
         // Trap 403 - Character does not have required role(s)
+        // Trap 403 - Character cannot grant roles
         log.info("Trapped 403 - Character does not have required role");
         resultData.members = Collections.emptyList();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);

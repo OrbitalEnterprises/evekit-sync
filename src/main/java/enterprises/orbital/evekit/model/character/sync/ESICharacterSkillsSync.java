@@ -15,12 +15,16 @@ import enterprises.orbital.evekit.model.character.CharacterSkill;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterSkillsSync.SkillData> {
   protected static final Logger log = Logger.getLogger(ESICharacterSkillsSync.class.getName());
+
+  // If non-null, then save this ETAG as cached data for the next skills list call.
+  private String skillListETAG;
 
   class SkillData {
     GetCharactersCharacterIdSkillsOk skillInfo;
@@ -62,13 +66,26 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
     SkillData resultData = new SkillData();
     long expiry;
 
-    // Retrieve skill info
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdSkillsOk> resultS = apiInstance.getCharactersCharacterIdSkillsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(resultS);
-    expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
-    resultData.skillInfo = resultS.getData();
+    // Check whether we have an ETAG to send for the skills call
+    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SKILLS);
+    CachedCharacterSkills cached = ref != null ? (CachedCharacterSkills) ref.get() : null;
+    skillListETAG = cached != null ? cached.etag : null;
+
+    try {
+      // Retrieve skill info
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<GetCharactersCharacterIdSkillsOk> resultS = apiInstance.getCharactersCharacterIdSkillsWithHttpInfo(
+          (int) account.getEveCharacterID(), null, skillListETAG, accessToken());
+      checkCommonProblems(resultS);
+      expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
+      resultData.skillInfo = resultS.getData();
+      skillListETAG = extractETag(resultS, null);
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is retrhown.
+      if (e.getCode() != 304) throw e;
+      expiry = 0;
+    }
 
     // Retrieve attribute info
     ESIThrottle.throttle(endpoint().name(), account);
@@ -102,12 +119,32 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
     updates.add(new CharacterSheetSkillPoints(data.getData().skillInfo.getTotalSp(),
                                               nullSafeInteger(data.getData().skillInfo.getUnallocatedSp(), 0)));
 
-    // Add skills
-    for (GetCharactersCharacterIdSkillsSkill ns : data.getData().skillInfo.getSkills()) {
-      updates.add(new CharacterSkill(ns.getSkillId(),
-                                     ns.getTrainedSkillLevel(),
-                                     ns.getSkillpointsInSkill(),
-                                     ns.getActiveSkillLevel()));
+    // Add skills - will be null on cached results
+    if (data.getData().skillInfo != null)
+      for (GetCharactersCharacterIdSkillsSkill ns : data.getData().skillInfo.getSkills()) {
+        updates.add(new CharacterSkill(ns.getSkillId(),
+                                       ns.getTrainedSkillLevel(),
+                                       ns.getSkillpointsInSkill(),
+                                       ns.getActiveSkillLevel()));
+      }
+  }
+
+  @Override
+  protected void commitComplete() {
+    // Update the cache if we updated the value
+    if (skillListETAG != null) {
+      ModelCache.set(account, ESISyncEndpoint.CHAR_SKILLS, new CachedCharacterSkills(skillListETAG));
+    } else {
+      ModelCache.clear(account, ESISyncEndpoint.CHAR_SKILLS);
+    }
+    super.commitComplete();
+  }
+
+  private static class CachedCharacterSkills implements ModelCacheData {
+    String etag;
+
+    CachedCharacterSkills(String etag) {
+      this.etag = etag;
     }
   }
 
