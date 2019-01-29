@@ -80,10 +80,12 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
       expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
       resultData.skillInfo = resultS.getData();
       skillListETAG = extractETag(resultS, null);
+      cacheMiss();
     } catch (ApiException e) {
       // Trap 304 which indicates there are no changes from the last call
-      // Anything else is retrhown.
+      // Anything else is rethrown.
       if (e.getCode() != 304) throw e;
+      cacheHit();
       expiry = 0;
     }
 
