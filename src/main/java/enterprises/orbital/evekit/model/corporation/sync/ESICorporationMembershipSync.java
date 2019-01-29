@@ -68,6 +68,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
   protected ESIAccountServerResult<MembershipData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     final String errTrap = "Character does not have required role";
+    final String roleGrantError = "Character cannot grant roles";
     CorporationApi apiInstance = cp.getCorporationApi();
     MembershipData resultData = new MembershipData();
     long expiry;
@@ -83,7 +84,6 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       resultData.members = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
     } catch (ApiException e) {
-      String roleGrantError = "Character cannot grant roles";
       if (e.getCode() == 403 && e.getResponseBody() != null &&
           (e.getResponseBody().contains(errTrap) || e.getResponseBody().contains(roleGrantError))) {
         // Trap 403 - Character does not have required role(s)
@@ -112,9 +112,10 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       resultData.roles = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403 && e.getResponseBody() != null &&
+          (e.getResponseBody().contains(errTrap) || e.getResponseBody().contains(roleGrantError))) {
         // Trap 403 - Character does not have required role(s)
+        // Trap 403 - Character cannot grant roles
         log.info("Trapped 403 - Character does not have required role");
         resultData.roles = Collections.emptyList();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
