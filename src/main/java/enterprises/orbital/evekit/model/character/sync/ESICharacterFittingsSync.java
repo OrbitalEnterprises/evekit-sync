@@ -58,7 +58,6 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                         result.getData());
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdFittings200Ok>> data,
@@ -77,7 +76,7 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                                          .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey,
                                                                                    AbstractMap.SimpleEntry::getValue));
 
-    Map<Triple<Integer, Integer, Integer>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
+    Map<Triple<Integer, Integer, String>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
                                                                                                  (contid, at) -> FittingItem.accessQuery(
                                                                                                      account,
                                                                                                      contid, 1000,
@@ -98,7 +97,7 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                                                                         AbstractMap.SimpleEntry::getValue));
 
     Set<Integer> seenFittings = new HashSet<>();
-    Set<Triple<Integer, Integer, Integer>> seenItems = new HashSet<>();
+    Set<Triple<Integer, Integer, String>> seenItems = new HashSet<>();
 
     for (GetCharactersCharacterIdFittings200Ok next : data.getData()) {
       Fitting nextFitting = new Fitting(next.getFittingId(),
@@ -114,13 +113,13 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
       for (GetCharactersCharacterIdFittingsItem item : next.getItems()) {
         FittingItem nextItem = new FittingItem(next.getFittingId(),
                                                item.getTypeId(),
-                                               item.getFlag(),
+                                               item.getFlag().toString(),
                                                item.getQuantity());
         // Only update if there is a change to reduce DB contention
         if (!existingItemMap.containsKey(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag())) ||
             !nextItem.equivalent(existingItemMap.get(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag()))))
           updates.add(nextItem);
-        seenItems.add(Triple.of(next.getFittingId(), item.getTypeId(), item.getFlag()));
+        seenItems.add(Triple.of(next.getFittingId(), item.getTypeId(), item.getFlag().toString()));
       }
     }
 

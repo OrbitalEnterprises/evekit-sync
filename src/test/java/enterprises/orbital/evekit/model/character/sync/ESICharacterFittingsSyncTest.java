@@ -41,6 +41,7 @@ public class ESICharacterFittingsSyncTest extends SyncTestBase {
     // 3 int shipTypeID
     // 4 Object[][] items
     int size = 50 + TestBase.getRandomInt(50);
+    int flagLen = GetCharactersCharacterIdFittingsItem.FlagEnum.values().length;
     fittingsTestData = new Object[size][5];
     for (int i = 0; i < size; i++) {
       fittingsTestData[i][0] = TestBase.getUniqueRandomInteger();
@@ -55,7 +56,7 @@ public class ESICharacterFittingsSyncTest extends SyncTestBase {
         fittingsTestData[i][4] = itemData;
         for (int j = 0; j < itemCount; j++) {
           itemData[j][0] = TestBase.getUniqueRandomInteger();
-          itemData[j][1] = TestBase.getRandomInt();
+          itemData[j][1] = GetCharactersCharacterIdFittingsItem.FlagEnum.values()[TestBase.getRandomInt(flagLen)];
           itemData[j][2] = TestBase.getRandomInt();
         }
       }
@@ -115,7 +116,8 @@ public class ESICharacterFittingsSyncTest extends SyncTestBase {
                                                                                        .map(y -> {
                                                                                          GetCharactersCharacterIdFittingsItem newItem = new GetCharactersCharacterIdFittingsItem();
                                                                                          newItem.setTypeId((int) y[0]);
-                                                                                         newItem.setFlag((int) y[1]);
+                                                                                         newItem.setFlag(
+                                                                                             (GetCharactersCharacterIdFittingsItem.FlagEnum) y[1]);
                                                                                          newItem.setQuantity(
                                                                                              (int) y[2]);
                                                                                          return newItem;
@@ -178,7 +180,7 @@ public class ESICharacterFittingsSyncTest extends SyncTestBase {
         FittingItem nextItem = storedItems.get(j++);
         Assert.assertEquals((int) testData[i][0], nextItem.getFittingID());
         Assert.assertEquals((int) next[0], nextItem.getTypeID());
-        Assert.assertEquals((int) next[1], nextItem.getFlag());
+        Assert.assertEquals(next[1].toString(), nextItem.getFlag());
         Assert.assertEquals((int) next[2], nextItem.getQuantity());
       }
     }
@@ -240,12 +242,12 @@ public class ESICharacterFittingsSyncTest extends SyncTestBase {
         newTestData[i][4] = itemData;
         for (int j = 0; j < itemCount; j++) {
           itemData[j][0] = oldData[j][0];
-          itemData[j][1] = (int) oldData[j][1] + 1;
+          itemData[j][1] = oldData[j][1].toString() + "1";
           itemData[j][2] = (int) oldData[j][2] + 1;
 
           FittingItem oldItem = new FittingItem((int) newTestData[i][0],
                                                 (int) itemData[j][0],
-                                                (int) itemData[j][1],
+                                                (String) itemData[j][1],
                                                 (int) itemData[j][2]);
           oldItem.setup(charSyncAccount, testTime - 1);
           CachedData.update(oldItem);
