@@ -74,6 +74,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     testSheet.setFactionId(TestBase.getRandomInt());
     testSheet.setDescription(TestBase.getRandomText(50));
     testSheet.setSecurityStatus(TestBase.getRandomFloat(10));
+    testSheet.setTitle(TestBase.getRandomText(50));
 
     corpSheet = new GetCorporationsCorporationIdOk();
     corpSheet.setName(TestBase.getRandomText(50));
@@ -130,6 +131,7 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
     Assert.assertEquals((int) testSheet.getFactionId(), result.getFactionID());
     Assert.assertEquals(testSheet.getDescription(), result.getDescription());
     Assert.assertEquals(testSheet.getSecurityStatus(), result.getSecurityStatus(), 0.001);
+    Assert.assertEquals(testSheet.getTitle(), result.getTitle());
 
     // Verify synch account corp ID and name were updated
     SynchronizedEveAccount updated = SynchronizedEveAccount.getSynchronizedAccount(testUserAccount, charSyncAccount.getAid(), false);
@@ -170,7 +172,8 @@ public class ESICharacterSheetSyncTest extends SyncTestBase {
                                                  testSheet.getAllianceId() + 1,
                                                  testSheet.getFactionId() + 1,
                                                  testSheet.getDescription() + "1",
-                                                 testSheet.getSecurityStatus());
+                                                 testSheet.getSecurityStatus(),
+                                                 testSheet.getTitle() + "1");
     existing.setup(charSyncAccount, testTime - 1);
     CachedData.update(existing);
 

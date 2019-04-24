@@ -51,48 +51,52 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
     checkCommonProblems(result);
 
     // Also cache corporation ID and name in case these changed
-    corporationID = result.getData().getCorporationId();
-    ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi().getCorporationsCorporationIdWithHttpInfo(
-        (int) corporationID,
-        null,
-        null);
+    corporationID = result.getData()
+                          .getCorporationId();
+    ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi()
+                                                               .getCorporationsCorporationIdWithHttpInfo(
+                                                                   (int) corporationID,
+                                                                   null,
+                                                                   null);
     checkCommonProblems(corpResult);
-    corporationName = corpResult.getData().getName();
+    corporationName = corpResult.getData()
+                                .getName();
 
     return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
                                         result.getData());
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
     // Add update for processing
     CharacterSheet newSheet = new CharacterSheet(account.getEveCharacterID(),
-                                                                 data.getData()
-                                                                     .getName(),
-                                                                 data.getData()
-                                                                     .getCorporationId(),
-                                                                 data.getData()
-                                                                     .getRaceId(),
-                                                                 data.getData()
-                                                                     .getBirthday()
-                                                                     .getMillis(),
-                                                                 data.getData()
-                                                                     .getBloodlineId(),
-                                                                 nullSafeInteger(data.getData()
-                                                                                     .getAncestryId(), 0),
-                                                                 data.getData()
-                                                                     .getGender()
-                                                                     .toString(),
-                                                                 nullSafeInteger(data.getData()
-                                                                                     .getAllianceId(), 0),
-                                                                 nullSafeInteger(data.getData()
-                                                                                     .getFactionId(), 0),
-                                                                 data.getData()
-                                                                     .getDescription(),
-                                                                 nullSafeFloat(data.getData()
-                                                                                   .getSecurityStatus(), 0F));
+                                                 data.getData()
+                                                     .getName(),
+                                                 data.getData()
+                                                     .getCorporationId(),
+                                                 data.getData()
+                                                     .getRaceId(),
+                                                 data.getData()
+                                                     .getBirthday()
+                                                     .getMillis(),
+                                                 data.getData()
+                                                     .getBloodlineId(),
+                                                 nullSafeInteger(data.getData()
+                                                                     .getAncestryId(), 0),
+                                                 data.getData()
+                                                     .getGender()
+                                                     .toString(),
+                                                 nullSafeInteger(data.getData()
+                                                                     .getAllianceId(), 0),
+                                                 nullSafeInteger(data.getData()
+                                                                     .getFactionId(), 0),
+                                                 data.getData()
+                                                     .getDescription(),
+                                                 nullSafeFloat(data.getData()
+                                                                   .getSecurityStatus(), 0F),
+                                                 nullSafeString(data.getData()
+                                                                    .getTitle(), ""));
 
     // Check whether the corporation has changed.  If so, update the SynchronizedEveAccount
     if (account.getEveCorporationID() != corporationID) {
