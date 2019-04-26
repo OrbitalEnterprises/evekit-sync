@@ -45,6 +45,7 @@ public class ESICharacterAssetsSync extends AbstractESIAccountSync<ESICharacterA
     return ESISyncEndpoint.CHAR_ASSETS;
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {

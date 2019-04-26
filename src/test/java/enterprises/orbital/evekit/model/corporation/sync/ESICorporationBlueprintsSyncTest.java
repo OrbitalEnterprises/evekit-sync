@@ -146,7 +146,15 @@ public class ESICorporationBlueprintsSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < blueprintsTestData.length; i++) {
-      Blueprint nextEl = storedData.get(i);
+      long itemID = (long) (Long) blueprintsTestData[i][0];
+      Blueprint nextEl = null;
+      for (Blueprint j : storedData) {
+        if (j.getItemID() == itemID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) (Long) blueprintsTestData[i][0], nextEl.getItemID());
       Assert.assertEquals((long) (Long) blueprintsTestData[i][1], nextEl.getLocationID());
       Assert.assertEquals(String.valueOf(blueprintsTestData[i][2]), nextEl.getLocationFlag());

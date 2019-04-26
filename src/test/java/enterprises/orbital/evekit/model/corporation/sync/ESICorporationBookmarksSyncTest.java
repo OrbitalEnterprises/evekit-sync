@@ -218,7 +218,15 @@ public class ESICorporationBookmarksSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < bookmarksTestData.length; i++) {
-      Bookmark nextEl = storedData.get(i);
+      int bookmarkID = (int) (Integer) bookmarksTestData[i][3];
+      Bookmark nextEl = null;
+      for (Bookmark j : storedData) {
+        if (j.getBookmarkID() == bookmarkID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) (Integer) bookmarksTestData[i][0], nextEl.getFolderID());
       Assert.assertEquals(bookmarksTestData[i][1], nextEl.getFolderName());
       Assert.assertEquals((int) (Integer) bookmarksTestData[i][2], nextEl.getFolderCreatorID());

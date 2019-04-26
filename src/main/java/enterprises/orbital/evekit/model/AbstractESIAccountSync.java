@@ -317,6 +317,19 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     return def;
   }
 
+  protected static long extractExpiry(ApiException result, long def) {
+    try {
+      String expireHeader = result.getResponseHeaders()
+                                  .get("Expires")
+                                  .get(0);
+      return DateUtils.parseDate(expireHeader)
+                      .getTime();
+    } catch (Exception e) {
+      log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
+    }
+    return def;
+  }
+
   /**
    * Utility method to extract X-Pages header from an ESI ApiResponse.
    *
@@ -354,6 +367,17 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
     return def;
   }
 
+  protected static String extractETag(ApiException result, String def) {
+    try {
+      return result.getResponseHeaders()
+                   .get("ETag")
+                   .get(0);
+    } catch (Exception e) {
+      log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
+    }
+    return def;
+  }
+
   /**
    * Utility method to check for common problems with API responses.  The current list of common problems are:
    * <p>
@@ -381,6 +405,26 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    */
   protected String getNextSyncContext() {
     return null;
+  }
+
+  /**
+   * Split cached context data using the char "|".
+   *
+   * @param required the number of distinct context elements we expect in the context.
+   * @return a String[] of length "required" populated with the results of splitting the
+   * context (if the required number is present), otherwise populated with null values.
+   * @throws IOException if an error occurs while retrieving the context.
+   */
+  public String[] splitCachedContext(int required) throws IOException {
+    try {
+      String cachedTag = getCurrentTracker().getContext();
+      if (cachedTag == null) throw new TrackerNotFoundException();
+      String[] splits = cachedTag.split("\\|");
+      if (splits.length != required) throw new TrackerNotFoundException();
+      return splits;
+    } catch (TrackerNotFoundException e) {
+      return new String[required];
+    }
   }
 
   /**
@@ -497,7 +541,6 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         syncProcessDataStart = OrbitalProperties.getCurrentTime();
         processServerData(syncTime, serverData, updateList);
         syncProcessDataEnd = OrbitalProperties.getCurrentTime();
-        nextContext = getNextSyncContext();
 
         // Commit all updates.  We process updates in batches with sizes that can be varied dynamically by the
         // admin as needed.  Smaller batches prevent long running transactions from tying up contended resources.
@@ -538,6 +581,10 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         }
         syncCommitEnd = OrbitalProperties.getCurrentTime();
         commitComplete();
+
+        // NOTE: only collect context after commit to give the subclass an opportunity
+        // to only save context on successful commit.
+        nextContext = getNextSyncContext();
 
         log.fine("Update and store finished normally: " + getContext());
         tracker.setStatus(ESISyncState.FINISHED);

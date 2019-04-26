@@ -213,13 +213,23 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
       Assert.assertEquals(contactsTestData.length, storedData.size());
 
       // Check stored data
-      for (int i = 0; i < contactsTestData.length; i++) {
-        Contact nextEl = storedData.get(i);
-        long[] labels = (long[]) contactsTestData[i][4];
-        Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
-        Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
-        Assert.assertEquals((float) contactsTestData[i][2], nextEl.getStanding(), 0.001);
-        Assert.assertEquals(String.valueOf(contactsTestData[i][3]), nextEl.getContactType());
+      for (Object[] contactsTestDatum : contactsTestData) {
+        String listName = (String) contactsTestDatum[0];
+        int contactID = (int) contactsTestDatum[1];
+        Contact nextEl = null;
+        for (Contact j : storedData) {
+          if (j.getList()
+               .equals(listName) && j.getContactID() == contactID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
+        long[] labels = (long[]) contactsTestDatum[4];
+        Assert.assertEquals(contactsTestDatum[0], nextEl.getList());
+        Assert.assertEquals((int) contactsTestDatum[1], nextEl.getContactID());
+        Assert.assertEquals((float) contactsTestDatum[2], nextEl.getStanding(), 0.001);
+        Assert.assertEquals(String.valueOf(contactsTestDatum[3]), nextEl.getContactType());
         Assert.assertFalse(nextEl.isInWatchlist());
         Assert.assertFalse(nextEl.isBlocked());
         Assert.assertEquals(labels.length, nextEl.getLabels()
@@ -248,7 +258,15 @@ public class ESICharacterAllianceContactsSyncTest extends SyncTestBase {
 
       // Check stored data
       for (int i = 0; i < labelsTestData.length; i++) {
-        ContactLabel nextEl = storedData.get(i);
+        ContactLabel nextEl = null;
+        long labelID = (long) labelsTestData[i][1];
+        for (ContactLabel j : storedData) {
+          if (j.getLabelID() == labelID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals(labelsTestData[i][0], nextEl.getList());
         Assert.assertEquals((long) labelsTestData[i][1], nextEl.getLabelID());
         Assert.assertEquals(labelsTestData[i][2], nextEl.getName());

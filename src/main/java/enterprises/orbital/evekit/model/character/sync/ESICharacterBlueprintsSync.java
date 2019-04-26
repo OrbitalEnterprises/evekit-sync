@@ -10,14 +10,31 @@ import enterprises.orbital.evekit.model.common.Blueprint;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICharacterBlueprintsSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdBlueprints200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterBlueprintsSync.class.getName());
 
-  private CachedCharBlueprints cacheUpdate;
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
 
   public ESICharacterBlueprintsSync(SynchronizedEveAccount account) {
     super(account);
@@ -58,101 +75,69 @@ public class ESICharacterBlueprintsSync extends AbstractESIAccountSync<List<GetC
         result.getRight());
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdBlueprints200Ok>> data,
                                    List<CachedData> updates) throws IOException {
-    // Prepare list of latest blueprints
-    List<Blueprint> toAdd = new ArrayList<>();
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    // Assemble retrieved data and prepare hashes for comparison.
+    List<Blueprint> retrievedBlueprints = new ArrayList<>();
     for (GetCharactersCharacterIdBlueprints200Ok next : data.getData()) {
-      Blueprint nextBlueprint = new Blueprint(next.getItemId(), next.getLocationId(), next.getLocationFlag()
-                                                                                          .toString(), next.getTypeId(),
-                                              next.getQuantity(), next.getTimeEfficiency(),
-                                              next.getMaterialEfficiency(), next.getRuns());
-      toAdd.add(nextBlueprint);
+      retrievedBlueprints.add(new Blueprint(next.getItemId(), next.getLocationId(), next.getLocationFlag()
+                                                                                        .toString(),
+                                            next.getTypeId(),
+                                            next.getQuantity(), next.getTimeEfficiency(),
+                                            next.getMaterialEfficiency(), next.getRuns()));
+    }
+    retrievedBlueprints.sort(Comparator.comparingLong(Blueprint::getItemID));
+    String hashResult = CachedData.dataHashHelper(retrievedBlueprints.stream()
+                                                                     .map(Blueprint::dataHash)
+                                                                     .toArray());
+
+    if (hashResult.equals(currentETag)) {
+      // List hasn't changed, no need to update
+      cacheHit();
+      return;
     }
 
-    // Retrieve blueprint cache and check for changed blueprints, or blueprints that no longer exist and can be
-    // deleted.
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_BLUEPRINTS);
-    cacheUpdate = ref != null ? (CachedCharBlueprints) ref.get() : null;
-    if (cacheUpdate == null) {
-      // If we don't have a cache yet, then create one from all active stored blueprints.
-      cacheInit();
-      cacheUpdate = new CachedCharBlueprints();
-      for (Blueprint next : retrieveAll(time,
-                                        (long contid, AttributeSelector at) -> Blueprint.accessQuery(account, contid,
-                                                                                                     1000,
-                                                                                                     false, at,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR))) {
-        cacheUpdate.addBlueprint(next);
-      }
-    }
+    // Otherwise, something changed so process.
+    cacheMiss();
+    currentETag = hashResult;
 
-    // Created a stored collection from the current cached blueprints
-    // We make a copy here to avoid concurrent modification exceptions below.
-    Collection<Blueprint> stored = new ArrayList<>(cacheUpdate.cachedBlueprints.values());
-
-    // Process the latest blueprint list.  Any new blueprint should be added
-    // and cached.  If the blueprint already exists, but the new copy has changed,
-    // then it should also be updated and replace the cached copy.  We also keep
-    // track of the ID of all new blueprints so we can detect when an existing
-    // blueprint should be EOL'd.
-    Set<Long> currentBlueprintSet = new HashSet<>();
-    //noinspection Duplicates
-    for (Blueprint next : toAdd) {
-      currentBlueprintSet.add(next.getItemID());
-      if (cacheUpdate.cachedBlueprints.containsKey(next.getItemID())) {
-        Blueprint compare = cacheUpdate.cachedBlueprints.get(next.getItemID());
-        if (!compare.equivalent(next)) {
-          // Update and replace in cache
-          updates.add(next);
-          cacheUpdate.addBlueprint(next);
-          cacheMiss();
-        } else {
-          // Cached value is still correct
-          cacheHit();
-        }
-      } else {
-        // A blueprint we've never seen before
-        cacheMiss();
-        updates.add(next);
-        cacheUpdate.addBlueprint(next);
-      }
-    }
+    // Process the latest blueprint list.
+    Set<Long> currentBlueprintSet = retrievedBlueprints.stream()
+                                                       .map(Blueprint::getItemID)
+                                                       .collect(Collectors.toSet());
+    updates.addAll(retrievedBlueprints);
 
     // Now EOL any blueprints which are not in the latest list.
-    //noinspection Duplicates
-    for (Blueprint next : stored) {
+    for (Blueprint next : retrieveAll(time,
+                                      (long contid, AttributeSelector at) -> Blueprint.accessQuery(account, contid,
+                                                                                                   1000,
+                                                                                                   false, at,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR,
+                                                                                                   ANY_SELECTOR))) {
       if (!currentBlueprintSet.contains(next.getItemID())) {
         next.evolve(null, time);
         updates.add(next);
-        cacheUpdate.cachedBlueprints.remove(next.getItemID());
       }
     }
-
   }
 
-  @Override
-  protected void commitComplete() {
-    // Update the blueprint cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_BLUEPRINTS, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCharBlueprints implements ModelCacheData {
-    Map<Long, Blueprint> cachedBlueprints = new HashMap<>();
-
-    void addBlueprint(Blueprint bp) {
-      cachedBlueprints.put(bp.getItemID(), bp);
-    }
-  }
 }

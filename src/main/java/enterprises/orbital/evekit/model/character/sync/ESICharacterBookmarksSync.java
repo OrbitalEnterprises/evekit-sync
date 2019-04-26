@@ -11,10 +11,7 @@ import enterprises.orbital.evekit.model.common.Bookmark;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
@@ -24,6 +21,22 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
   class BookmarkData {
     List<GetCharactersCharacterIdBookmarksFolders200Ok> folders;
     List<GetCharactersCharacterIdBookmarks200Ok> bookmarks;
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICharacterBookmarksSync(SynchronizedEveAccount account) {
@@ -80,12 +93,22 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
     return new ESIAccountServerResult<>(Math.max(expiry, bkExpiry), data);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<BookmarkData> data,
                                    List<CachedData> updates) throws IOException {
-    // Map bookmark planets, then build bookmark objects
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    // Map bookmark folders, then build bookmark objects
     Map<Integer, GetCharactersCharacterIdBookmarksFolders200Ok> folderMap = data.getData().folders.stream()
                                                                                                   .collect(
                                                                                                       Collectors.toMap(
@@ -99,6 +122,7 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
     defaultFolder.setName(null);
     folderMap.put(0, defaultFolder);
 
+    List<Bookmark> retrievedBookmarks = new ArrayList<>();
     for (GetCharactersCharacterIdBookmarks200Ok next : data.getData().bookmarks) {
       GetCharactersCharacterIdBookmarksFolders200Ok folder = folderMap.get(nullSafeInteger(next.getFolderId(), 0));
       if (folder == null) {
@@ -137,9 +161,24 @@ public class ESICharacterBookmarksSync extends AbstractESIAccountSync<ESICharact
                                              next.getLabel(),
                                              next.getNotes());
         seenBookmarks.add(Pair.of(folder.getFolderId(), next.getBookmarkId()));
-        updates.add(nextBookmark);
+        retrievedBookmarks.add(nextBookmark);
       }
     }
+    retrievedBookmarks.sort(Comparator.comparingInt(Bookmark::getBookmarkID));
+    String hashResult = CachedData.dataHashHelper(retrievedBookmarks.stream()
+                                                                          .map(Bookmark::dataHash)
+                                                                          .toArray());
+
+    if (hashResult.equals(currentETag)) {
+      // List hasn't changed, no need to update
+      cacheHit();
+      return;
+    }
+
+    // Otherwise, something changed so process.
+    cacheMiss();
+    currentETag = hashResult;
+    updates.addAll(retrievedBookmarks);
 
     // Check for bookmarks that no longer exist and schedule for EOL
     for (Bookmark existing : retrieveAll(time,
