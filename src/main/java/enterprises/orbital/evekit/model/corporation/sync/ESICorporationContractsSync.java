@@ -319,7 +319,6 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
 
     // Save hashes for next execution
     currentETag = String.join("|", cachedHash);
-
   }
 
 

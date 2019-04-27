@@ -10,14 +10,27 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterLocation;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class ESICharacterLocationSync extends AbstractESIAccountSync<GetCharactersCharacterIdLocationOk> {
   protected static final Logger log = Logger.getLogger(ESICharacterLocationSync.class.getName());
 
-  private CachedCharacterLocation cacheUpdate;
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterLocationSync(SynchronizedEveAccount account) {
     super(account);
@@ -43,54 +56,46 @@ public class ESICharacterLocationSync extends AbstractESIAccountSync<GetCharacte
   protected ESIAccountServerResult<GetCharactersCharacterIdLocationOk> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     LocationApi apiInstance = cp.getLocationApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdLocationOk> result = apiInstance.getCharactersCharacterIdLocationWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<GetCharactersCharacterIdLocationOk> result = apiInstance.getCharactersCharacterIdLocationWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdLocationOk> data,
                                    List<CachedData> updates) throws IOException {
-    CharacterLocation locationUpdate = new CharacterLocation(data.getData()
-                                                                 .getSolarSystemId(),
-                                                             nullSafeInteger(data.getData()
-                                                                                 .getStationId(), 0),
-                                                             nullSafeLong(data.getData()
-                                                                              .getStructureId(), 0L));
 
-    // Only queue update if something has changed.
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_LOCATION);
-    cacheUpdate = ref != null ? (CachedCharacterLocation) ref.get() : null;
-    if (cacheUpdate == null) {
-      // No cache yet, populate from latest character location
-      cacheInit();
-      cacheUpdate = new CachedCharacterLocation();
-      cacheUpdate.cachedData = CharacterLocation.get(account, time);
-    }
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
 
-    if (cacheUpdate.cachedData == null || !cacheUpdate.cachedData.equivalent(locationUpdate)) {
-      updates.add(locationUpdate);
-      cacheUpdate.cachedData = locationUpdate;
-      cacheMiss();
-    } else {
-      cacheHit();
-    }
-
+    updates.add(new CharacterLocation(data.getData()
+                                          .getSolarSystemId(),
+                                      nullSafeInteger(data.getData()
+                                                          .getStationId(), 0),
+                                      nullSafeLong(data.getData()
+                                                       .getStructureId(), 0L)));
   }
-
-  @Override
-  protected void commitComplete() {
-    // Update the character location cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_LOCATION, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCharacterLocation implements ModelCacheData {
-    CharacterLocation cachedData;
-  }
-
 }

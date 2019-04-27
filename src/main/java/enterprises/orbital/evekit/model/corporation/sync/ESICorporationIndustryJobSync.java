@@ -13,14 +13,28 @@ import org.joda.time.DateTime;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdIndustryJobs200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICorporationIndustryJobSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICorporationIndustryJobSync(SynchronizedEveAccount account) {
     super(account);
@@ -63,30 +77,30 @@ public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<G
           result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
           result.getRight());
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         return new ESIAccountServerResult<>(expiry, Collections.emptyList());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdIndustryJobs200Ok>> data,
                                    List<CachedData> updates) throws IOException {
-    // Add and record orders
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    // Compute hash
+    List<IndustryJob> retrievedJobs = new ArrayList<>();
     for (GetCorporationsCorporationIdIndustryJobs200Ok next : data.getData()) {
       IndustryJob nextJob = new IndustryJob(next.getJobId(),
                                             next.getInstallerId(),
@@ -116,8 +130,25 @@ public class ESICorporationIndustryJobSync extends AbstractESIAccountSync<List<G
                                                              new DateTime(new Date(0L))).getMillis(),
                                             nullSafeInteger(next.getCompletedCharacterId(), 0),
                                             nullSafeInteger(next.getSuccessfulRuns(), 0));
-      updates.add(nextJob);
+      retrievedJobs.add(nextJob);
     }
+    retrievedJobs.sort(Comparator.comparingInt(IndustryJob::getJobID));
+    String industryHashResult = CachedData.dataHashHelper(retrievedJobs.stream()
+                                                                            .map(IndustryJob::dataHash)
+                                                                            .toArray());
+
+    // Check hash for jobs
+    if (cachedHash[0] == null || !cachedHash[0].equals(industryHashResult)) {
+      // New jobs, process
+      cacheMiss();
+      cachedHash[0] = industryHashResult;
+      updates.addAll(retrievedJobs);
+    } else {
+      cacheHit();
+    }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
   }
 
 

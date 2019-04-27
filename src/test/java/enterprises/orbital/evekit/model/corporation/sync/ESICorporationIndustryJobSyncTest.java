@@ -200,7 +200,15 @@ public class ESICorporationIndustryJobSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < jobTestData.length; i++) {
-      IndustryJob nextEl = storedData.get(i);
+      IndustryJob nextEl = null;
+      int jobID = (int) (Integer) jobTestData[i][0];
+      for (IndustryJob j : storedData) {
+        if (j.getJobID() == jobID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) (Integer) jobTestData[i][0], nextEl.getJobID());
       Assert.assertEquals((int) (Integer) jobTestData[i][1], nextEl.getInstallerID());
       Assert.assertEquals((long) (Long) jobTestData[i][2], nextEl.getFacilityID());

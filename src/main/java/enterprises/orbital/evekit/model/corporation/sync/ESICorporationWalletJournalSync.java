@@ -72,19 +72,13 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<
                   accessToken());
             });
       } catch (ApiException e) {
-        final String errTrap = "Character does not have required role";
-        if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                  .contains(errTrap)) {
+        if (e.getCode() == 403) {
           // Trap 403 - Character does not have required role(s)
           log.info("Trapped 403 - Character does not have required role");
           result = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
                            Collections.emptyList());
         } else {
           // Any other error will be rethrown.
-          // Document other 403 error response bodies in case we should add these in the future.
-          if (e.getCode() == 403) {
-            log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-          }
           throw e;
         }
       }
@@ -100,7 +94,7 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<
     return new ESIAccountServerResult<>(expiry, resultMap);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<Map<Integer, List<GetCorporationsCorporationIdWalletsDivisionJournal200Ok>>> data,

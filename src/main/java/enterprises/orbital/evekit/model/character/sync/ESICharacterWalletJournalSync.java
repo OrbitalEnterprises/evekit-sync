@@ -74,7 +74,6 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
     return new ESIAccountServerResult<>(expiry, results);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdWalletJournal200Ok>> data,

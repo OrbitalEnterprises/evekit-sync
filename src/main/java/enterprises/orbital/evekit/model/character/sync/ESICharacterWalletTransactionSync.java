@@ -107,7 +107,6 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
     return new ESIAccountServerResult<>(expiry, results);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdWalletTransactions200Ok>> data,

@@ -64,6 +64,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
     evolveOrAdd(time, null, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<CorpWalletTransaction> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -116,7 +117,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
                      .isEmpty()) {
             // Check whether min transaction ID is less than previous transaction ID.  If it's not
             // then we're seeing the bug and we need to empty the result set.
-            @SuppressWarnings("ConstantConditions") long testLimit = result.getData()
+            long testLimit = result.getData()
                                                                            .stream()
                                                                            .min(Comparator.comparingLong(
                                                                                GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
@@ -128,17 +129,12 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
         }
       } catch (ApiException e) {
         final String errTrap = "Character does not have required role";
-        if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                  .contains(errTrap)) {
+        if (e.getCode() == 403) {
           // Trap 403 - Character does not have required role(s)
           log.info("Trapped 403 - Character does not have required role");
           expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         } else {
           // Any other error will be rethrown.
-          // Document other 403 error response bodies in case we should add these in the future.
-          if (e.getCode() == 403) {
-            log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-          }
           throw e;
         }
       }
@@ -152,7 +148,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
     return new ESIAccountServerResult<>(expiry, resultObject);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<CorpWalletTransaction> data,

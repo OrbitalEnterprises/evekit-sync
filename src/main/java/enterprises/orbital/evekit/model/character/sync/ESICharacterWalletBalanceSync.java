@@ -9,7 +9,6 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.common.AccountBalance;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -18,7 +17,21 @@ import java.util.logging.Logger;
 public class ESICharacterWalletBalanceSync extends AbstractESIAccountSync<Double> {
   protected static final Logger log = Logger.getLogger(ESICharacterWalletBalanceSync.class.getName());
 
-  private CachedCharacterWalletBalance cacheUpdate;
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterWalletBalanceSync(SynchronizedEveAccount account) {
     super(account);
@@ -41,48 +54,44 @@ public class ESICharacterWalletBalanceSync extends AbstractESIAccountSync<Double
   @Override
   protected ESIAccountServerResult<Double> getServerData(ESIAccountClientProvider cp) throws ApiException, IOException {
     WalletApi apiInstance = cp.getWalletApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<Double> result = apiInstance.getCharactersCharacterIdWalletWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<Double> result = apiInstance.getCharactersCharacterIdWalletWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
+
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<Double> data,
                                    List<CachedData> updates) throws IOException {
-    AccountBalance newBalance = new AccountBalance(1, BigDecimal.valueOf(data.getData())
-                                                .setScale(2, RoundingMode.HALF_UP));
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
 
-    // Check against cache, if it exists
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_WALLET_BALANCE);
-    cacheUpdate = ref != null ? (CachedCharacterWalletBalance) ref.get() : null;
-    if (cacheUpdate == null) {
-      // No cache yet, populate from latest stored balance
-      cacheInit();
-      cacheUpdate = new CachedCharacterWalletBalance();
-      cacheUpdate.cachedBalance = AccountBalance.get(account, time, 1);
-    }
+    updates.add(new AccountBalance(1, BigDecimal.valueOf(data.getData())
+                                                .setScale(2, RoundingMode.HALF_UP)));
 
-    if (cacheUpdate.cachedBalance == null || !cacheUpdate.cachedBalance.equivalent(newBalance)) {
-      updates.add(newBalance);
-      cacheUpdate.cachedBalance = newBalance;
-      cacheMiss();
-    } else {
-      cacheHit();
-    }
   }
 
-  @Override
-  protected void commitComplete() {
-    // Update the character sheet cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_WALLET_BALANCE, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCharacterWalletBalance implements ModelCacheData {
-    AccountBalance cachedBalance;
-  }
 }
