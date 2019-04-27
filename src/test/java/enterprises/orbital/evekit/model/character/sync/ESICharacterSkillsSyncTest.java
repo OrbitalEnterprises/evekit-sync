@@ -9,6 +9,7 @@ import enterprises.orbital.eve.esi.client.model.GetCharactersCharacterIdSkillsSk
 import enterprises.orbital.evekit.TestBase;
 import enterprises.orbital.evekit.account.EveKitUserAccountProvider;
 import enterprises.orbital.evekit.model.*;
+import enterprises.orbital.evekit.model.character.CharacterSheet;
 import enterprises.orbital.evekit.model.character.CharacterSheetAttributes;
 import enterprises.orbital.evekit.model.character.CharacterSheetSkillPoints;
 import enterprises.orbital.evekit.model.character.CharacterSkill;
@@ -189,7 +190,15 @@ public class ESICharacterSkillsSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < skillTestData.length; i++) {
-      CharacterSkill nextEl = storedData.get(i);
+      int typeID = (int) skillTestData[i][0];
+      CharacterSkill nextEl = null;
+      for (CharacterSkill j : storedData) {
+        if (j.getTypeID() == typeID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) skillTestData[i][0], nextEl.getTypeID());
       Assert.assertEquals((int) skillTestData[i][1], nextEl.getTrainedSkillLevel());
       Assert.assertEquals((long) skillTestData[i][2], nextEl.getSkillpoints());

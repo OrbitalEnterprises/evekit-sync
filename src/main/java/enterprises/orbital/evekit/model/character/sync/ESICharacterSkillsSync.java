@@ -15,6 +15,8 @@ import enterprises.orbital.evekit.model.character.CharacterSkill;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -79,31 +81,13 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
     SkillData resultData = new SkillData();
     long expiry;
 
-    // Check whether we have an ETAG to send for the skills call
-    try {
-      currentETag = getCurrentTracker().getContext();
-    } catch (TrackerNotFoundException e) {
-      currentETag = null;
-    }
-
-    try {
-      // Retrieve skill info
-      ESIThrottle.throttle(endpoint().name(), account);
-      ApiResponse<GetCharactersCharacterIdSkillsOk> resultS = apiInstance.getCharactersCharacterIdSkillsWithHttpInfo(
-          (int) account.getEveCharacterID(), null, currentETag, accessToken());
-      checkCommonProblems(resultS);
-      expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
-      resultData.skillInfo = resultS.getData();
-      currentETag = extractETag(resultS, null);
-      cacheMiss();
-    } catch (ApiException e) {
-      // Trap 304 which indicates there are no changes from the last call
-      // Anything else is rethrown.
-      if (e.getCode() != 304) throw e;
-      expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
-      currentETag = extractETag(e, null);
-      cacheHit();
-    }
+    // Retrieve skill info
+    ESIThrottle.throttle(endpoint().name(), account);
+    ApiResponse<GetCharactersCharacterIdSkillsOk> resultS = apiInstance.getCharactersCharacterIdSkillsWithHttpInfo(
+        (int) account.getEveCharacterID(), null, currentETag, accessToken());
+    checkCommonProblems(resultS);
+    expiry = extractExpiry(resultS, OrbitalProperties.getCurrentTime() + maxDelay());
+    resultData.skillInfo = resultS.getData();
 
     // Retrieve attribute info
     ESIThrottle.throttle(endpoint().name(), account);
@@ -121,29 +105,71 @@ public class ESICharacterSkillsSync extends AbstractESIAccountSync<ESICharacterS
                                    ESIAccountServerResult<SkillData> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Add attributes and skill points
-    updates.add(new CharacterSheetAttributes(data.getData().attributeInfo.getIntelligence(),
-                                             data.getData().attributeInfo.getMemory(),
-                                             data.getData().attributeInfo.getCharisma(),
-                                             data.getData().attributeInfo.getPerception(),
-                                             data.getData().attributeInfo.getWillpower(),
-                                             nullSafeInteger(data.getData().attributeInfo.getBonusRemaps(), 0),
-                                             nullSafeDateTime(data.getData().attributeInfo.getLastRemapDate(),
-                                                              new DateTime(new Date(0))).getMillis(),
-                                             nullSafeDateTime(
-                                                 data.getData().attributeInfo.getAccruedRemapCooldownDate(),
-                                                 new DateTime(new Date(0))).getMillis()));
-    updates.add(new CharacterSheetSkillPoints(data.getData().skillInfo.getTotalSp(),
-                                              nullSafeInteger(data.getData().skillInfo.getUnallocatedSp(), 0)));
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(3);
 
-    // Add skills - will be null on cached results
-    if (data.getData().skillInfo != null)
-      for (GetCharactersCharacterIdSkillsSkill ns : data.getData().skillInfo.getSkills()) {
-        updates.add(new CharacterSkill(ns.getSkillId(),
-                                       ns.getTrainedSkillLevel(),
-                                       ns.getSkillpointsInSkill(),
-                                       ns.getActiveSkillLevel()));
-      }
+    CharacterSheetAttributes attributes = new CharacterSheetAttributes(data.getData().attributeInfo.getIntelligence(),
+                                                                       data.getData().attributeInfo.getMemory(),
+                                                                       data.getData().attributeInfo.getCharisma(),
+                                                                       data.getData().attributeInfo.getPerception(),
+                                                                       data.getData().attributeInfo.getWillpower(),
+                                                                       nullSafeInteger(
+                                                                           data.getData().attributeInfo.getBonusRemaps(),
+                                                                           0),
+                                                                       nullSafeDateTime(
+                                                                           data.getData().attributeInfo.getLastRemapDate(),
+                                                                           new DateTime(new Date(0))).getMillis(),
+                                                                       nullSafeDateTime(
+                                                                           data.getData().attributeInfo.getAccruedRemapCooldownDate(),
+                                                                           new DateTime(new Date(0))).getMillis());
+    String attributesHash = attributes.dataHash();
+    CharacterSheetSkillPoints skillPoints = new CharacterSheetSkillPoints(data.getData().skillInfo.getTotalSp(),
+                                                                          nullSafeInteger(data.getData().skillInfo.getUnallocatedSp(), 0));
+    String skillPointsHash = skillPoints.dataHash();
+    List<CharacterSkill> retrievedSkills = new ArrayList<>();
+    for (GetCharactersCharacterIdSkillsSkill ns : data.getData().skillInfo.getSkills()) {
+      retrievedSkills.add(new CharacterSkill(ns.getSkillId(),
+                                     ns.getTrainedSkillLevel(),
+                                     ns.getSkillpointsInSkill(),
+                                     ns.getActiveSkillLevel()));
+    }
+    retrievedSkills.sort(Comparator.comparingInt(CharacterSkill::getTypeID));
+    String skillsHash = CachedData.dataHashHelper(retrievedSkills.stream().map(CharacterSkill::dataHash).toArray());
+
+    // Check hash for attributes
+    if (cachedHash[0] == null || !cachedHash[0].equals(attributesHash)) {
+      // New attributes, process
+      cacheMiss();
+      cachedHash[0] = attributesHash;
+      updates.add(attributes);
+    } else {
+      cacheHit();
+    }
+
+    // Check hash for skill points
+    if (cachedHash[1] == null || !cachedHash[1].equals(skillPointsHash)) {
+      // New skill points, process
+      cacheMiss();
+      cachedHash[1] = skillPointsHash;
+      updates.add(skillPoints);
+    } else {
+      cacheHit();
+    }
+
+    // Check hash for skills
+    if (cachedHash[2] == null || !cachedHash[2].equals(skillsHash)) {
+      // New skills, process
+      cacheMiss();
+      cachedHash[2] = skillsHash;
+      updates.addAll(retrievedSkills);
+    } else {
+      cacheHit();
+    }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
   }
 
 

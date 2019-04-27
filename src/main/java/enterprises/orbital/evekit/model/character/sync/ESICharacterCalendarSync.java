@@ -28,6 +28,22 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
     Map<Integer, List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok>> attendees = new HashMap<>();
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
   public ESICharacterCalendarSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -78,7 +94,7 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
     while (!result.getData()
                   .isEmpty()) {
       prelimResults.addAll(result.getData());
-      //noinspection ConstantConditions
+      //noinspection OptionalGetWithoutIsPresent
       eventIdLimit = result.getData()
                            .stream()
                            .max(Comparator.comparingLong(GetCharactersCharacterIdCalendar200Ok::getEventId))
@@ -136,19 +152,25 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<CalendarData> data,
                                    List<CachedData> updates) throws IOException {
 
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(2);
+
     Set<Integer> seenEvents = new HashSet<>();
     Set<Pair<Integer, Integer>> seenAttendees = new HashSet<>();
 
     // Assemble events and attendees
+    List<UpcomingCalendarEvent> retrievedEvents = new ArrayList<>();
+    List<CalendarEventAttendee> retrievedAttendees = new ArrayList<>();
     for (GetCharactersCharacterIdCalendar200Ok nm : data.getData().events) {
       GetCharactersCharacterIdCalendarEventIdOk info = data.getData().eventInfo.get(nm.getEventId());
-      updates.add(new UpcomingCalendarEvent(
+      retrievedEvents.add(new UpcomingCalendarEvent(
           info.getDuration(),
           info.getDate()
               .getMillis(),
@@ -168,55 +190,95 @@ public class ESICharacterCalendarSync extends AbstractESIAccountSync<ESICharacte
         List<GetCharactersCharacterIdCalendarEventIdAttendees200Ok> attendees = data.getData().attendees.get(
             nm.getEventId());
         for (GetCharactersCharacterIdCalendarEventIdAttendees200Ok a : attendees) {
-          updates.add(new CalendarEventAttendee(nm.getEventId(),
-                                                a.getCharacterId(),
-                                                a.getEventResponse()
-                                                 .toString()));
+          retrievedAttendees.add(new CalendarEventAttendee(nm.getEventId(),
+                                                           a.getCharacterId(),
+                                                           a.getEventResponse()
+                                                            .toString()));
           seenAttendees.add(Pair.of(nm.getEventId(), a.getCharacterId()));
         }
       }
     }
 
-    // Look for events which no longer exist and end of life
-    CachedData.SimpleStreamExceptionHandler handler = new CachedData.SimpleStreamExceptionHandler();
-    CachedData.stream(time, (contid, at) -> UpcomingCalendarEvent.accessQuery(account, contid, 1000, false, at,
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any()), true, handler)
-              .filter(upcomingCalendarEvent -> {
-                // Retain events which are live but which were not in the download set
-                return !seenEvents.contains(upcomingCalendarEvent.getEventID());
-              })
-              .forEach(upcomingCalendarEvent -> {
-                // Event is live but not in the download set, so end of life
-                upcomingCalendarEvent.evolve(null, time);
-                updates.add(upcomingCalendarEvent);
-              });
-    if (handler.hit()) throw handler.getFirst();
+    // Compute hash data
+    retrievedEvents.sort(Comparator.comparingLong(UpcomingCalendarEvent::getEventID));
+    String eventHashResult = CachedData.dataHashHelper(retrievedEvents.stream()
+                                                                      .map(UpcomingCalendarEvent::dataHash)
+                                                                      .toArray());
+    retrievedAttendees.sort((o1, o2) -> {
+      int ecmp = Comparator.comparingInt(CalendarEventAttendee::getEventID)
+                           .compare(o1, o2);
+      return ecmp != 0 ? ecmp : Comparator.comparingLong(CalendarEventAttendee::getCharacterID)
+                                          .compare(o1, o2);
+    });
+    String attendeeHashResult = CachedData.dataHashHelper(retrievedAttendees.stream()
+                                                                            .map(CalendarEventAttendee::dataHash)
+                                                                            .toArray());
 
-    // Look for attendees which no longer exist and end of life
-    handler = new CachedData.SimpleStreamExceptionHandler();
-    CachedData.stream(time, (contid, at) -> CalendarEventAttendee.accessQuery(account, contid, 1000, false, at,
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any(),
-                                                                              AttributeSelector.any()), true, handler)
-              .filter(attendee -> {
-                // Retain attendees which are live but which were not in the download set
-                return !seenAttendees.contains(Pair.of(attendee.getEventID(), attendee.getCharacterID()));
-              })
-              .forEach(attendee -> {
-                // Attendee is live but not in the download set, so end of life
-                attendee.evolve(null, time);
-                updates.add(attendee);
-              });
-    if (handler.hit()) throw handler.getFirst();
+    // Check hash for events
+    if (cachedHash[0] == null || !cachedHash[0].equals(eventHashResult)) {
+      // New event list, process
+      cacheMiss();
+      cachedHash[0] = eventHashResult;
+      updates.addAll(retrievedEvents);
+
+      // Look for events which no longer exist and end of life
+      CachedData.SimpleStreamExceptionHandler handler = new CachedData.SimpleStreamExceptionHandler();
+      CachedData.stream(time, (contid, at) -> UpcomingCalendarEvent.accessQuery(account, contid, 1000, false, at,
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any()), true, handler)
+                .filter(upcomingCalendarEvent -> {
+                  // Retain events which are live but which were not in the download set
+                  return !seenEvents.contains(upcomingCalendarEvent.getEventID());
+                })
+                .forEach(upcomingCalendarEvent -> {
+                  // Event is live but not in the download set, so end of life
+                  upcomingCalendarEvent.evolve(null, time);
+                  updates.add(upcomingCalendarEvent);
+                });
+      if (handler.hit()) throw handler.getFirst();
+
+    } else {
+      cacheHit();
+    }
+
+    // Check hash for attendees
+    if (cachedHash[1] == null || !cachedHash[1].equals(attendeeHashResult)) {
+      // New attendee list, process
+      cacheMiss();
+      cachedHash[1] = attendeeHashResult;
+      updates.addAll(retrievedAttendees);
+
+      // Look for attendees which no longer exist and end of life
+      CachedData.SimpleStreamExceptionHandler handler = new CachedData.SimpleStreamExceptionHandler();
+      CachedData.stream(time, (contid, at) -> CalendarEventAttendee.accessQuery(account, contid, 1000, false, at,
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any(),
+                                                                                AttributeSelector.any()), true, handler)
+                .filter(attendee -> {
+                  // Retain attendees which are live but which were not in the download set
+                  return !seenAttendees.contains(Pair.of(attendee.getEventID(), attendee.getCharacterID()));
+                })
+                .forEach(attendee -> {
+                  // Attendee is live but not in the download set, so end of life
+                  attendee.evolve(null, time);
+                  updates.add(attendee);
+                });
+      if (handler.hit()) throw handler.getFirst();
+
+    } else {
+      cacheHit();
+    }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
 
   }
 

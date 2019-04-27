@@ -262,7 +262,15 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < assetsTestData.length; i++) {
-      Asset nextEl = storedData.get(i);
+      long itemID = (long) (Long) assetsTestData[i][0];
+      Asset nextEl = null;
+      for (Asset j : storedData) {
+        if (itemID == j.getItemID()) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) (Long) assetsTestData[i][0], nextEl.getItemID());
       Assert.assertEquals((long) (Long) assetsTestData[i][1], nextEl.getLocationID());
       Assert.assertEquals(String.valueOf(assetsTestData[i][2]), nextEl.getLocationType());
@@ -285,7 +293,15 @@ public class ESICharacterAssetsSyncTest extends SyncTestBase {
     // Check stored data
     Map<Long, Location> locMap = storedData2.stream().collect(Collectors.toMap(Location::getItemID, Function.identity()));
     for (int i = 0; i < assetsTestData.length; i++) {
-      long itemID = storedData.get(i).getItemID();
+      long itemID = (long) (Long) assetsTestData[i][0];
+      Asset assetEl = null;
+      for (Asset j : storedData) {
+        if (itemID == j.getItemID()) {
+          assetEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(assetEl);
       Location nextEl = locMap.get(itemID);
       Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) (Long) locationsTestData[i][0], nextEl.getItemID());

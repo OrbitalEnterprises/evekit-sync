@@ -263,8 +263,16 @@ public class ESICharacterCalendarSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < testEventData.length; i++) {
-      UpcomingCalendarEvent nextEl = storedEvents.get(i);
+      UpcomingCalendarEvent nextEl = null;
       Object[] dt = testEventData[i];
+      int eventID = (int) dt[2];
+      for (UpcomingCalendarEvent j : storedEvents) {
+        if (eventID == j.getEventID()) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) dt[0], nextEl.getDuration());
       Assert.assertEquals((long) dt[1], nextEl.getEventDate());
       Assert.assertEquals((int) dt[2], nextEl.getEventID());
@@ -295,10 +303,19 @@ public class ESICharacterCalendarSyncTest extends SyncTestBase {
     Assert.assertEquals(attendeeCount, storedAttendees.size());
 
     // Check stored data
-    for (int i = 0, j = 0; i < testAttendeeData.length; i++) {
+    for (int i = 0; i < testAttendeeData.length; i++) {
       Object[][] nextSet = testAttendeeData[i];
       for (Object[] aNextSet : nextSet) {
-        CalendarEventAttendee nextEl = storedAttendees.get(j++);
+        int eventID = (int) aNextSet[0];
+        int characterID = (int) aNextSet[1];
+        CalendarEventAttendee nextEl = null;
+        for (CalendarEventAttendee j : storedAttendees) {
+          if (eventID == j.getEventID() && characterID == j.getCharacterID()) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals((int) aNextSet[0], nextEl.getEventID());
         Assert.assertEquals((int) aNextSet[1], nextEl.getCharacterID());
         Assert.assertEquals(String.valueOf(aNextSet[2]), nextEl.getResponse());

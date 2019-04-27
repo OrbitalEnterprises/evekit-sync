@@ -35,6 +35,22 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
     List<PostCorporationsCorporationIdAssetsNames200Ok> assetNames;
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
   public ESICorporationAssetsSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -44,6 +60,7 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
     return ESISyncEndpoint.CORP_ASSETS;
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
@@ -106,7 +123,7 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
         // Any other error will be rethrown.
         // Document other 403 error response bodies in case we should add these in the future.
         if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+          log.warning("403 code with unmatched body: " + e.getResponseBody());
         }
         throw e;
       }
@@ -187,21 +204,32 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<ESICorporationAssetsSync.AssetData> data,
                                    List<CachedData> updates) throws IOException {
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(2);
+
     // Add and record seen assets
-    Set<Long> seenAssets = new HashSet<>();
+    List<Asset> retrievedAssets = new ArrayList<>();
     for (GetCorporationsCorporationIdAssets200Ok next : data.getData().assets) {
       Asset nextAsset = new Asset(next.getItemId(), next.getLocationId(), next.getLocationType()
                                                                               .toString(), next.getLocationFlag()
                                                                                                .toString(),
                                   next.getTypeId(), next.getQuantity(), next.getIsSingleton(), null,
                                   nullSafeBoolean(next.getIsBlueprintCopy(), false));
-      seenAssets.add(nextAsset.getItemID());
-      updates.add(nextAsset);
+      retrievedAssets.add(nextAsset);
     }
+    Set<Long> seenAssets = retrievedAssets.stream()
+                                          .map(Asset::getItemID)
+                                          .collect(Collectors.toSet());
+    retrievedAssets.sort(Comparator.comparingLong(Asset::getItemID));
+    String assetHashResult = CachedData.dataHashHelper(retrievedAssets.stream()
+                                                                      .map(Asset::dataHash)
+                                                                      .toArray());
 
     // Add and record locations
     Map<Long, PostCorporationsCorporationIdAssetsNames200Ok> nameMap =
@@ -210,9 +238,9 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
                                                            Function.identity()));
     Map<Long, PostCorporationsCorporationIdAssetsLocations200Ok> locationMap =
         data.getData().assetLocations.stream()
-                                     .collect(
-                                         Collectors.toMap(PostCorporationsCorporationIdAssetsLocations200Ok::getItemId,
-                                                          Function.identity()));
+                                     .collect(Collectors.toMap(PostCorporationsCorporationIdAssetsLocations200Ok::getItemId,
+                                                               Function.identity()));
+    List<Location> retrievedLocations = new ArrayList<>();
     for (long itemID : seenAssets) {
       PostCorporationsCorporationIdAssetsNames200Ok name = nameMap.get(itemID);
       PostCorporationsCorporationIdAssetsLocations200Ok location = locationMap.get(itemID);
@@ -222,43 +250,71 @@ public class ESICorporationAssetsSync extends AbstractESIAccountSync<ESICorporat
                                                                                               .getY(),
                                              location.getPosition()
                                                      .getZ());
-        updates.add(nextLocation);
+        retrievedLocations.add(nextLocation);
       }
+    }
+    retrievedLocations.sort(Comparator.comparingLong(Location::getItemID));
+    String locationHashResult = CachedData.dataHashHelper(retrievedLocations.stream()
+                                                                            .map(Location::dataHash)
+                                                                            .toArray());
+
+    // Check hash for assets
+    if (cachedHash[0] == null || !cachedHash[0].equals(assetHashResult)) {
+      // New asset list, process
+      cacheMiss();
+      cachedHash[0] = assetHashResult;
+      updates.addAll(retrievedAssets);
+
+      // Check for assets that no longer exist and schedule for EOL
+      for (Asset existing : retrieveAll(time,
+                                        (long contid, AttributeSelector at) -> Asset.accessQuery(account, contid, 1000,
+                                                                                                 false, at,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR,
+                                                                                                 ANY_SELECTOR))) {
+        if (!seenAssets.contains(existing.getItemID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
-    // Check for assets that no longer exist and schedule for EOL
-    for (Asset existing : retrieveAll(time,
-                                      (long contid, AttributeSelector at) -> Asset.accessQuery(account, contid, 1000,
-                                                                                               false, at, ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR,
-                                                                                               ANY_SELECTOR))) {
-      if (!seenAssets.contains(existing.getItemID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
+    // Check hash for locations
+    if (cachedHash[1] == null || !cachedHash[1].equals(locationHashResult)) {
+      // New location list, process
+      cacheMiss();
+      cachedHash[1] = locationHashResult;
+      updates.addAll(retrievedLocations);
+
+      // Check for locations that no longer exist and schedule for EOL
+      for (Location existing : retrieveAll(time,
+                                           (long contid, AttributeSelector at) -> Location.accessQuery(account, contid,
+                                                                                                       1000,
+                                                                                                       false, at,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR))) {
+        if (!seenAssets.contains(existing.getItemID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
+    } else {
+      cacheHit();
     }
 
-    // Check for locations that no longer exist and schedule for EOL
-    for (Location existing : retrieveAll(time,
-                                         (long contid, AttributeSelector at) -> Location.accessQuery(account, contid,
-                                                                                                     1000,
-                                                                                                     false, at,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR))) {
-      if (!seenAssets.contains(existing.getItemID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
   }
 
 }
