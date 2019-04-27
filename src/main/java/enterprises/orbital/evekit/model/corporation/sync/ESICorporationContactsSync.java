@@ -13,10 +13,9 @@ import enterprises.orbital.evekit.model.common.ContactLabel;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationContactsSync extends AbstractESIAccountSync<ESICorporationContactsSync.ContactData> {
   protected static final Logger log = Logger.getLogger(ESICorporationContactsSync.class.getName());
@@ -24,6 +23,22 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<ESICorpor
   class ContactData {
     List<GetCorporationsCorporationIdContacts200Ok> contacts;
     List<GetCorporationsCorporationIdContactsLabels200Ok> labels;
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICorporationContactsSync(SynchronizedEveAccount account) {
@@ -35,6 +50,7 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<ESICorpor
     return ESISyncEndpoint.CORP_CONTACTS;
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
@@ -81,66 +97,106 @@ public class ESICorporationContactsSync extends AbstractESIAccountSync<ESICorpor
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<ContactData> data,
                                    List<CachedData> updates) throws IOException {
-    // Map contacts, then look for non-existent contacts
-    Set<Integer> seenContacts = new HashSet<>();
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(2);
+
+    // Assemble retrieved data and prepare hashes for comparison.
+    List<Contact> retrievedContacts = new ArrayList<>();
     for (GetCorporationsCorporationIdContacts200Ok next : data.getData().contacts) {
-      seenContacts.add(next.getContactId());
-      updates.add(new Contact("corporation",
-                              next.getContactId(),
-                              next.getStanding(),
-                              next.getContactType()
-                                  .toString(),
-                              nullSafeBoolean(next.getIsWatched(), false),
-                              false,
-                              new HashSet<>(next.getLabelIds())));
+      retrievedContacts.add(new Contact("corporation",
+                                        next.getContactId(),
+                                        next.getStanding(),
+                                        next.getContactType()
+                                            .toString(),
+                                        nullSafeBoolean(next.getIsWatched(), false),
+                                        false,
+                                        new HashSet<>(next.getLabelIds())));
+    }
+    retrievedContacts.sort(Comparator.comparingInt(Contact::getContactID));
+    String contactHashResult = CachedData.dataHashHelper(retrievedContacts.stream()
+                                                                          .map(Contact::dataHash)
+                                                                          .toArray());
+
+    List<ContactLabel> retrievedLabels = new ArrayList<>();
+    for (GetCorporationsCorporationIdContactsLabels200Ok next : data.getData().labels) {
+      retrievedLabels.add(new ContactLabel("corporation",
+                                           next.getLabelId(),
+                                           next.getLabelName()));
+    }
+    retrievedLabels.sort(Comparator.comparingLong(ContactLabel::getLabelID));
+    String labelHashResult = CachedData.dataHashHelper(retrievedLabels.stream()
+                                                                      .map(ContactLabel::dataHash)
+                                                                      .toArray());
+
+    // Check hash for contacts
+    if (cachedHash[0] == null || !cachedHash[0].equals(contactHashResult)) {
+      // New contact list, process
+      cacheMiss();
+      cachedHash[0] = contactHashResult;
+      updates.addAll(retrievedContacts);
+
+      // Check for contacts that no longer exist and schedule for EOL
+      Set<Integer> seenContacts = retrievedContacts.stream()
+                                                   .map(Contact::getContactID)
+                                                   .collect(Collectors.toSet());
+      for (Contact existing : retrieveAll(time,
+                                          (long contid, AttributeSelector at) -> Contact.accessQuery(account, contid,
+                                                                                                     1000,
+                                                                                                     false, at,
+                                                                                                     AttributeSelector.values(
+                                                                                                         "corporation"),
+                                                                                                     ANY_SELECTOR,
+                                                                                                     ANY_SELECTOR,
+                                                                                                     ANY_SELECTOR,
+                                                                                                     ANY_SELECTOR,
+                                                                                                     ANY_SELECTOR,
+                                                                                                     ANY_SELECTOR))) {
+        if (!seenContacts.contains(existing.getContactID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
-    // Check for contacts that no longer exist and schedule for EOL
-    for (Contact existing : retrieveAll(time,
-                                        (long contid, AttributeSelector at) -> Contact.accessQuery(account, contid,
+    // Check hash for labels
+    if (cachedHash[1] == null || !cachedHash[1].equals(labelHashResult)) {
+      // New labels list, process
+      cacheMiss();
+      cachedHash[1] = labelHashResult;
+      updates.addAll(retrievedLabels);
+
+      // Check for labels that no longer exist and schedule for EOL
+      Set<Long> seenLabels = retrievedLabels.stream()
+                                            .map(ContactLabel::getLabelID)
+                                            .collect(Collectors.toSet());
+      for (ContactLabel existing : CachedData.retrieveAll(time,
+                                                          (contid, at) -> ContactLabel.accessQuery(account, contid,
                                                                                                    1000,
                                                                                                    false, at,
                                                                                                    AttributeSelector.values(
                                                                                                        "corporation"),
                                                                                                    ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
                                                                                                    ANY_SELECTOR))) {
-      if (!seenContacts.contains(existing.getContactID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
+        if (!seenLabels.contains(existing.getLabelID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
+    } else {
+      cacheHit();
     }
 
-    // Map contact labels, then look for non-existent contact labels
-    Set<Long> seenLabels = new HashSet<>();
-    for (GetCorporationsCorporationIdContactsLabels200Ok next : data.getData().labels) {
-      seenLabels.add(next.getLabelId());
-      updates.add(new ContactLabel("corporation",
-                                   next.getLabelId(),
-                                   next.getLabelName()));
-    }
-
-    for (ContactLabel existing : CachedData.retrieveAll(time,
-                                                        (contid, at) -> ContactLabel.accessQuery(account, contid, 1000,
-                                                                                                 false, at,
-                                                                                                 AttributeSelector.values(
-                                                                                                     "corporation"),
-                                                                                                 ANY_SELECTOR,
-                                                                                                 ANY_SELECTOR))) {
-      if (!seenLabels.contains(existing.getLabelID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
-
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
   }
 
 }

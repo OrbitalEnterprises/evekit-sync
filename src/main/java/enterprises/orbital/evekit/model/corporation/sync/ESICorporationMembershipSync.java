@@ -67,8 +67,6 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
   @Override
   protected ESIAccountServerResult<MembershipData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
-    final String errTrap = "Character does not have required role";
-    final String roleGrantError = "Character cannot grant roles";
     CorporationApi apiInstance = cp.getCorporationApi();
     MembershipData resultData = new MembershipData();
     long expiry;
@@ -84,19 +82,15 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       resultData.members = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null &&
-          (e.getResponseBody().contains(errTrap) || e.getResponseBody().contains(roleGrantError))) {
-        // Trap 403 - Character does not have required role(s)
-        // Trap 403 - Character cannot grant roles
+      // Corp members require certain permissions to retrieve membership.  We'll get a 403 if permissions
+      // aren't present which we trap here.
+      if (e.getCode() == 403) {
+        // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
         resultData.members = Collections.emptyList();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -112,19 +106,15 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       resultData.roles = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null &&
-          (e.getResponseBody().contains(errTrap) || e.getResponseBody().contains(roleGrantError))) {
-        // Trap 403 - Character does not have required role(s)
-        // Trap 403 - Character cannot grant roles
+      // Corp members require certain permissions to retrieve roles.  We'll get a 403 if permissions
+      // aren't present which we trap here.
+      if (e.getCode() == 403) {
+        // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
         resultData.roles = Collections.emptyList();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -143,18 +133,15 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
                         result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
       resultData.history = result.getRight();
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
-        // Trap 403 - Character does not have required role(s)
+      // Corp members require certain permissions to retrieve role history.  We'll get a 403 if permissions
+      // aren't present which we trap here.
+      if (e.getCode() == 403) {
+        // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
         resultData.history = Collections.emptyList();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -162,7 +149,7 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<MembershipData> data,

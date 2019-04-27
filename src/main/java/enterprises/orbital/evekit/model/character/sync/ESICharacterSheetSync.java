@@ -11,7 +11,6 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterSheet;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -19,7 +18,22 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   protected static final Logger log = Logger.getLogger(ESICharacterSheetSync.class.getName());
   private long corporationID;
   private String corporationName;
-  private CachedCharacterSheet cacheUpdate;
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterSheetSync(SynchronizedEveAccount account) {
     super(account);
@@ -45,58 +59,81 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
   protected ESIAccountServerResult<GetCharactersCharacterIdOk> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null);
-    checkCommonProblems(result);
 
-    // Also cache corporation ID and name in case these changed
-    corporationID = result.getData()
-                          .getCorporationId();
-    ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi()
-                                                               .getCorporationsCorporationIdWithHttpInfo(
-                                                                   (int) corporationID,
-                                                                   null,
-                                                                   null);
-    checkCommonProblems(corpResult);
-    corporationName = corpResult.getData()
-                                .getName();
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
 
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<GetCharactersCharacterIdOk> result = apiInstance.getCharactersCharacterIdWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag);
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+
+      // Also cache corporation ID and name in case these changed
+      corporationID = result.getData()
+                            .getCorporationId();
+      ApiResponse<GetCorporationsCorporationIdOk> corpResult = cp.getCorporationApi()
+                                                                 .getCorporationsCorporationIdWithHttpInfo(
+                                                                     (int) corporationID,
+                                                                     null,
+                                                                     null);
+      checkCommonProblems(corpResult);
+      corporationName = corpResult.getData()
+                                  .getName();
+
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
   }
 
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdOk> data,
                                    List<CachedData> updates) throws IOException {
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
+
     // Add update for processing
-    CharacterSheet newSheet = new CharacterSheet(account.getEveCharacterID(),
-                                                 data.getData()
-                                                     .getName(),
-                                                 data.getData()
-                                                     .getCorporationId(),
-                                                 data.getData()
-                                                     .getRaceId(),
-                                                 data.getData()
-                                                     .getBirthday()
-                                                     .getMillis(),
-                                                 data.getData()
-                                                     .getBloodlineId(),
-                                                 nullSafeInteger(data.getData()
-                                                                     .getAncestryId(), 0),
-                                                 data.getData()
-                                                     .getGender()
-                                                     .toString(),
-                                                 nullSafeInteger(data.getData()
-                                                                     .getAllianceId(), 0),
-                                                 nullSafeInteger(data.getData()
-                                                                     .getFactionId(), 0),
-                                                 data.getData()
-                                                     .getDescription(),
-                                                 nullSafeFloat(data.getData()
-                                                                   .getSecurityStatus(), 0F),
-                                                 nullSafeString(data.getData()
-                                                                    .getTitle(), ""));
+    updates.add(new CharacterSheet(account.getEveCharacterID(),
+                                   data.getData()
+                                       .getName(),
+                                   data.getData()
+                                       .getCorporationId(),
+                                   data.getData()
+                                       .getRaceId(),
+                                   data.getData()
+                                       .getBirthday()
+                                       .getMillis(),
+                                   data.getData()
+                                       .getBloodlineId(),
+                                   nullSafeInteger(data.getData()
+                                                       .getAncestryId(), 0),
+                                   data.getData()
+                                       .getGender()
+                                       .toString(),
+                                   nullSafeInteger(data.getData()
+                                                       .getAllianceId(), 0),
+                                   nullSafeInteger(data.getData()
+                                                       .getFactionId(), 0),
+                                   data.getData()
+                                       .getDescription(),
+                                   nullSafeFloat(data.getData()
+                                                     .getSecurityStatus(), 0F),
+                                   nullSafeString(data.getData()
+                                                      .getTitle(), "")));
 
     // Check whether the corporation has changed.  If so, update the SynchronizedEveAccount
     if (account.getEveCorporationID() != corporationID) {
@@ -105,35 +142,6 @@ public class ESICharacterSheetSync extends AbstractESIAccountSync<GetCharactersC
       account.setEveCorporationName(corporationName);
       account = SynchronizedEveAccount.update(account);
     }
-
-    // Only queue update if something has changed.
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SHEET);
-    cacheUpdate = ref != null ? (CachedCharacterSheet) ref.get() : null;
-    if (cacheUpdate == null) {
-      // No cache yet, populate from latest character sheet
-      cacheInit();
-      cacheUpdate = new CachedCharacterSheet();
-      cacheUpdate.cachedData = CharacterSheet.get(account, time);
-    }
-
-    if (cacheUpdate.cachedData == null || !cacheUpdate.cachedData.equivalent(newSheet)) {
-      updates.add(newSheet);
-      cacheUpdate.cachedData = newSheet;
-      cacheMiss();
-    } else {
-      cacheHit();
-    }
-  }
-
-  @Override
-  protected void commitComplete() {
-    // Update the character sheet cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_SHEET, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCharacterSheet implements ModelCacheData {
-    CharacterSheet cachedData;
   }
 
 }

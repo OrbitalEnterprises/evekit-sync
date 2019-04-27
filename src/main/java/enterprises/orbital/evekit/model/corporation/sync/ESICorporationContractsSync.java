@@ -17,7 +17,6 @@ import org.apache.http.HttpStatus;
 import org.joda.time.DateTime;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
@@ -28,12 +27,26 @@ import java.util.stream.Collectors;
 public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorporationContractsSync.ContractData> {
   protected static final Logger log = Logger.getLogger(ESICorporationContractsSync.class.getName());
 
-  private CachedCorpContracts cacheUpdate;
-
   class ContractData {
     List<GetCorporationsCorporationIdContracts200Ok> contracts;
     Map<Integer, List<GetCorporationsCorporationIdContractsContractIdItems200Ok>> contractItems = new HashMap<>();
     Map<Integer, List<GetCorporationsCorporationIdContractsContractIdBids200Ok>> contractBids = new HashMap<>();
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICorporationContractsSync(SynchronizedEveAccount account) {
@@ -84,19 +97,14 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
             accessToken());
       });
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
-        // Trap 403 - Character does not have required role(s)
+      // Corp members require certain permissions to retrieve contracts.  We'll get a 403 if permissions
+      // aren't present which we trap here.
+      if (e.getCode() == 403) {
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         result = Pair.of(expiry, Collections.emptyList());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -164,296 +172,155 @@ public class ESICorporationContractsSync extends AbstractESIAccountSync<ESICorpo
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time, ESIAccountServerResult<ContractData> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Construct arrays of values to add
-    List<Contract> currentContracts = data.getData().contracts.stream()
-                                                              .map((next) -> new Contract(
-                                                                  next.getContractId(),
-                                                                  next.getIssuerId(),
-                                                                  next.getIssuerCorporationId(),
-                                                                  next.getAssigneeId(),
-                                                                  next.getAcceptorId(),
-                                                                  nullSafeLong(
-                                                                      next.getStartLocationId(), 0L),
-                                                                  nullSafeLong(next.getEndLocationId(),
-                                                                               0L),
-                                                                  next.getType()
-                                                                      .toString(),
-                                                                  next.getStatus()
-                                                                      .toString(),
-                                                                  next.getTitle(),
-                                                                  next.getForCorporation(),
-                                                                  next.getAvailability()
-                                                                      .toString(),
-                                                                  next.getDateIssued()
-                                                                      .getMillis(),
-                                                                  next.getDateExpired()
-                                                                      .getMillis(),
-                                                                  nullSafeDateTime(
-                                                                      next.getDateAccepted(),
-                                                                      new DateTime(
-                                                                          new Date(0))).getMillis(),
-                                                                  nullSafeInteger(
-                                                                      next.getDaysToComplete(), 0),
-                                                                  nullSafeDateTime(
-                                                                      next.getDateCompleted(),
-                                                                      new DateTime(
-                                                                          new Date(0))).getMillis(),
-                                                                  BigDecimal.valueOf(
-                                                                      nullSafeDouble(next.getPrice(),
-                                                                                     0D))
-                                                                            .setScale(2,
-                                                                                      RoundingMode.HALF_UP),
-                                                                  BigDecimal.valueOf(
-                                                                      nullSafeDouble(next.getReward(),
-                                                                                     0D))
-                                                                            .setScale(2,
-                                                                                      RoundingMode.HALF_UP),
-                                                                  BigDecimal.valueOf(nullSafeDouble(
-                                                                      next.getCollateral(), 0D))
-                                                                            .setScale(2,
-                                                                                      RoundingMode.HALF_UP),
-                                                                  BigDecimal.valueOf(
-                                                                      nullSafeDouble(next.getBuyout(),
-                                                                                     0D))
-                                                                            .setScale(2,
-                                                                                      RoundingMode.HALF_UP),
-                                                                  nullSafeDouble(next.getVolume(), 0D)
-                                                              ))
-                                                              .collect(Collectors.toList());
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(3);
 
-    List<ContractItem> currentItems = new ArrayList<>();
+    // Compute contract hash results
+    List<Contract> retrievedContracts = data.getData().contracts.stream()
+                                                                .map((next) -> new Contract(
+                                                                    next.getContractId(),
+                                                                    next.getIssuerId(),
+                                                                    next.getIssuerCorporationId(),
+                                                                    next.getAssigneeId(),
+                                                                    next.getAcceptorId(),
+                                                                    nullSafeLong(next.getStartLocationId(), 0L),
+                                                                    nullSafeLong(next.getEndLocationId(), 0L),
+                                                                    next.getType()
+                                                                        .toString(),
+                                                                    next.getStatus()
+                                                                        .toString(),
+                                                                    next.getTitle(),
+                                                                    next.getForCorporation(),
+                                                                    next.getAvailability()
+                                                                        .toString(),
+                                                                    next.getDateIssued()
+                                                                        .getMillis(),
+                                                                    next.getDateExpired()
+                                                                        .getMillis(),
+                                                                    nullSafeDateTime(next.getDateAccepted(),
+                                                                                     new DateTime(
+                                                                                         new Date(0))).getMillis(),
+                                                                    nullSafeInteger(next.getDaysToComplete(), 0),
+                                                                    nullSafeDateTime(next.getDateCompleted(),
+                                                                                     new DateTime(
+                                                                                         new Date(0))).getMillis(),
+                                                                    BigDecimal.valueOf(
+                                                                        nullSafeDouble(next.getPrice(), 0D))
+                                                                              .setScale(2, RoundingMode.HALF_UP),
+                                                                    BigDecimal.valueOf(
+                                                                        nullSafeDouble(next.getReward(), 0D))
+                                                                              .setScale(2, RoundingMode.HALF_UP),
+                                                                    BigDecimal.valueOf(
+                                                                        nullSafeDouble(next.getCollateral(), 0D))
+                                                                              .setScale(2, RoundingMode.HALF_UP),
+                                                                    BigDecimal.valueOf(
+                                                                        nullSafeDouble(next.getBuyout(), 0D))
+                                                                              .setScale(2, RoundingMode.HALF_UP),
+                                                                    nullSafeDouble(next.getVolume(), 0D)
+                                                                ))
+                                                                .sorted(
+                                                                    Comparator.comparingLong(Contract::getContractID))
+                                                                .collect(Collectors.toList());
+    String contractHashResult = CachedData.dataHashHelper(retrievedContracts.stream()
+                                                                            .map(Contract::dataHash)
+                                                                            .toArray());
+
+    // Check hash for contracts
+    if (cachedHash[0] == null || !cachedHash[0].equals(contractHashResult)) {
+      // New contracts, process
+      cacheMiss();
+      cachedHash[0] = contractHashResult;
+      updates.addAll(retrievedContracts);
+    } else {
+      cacheHit();
+    }
+
+    // Compute contract item hash results
+    List<ContractItem> retrievedItems = new ArrayList<>();
     for (Map.Entry<Integer, List<GetCorporationsCorporationIdContractsContractIdItems200Ok>> nextItemList : data.getData().contractItems.entrySet()) {
-      currentItems.addAll(nextItemList.getValue()
+      retrievedItems.addAll(nextItemList.getValue()
+                                        .stream()
+                                        .map((next) -> new ContractItem(
+                                            nextItemList.getKey(),
+                                            next.getRecordId(),
+                                            next.getTypeId(),
+                                            next.getQuantity(),
+                                            nullSafeInteger(next.getRawQuantity(), 0),
+                                            next.getIsSingleton(),
+                                            next.getIsIncluded()
+                                        ))
+                                        .collect(Collectors.toList()));
+    }
+    retrievedItems.sort((o1, o2) -> {
+      int cid = Comparator.comparingInt(ContractItem::getContractID)
+                          .compare(o1, o2);
+      return cid != 0 ? cid : Comparator.comparingLong(ContractItem::getRecordID)
+                                        .compare(o1, o2);
+    });
+    String contractItemsHashResult = CachedData.dataHashHelper(retrievedItems.stream()
+                                                                             .map(ContractItem::dataHash)
+                                                                             .toArray());
+
+    // Check hash for contract items
+    if (cachedHash[1] == null || !cachedHash[1].equals(contractItemsHashResult)) {
+      // New contract items, process
+      cacheMiss();
+      cachedHash[1] = contractItemsHashResult;
+      updates.addAll(retrievedItems);
+    } else {
+      cacheHit();
+    }
+
+    // Compute contract bid hash results
+    List<ContractBid> retrievedBids = new ArrayList<>();
+    for (Map.Entry<Integer, List<GetCorporationsCorporationIdContractsContractIdBids200Ok>> nextBidList : data.getData().contractBids.entrySet()) {
+      retrievedBids.addAll(nextBidList.getValue()
                                       .stream()
-                                      .map((next) -> new ContractItem(
-                                          nextItemList.getKey(),
-                                          next.getRecordId(),
-                                          next.getTypeId(),
-                                          next.getQuantity(),
-                                          nullSafeInteger(next.getRawQuantity(), 0),
-                                          next.getIsSingleton(),
-                                          next.getIsIncluded()
+                                      .map((next) -> new ContractBid(
+                                          next.getBidId(),
+                                          nextBidList.getKey(),
+                                          next.getBidderId(),
+                                          next.getDateBid()
+                                              .getMillis(),
+                                          BigDecimal.valueOf(next.getAmount())
+                                                    .setScale(2, RoundingMode.HALF_UP)
                                       ))
                                       .collect(Collectors.toList()));
     }
+    retrievedBids.sort((o1, o2) -> {
+      int cid = Comparator.comparingInt(ContractBid::getContractID)
+                          .compare(o1, o2);
+      return cid != 0 ? cid : Comparator.comparingInt(ContractBid::getBidID)
+                                        .compare(o1, o2);
+    });
+    String contractBidsHashResult = CachedData.dataHashHelper(retrievedBids.stream()
+                                                                           .map(ContractBid::dataHash)
+                                                                           .toArray());
 
-    List<ContractBid> currentBids = new ArrayList<>();
-    for (Map.Entry<Integer, List<GetCorporationsCorporationIdContractsContractIdBids200Ok>> nextBidList : data.getData().contractBids.entrySet()) {
-      currentBids.addAll(nextBidList.getValue()
-                                    .stream()
-                                    .map((next) -> new ContractBid(
-                                        next.getBidId(),
-                                        nextBidList.getKey(),
-                                        next.getBidderId(),
-                                        next.getDateBid()
-                                            .getMillis(),
-                                        BigDecimal.valueOf(next.getAmount())
-                                                  .setScale(2, RoundingMode.HALF_UP)
-                                    ))
-                                    .collect(Collectors.toList()));
-    }
-
-    // Retrieve contract cache and check for changed contracts.  Although contracts can not be deleted
-    // (they can only be changed), we do remove them from the cache when they no longer appear in the latest
-    // contract list.
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CORP_CONTRACTS);
-    cacheUpdate = ref != null ? (CachedCorpContracts) ref.get() : null;
-    if (cacheUpdate == null) {
-      // If we don't have a cache yet, then create one from stored contracts.
-      // Since contracts are never deleted, we don't actually want to retrieve all existing contracts
-      // (and items and bids).  Instead, we retrieve all contracts with a dateIssued no more than 5 weeks
-      // before the current time.  This works because no contract can have an expiry of more than 4 weeks.
-      cacheInit();
-      cacheUpdate = new CachedCorpContracts();
-      long boundary = time - 5 * 7 * 24 * 60 * 60 * 1000L;
-      for (Contract next : retrieveAll(time,
-                                       (long contid, AttributeSelector at) -> Contract.accessQuery(account, contid,
-                                                                                                   1000,
-                                                                                                   false, at,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   AttributeSelector.range(
-                                                                                                       boundary, time),
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR,
-                                                                                                   ANY_SELECTOR))) {
-        cacheUpdate.addContract(next);
-      }
-
-      // Retrieve items and bids as needed
-      for (Contract next : cacheUpdate.cachedContractMap.values()) {
-        for (ContractItem nextItem : retrieveAll(time, (long contid, AttributeSelector at) -> ContractItem.accessQuery(
-            account, contid,
-            1000, false, at,
-            AttributeSelector.values(next.getContractID()),
-            ANY_SELECTOR,
-            ANY_SELECTOR,
-            ANY_SELECTOR,
-            ANY_SELECTOR,
-            ANY_SELECTOR,
-            ANY_SELECTOR))) {
-          cacheUpdate.addContractItem(nextItem);
-        }
-        if (next.getType()
-                .equals("auction")) {
-          for (ContractBid nextBid : retrieveAll(time,
-                                                 (long contid, AttributeSelector at) -> ContractBid.accessQuery(account,
-                                                                                                                contid,
-                                                                                                                1000,
-                                                                                                                false,
-                                                                                                                at,
-                                                                                                                ANY_SELECTOR,
-                                                                                                                AttributeSelector.values(
-                                                                                                                    next.getContractID()),
-                                                                                                                ANY_SELECTOR,
-                                                                                                                ANY_SELECTOR,
-                                                                                                                ANY_SELECTOR))) {
-            cacheUpdate.addContractBid(nextBid);
-          }
-        }
-      }
+    // Check hash for contract bids
+    if (cachedHash[2] == null || !cachedHash[2].equals(contractBidsHashResult)) {
+      // New contract bids, process
+      cacheMiss();
+      cachedHash[2] = contractBidsHashResult;
+      updates.addAll(retrievedBids);
+    } else {
+      cacheHit();
     }
 
     // Contracts can never be deleted, they can only change state.  So no reason to check for removed contracts.
     // The same is true for the item list associated with a contract, as well as bids associated with an auction.
 
-    // Process the latest contracts list.  Any new contract should be added and cached.
-    // If a contract already exists, but the new copy has changed, then it should also be
-    // updated and replace the cached copy.  We also keep track of the ID of the latest
-    // contracts and remove any from the cache that no longer appear in the latest list.
-    Set<Integer> seenContracts = new HashSet<>();
-    for (Contract next : currentContracts) {
-      seenContracts.add(next.getContractID());
-      if (cacheUpdate.cachedContractMap.containsKey(next.getContractID())) {
-        Contract compare = cacheUpdate.cachedContractMap.get(next.getContractID());
-        if (!compare.equivalent(next)) {
-          // Update and replace in cache
-          updates.add(next);
-          cacheUpdate.addContract(next);
-          cacheMiss();
-        } else {
-          // Cached value is still correct
-          cacheHit();
-        }
-      } else {
-        // A contract we've never seen before
-        cacheMiss();
-        updates.add(next);
-        cacheUpdate.addContract(next);
-      }
-    }
-
-    // Process items
-    for (ContractItem next : currentItems) {
-      cacheUpdate.cachedContractItems.computeIfAbsent(next.getContractID(), k -> new HashMap<>());
-      if (cacheUpdate.cachedContractItems.get(next.getContractID())
-                                         .containsKey(next.getRecordID())) {
-        ContractItem compare = cacheUpdate.cachedContractItems.get(next.getContractID())
-                                                              .get(next.getRecordID());
-        if (!compare.equivalent(next)) {
-          // Update and replace in cache
-          updates.add(next);
-          cacheUpdate.addContractItem(next);
-          cacheMiss();
-        } else {
-          // Cached value is still correct
-          cacheHit();
-        }
-      } else {
-        // A contract item we've never seen before
-        cacheMiss();
-        updates.add(next);
-        cacheUpdate.addContractItem(next);
-      }
-    }
-
-    // Process bids
-    for (ContractBid next : currentBids) {
-      cacheUpdate.cachedContractBids.computeIfAbsent(next.getContractID(), k -> new HashMap<>());
-      if (cacheUpdate.cachedContractBids.get(next.getContractID())
-                                        .containsKey(next.getBidID())) {
-        ContractBid compare = cacheUpdate.cachedContractBids.get(next.getContractID())
-                                                            .get(next.getBidID());
-        if (!compare.equivalent(next)) {
-          // Update and replace in cache
-          updates.add(next);
-          cacheUpdate.addContractBid(next);
-          cacheMiss();
-        } else {
-          // Cached value is still correct
-          cacheHit();
-        }
-      } else {
-        // A contract bid we've never seen before
-        cacheMiss();
-        updates.add(next);
-        cacheUpdate.addContractBid(next);
-      }
-    }
-
-    // Clean the cache of any contracts no longer in the latest list.
-    Set<Integer> toDelete = new HashSet<>();
-    for (Integer next : cacheUpdate.cachedContractMap.keySet()) {
-      if (!seenContracts.contains(next)) {
-        toDelete.add(next);
-      }
-    }
-    for (Integer toDel : toDelete) {
-      cacheUpdate.cachedContractMap.remove(toDel);
-      cacheUpdate.cachedContractItems.remove(toDel);
-      cacheUpdate.cachedContractBids.remove(toDel);
-    }
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
 
   }
 
-  @Override
-  protected void commitComplete() {
-    // Update the contracts cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CORP_CONTRACTS, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCorpContracts implements ModelCacheData {
-    Map<Integer, Contract> cachedContractMap = new HashMap<>();
-    Map<Integer, Map<Long, ContractItem>> cachedContractItems = new HashMap<>();
-    Map<Integer, Map<Integer, ContractBid>> cachedContractBids = new HashMap<>();
-
-    void addContract(Contract ct) {
-      cachedContractMap.put(ct.getContractID(), ct);
-    }
-
-    void addContractItem(ContractItem it) {
-      cachedContractItems.computeIfAbsent(it.getContractID(), k -> new HashMap<>());
-      cachedContractItems.get(it.getContractID())
-                         .put(it.getRecordID(), it);
-    }
-
-    void addContractBid(ContractBid bd) {
-      cachedContractBids.computeIfAbsent(bd.getContractID(), k -> new HashMap<>());
-      cachedContractBids.get(bd.getContractID())
-                        .put(bd.getBidID(), bd);
-    }
-  }
 
 }

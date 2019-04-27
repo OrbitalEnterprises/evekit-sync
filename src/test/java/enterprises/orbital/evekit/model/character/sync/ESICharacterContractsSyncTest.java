@@ -330,7 +330,15 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < contractsTestData.length; i++) {
-      Contract nextEl = storedData.get(i);
+      Contract nextEl = null;
+      int contractID = (int) (Integer) contractsTestData[i][0];
+      for (Contract j : storedData) {
+        if (j.getContractID() == contractID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) (Integer) contractsTestData[i][0], nextEl.getContractID());
       Assert.assertEquals((int) (Integer) contractsTestData[i][1], nextEl.getIssuerID());
       Assert.assertEquals((int) (Integer) contractsTestData[i][2], nextEl.getIssuerCorpID());
@@ -359,19 +367,27 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
                                              .filter(x -> x[7] != GetCharactersCharacterIdContracts200Ok.TypeEnum.LOAN)
                                              .map(x -> (Integer) x[0])
                                              .collect(Collectors.toList());
-    for (int contractID : contractsWithItems) {
+    for (int cID : contractsWithItems) {
       List<ContractItem> storedItems = storedItemData.stream()
-                                                     .filter(x -> x.getContractID() == contractID)
+                                                     .filter(x -> x.getContractID() == cID)
                                                      .sorted(Comparator.comparingLong(ContractItem::getRecordID))
                                                      .collect(Collectors.toList());
       List<Object[]> srcItems = Arrays.stream(itemsTestData)
-                                      .filter(x -> (Integer) x[0] == contractID)
+                                      .filter(x -> (Integer) x[0] == cID)
                                       .sorted(Comparator.comparingLong(x -> (Long) x[1]))
                                       .collect(Collectors.toList());
       for (int i = 0; i < srcItems.size(); i++) {
-        ContractItem nextEl = storedItems.get(i);
+        ContractItem nextEl = null;
         Object[] nextSrc = srcItems.get(i);
-
+        int cIID = (int) (Integer) nextSrc[0];
+        long recordID = (long) (Long) nextSrc[1];
+        for (ContractItem j : storedItems) {
+          if (j.getContractID() == cIID && j.getRecordID() == recordID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals((int) (Integer) nextSrc[0], nextEl.getContractID());
         Assert.assertEquals((long) (Long) nextSrc[1], nextEl.getRecordID());
         Assert.assertEquals((int) (Integer) nextSrc[2], nextEl.getTypeID());
@@ -396,9 +412,17 @@ public class ESICharacterContractsSyncTest extends SyncTestBase {
                                      .sorted(Comparator.comparingInt(x -> (Integer) x[0]))
                                      .collect(Collectors.toList());
       for (int i = 0; i < srcBids.size(); i++) {
-        ContractBid nextEl = storedBids.get(i);
+        ContractBid nextEl = null;
         Object[] nextSrc = srcBids.get(i);
-
+        int cBID = (int) (Integer) nextSrc[1];
+        int bidID = (int) (Integer) nextSrc[0];
+        for (ContractBid j : storedBids) {
+          if (j.getContractID() == cBID && j.getBidID() == bidID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals((int) (Integer) nextSrc[0], nextEl.getBidID());
         Assert.assertEquals((int) (Integer) nextSrc[1], nextEl.getContractID());
         Assert.assertEquals((int) (Integer) nextSrc[2], nextEl.getBidderID());

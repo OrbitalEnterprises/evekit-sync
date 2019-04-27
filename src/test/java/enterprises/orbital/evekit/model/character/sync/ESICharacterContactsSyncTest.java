@@ -198,8 +198,16 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
 
       // Check stored data
       for (int i = 0; i < contactsTestData.length; i++) {
-        Contact nextEl = storedData.get(i);
+        Contact nextEl = null;
         long[] labels = (long[]) contactsTestData[i][6];
+        int contactID = (int) contactsTestData[i][1];
+        for (Contact j : storedData) {
+          if (j.getContactID() == contactID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals(contactsTestData[i][0], nextEl.getList());
         Assert.assertEquals((int) contactsTestData[i][1], nextEl.getContactID());
         Assert.assertEquals((float) contactsTestData[i][2], nextEl.getStanding(), 0.001);
@@ -232,7 +240,15 @@ public class ESICharacterContactsSyncTest extends SyncTestBase {
 
       // Check stored data
       for (int i = 0; i < labelsTestData.length; i++) {
-        ContactLabel nextEl = storedData.get(i);
+        ContactLabel nextEl = null;
+        long labelID = (long) labelsTestData[i][1];
+        for (ContactLabel j : storedData) {
+          if (j.getLabelID() == labelID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals(labelsTestData[i][0], nextEl.getList());
         Assert.assertEquals((long) labelsTestData[i][1], nextEl.getLabelID());
         Assert.assertEquals(labelsTestData[i][2], nextEl.getName());
