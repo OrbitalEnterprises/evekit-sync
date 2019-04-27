@@ -307,7 +307,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   protected static long extractExpiry(ApiResponse<?> result, long def) {
     try {
       String expireHeader = result.getHeaders()
-                                  .get("expires")
+                                  .get("Expires")
                                   .get(0);
       return DateUtils.parseDate(expireHeader)
                       .getTime();
@@ -320,7 +320,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   protected static long extractExpiry(ApiException result, long def) {
     try {
       String expireHeader = result.getResponseHeaders()
-                                  .get("expires")
+                                  .get("Expires")
                                   .get(0);
       return DateUtils.parseDate(expireHeader)
                       .getTime();
@@ -340,7 +340,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   protected static int extractXPages(ApiResponse<?> result, int def) {
     try {
       String expireHeader = result.getHeaders()
-                                  .get("x-pages")
+                                  .get("X-Pages")
                                   .get(0);
       return Integer.valueOf(expireHeader);
     } catch (Exception e) {
@@ -359,7 +359,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   protected static String extractETag(ApiResponse<?> result, String def) {
     try {
       return result.getHeaders()
-                   .get("etag")
+                   .get("Etag")
                    .get(0);
     } catch (Exception e) {
       log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
@@ -370,7 +370,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   protected static String extractETag(ApiException result, String def) {
     try {
       return result.getResponseHeaders()
-                   .get("etag")
+                   .get("Etag")
                    .get(0);
     } catch (Exception e) {
       log.log(Level.FINE, "Error parsing header, will return default: " + def, e);
