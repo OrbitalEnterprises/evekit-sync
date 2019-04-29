@@ -24,6 +24,22 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
     GetCorporationsCorporationIdIconsOk icons;
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICorporationSheetSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -49,8 +65,12 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CorporationData data = new CorporationData();
     CorporationApi apiInstance = cp.getCorporationApi();
-
     long expiry;
+
+    // Corporation sheet uses the result of two calls.  We need to update the corporation sheet if either
+    // one of these calls has new data.  Therefore, we check hashes during data processing instead of
+    // using ETags.
+
     {
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<GetCorporationsCorporationIdOk> result = apiInstance.getCorporationsCorporationIdWithHttpInfo(
@@ -79,7 +99,13 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
   @Override
   protected void processServerData(long time, ESIAccountServerResult<CorporationData> data,
                                    List<CachedData> updates) throws IOException {
-    updates.add(new CorporationSheet(nullSafeInteger(data.getData().sheet.getAllianceId(), 0),
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    CorporationSheet newSheet = new CorporationSheet(nullSafeInteger(data.getData().sheet.getAllianceId(), 0),
                                      data.getData().sheet.getCeoId(),
                                      account.getEveCorporationID(),
                                      data.getData().sheet.getName(),
@@ -97,8 +123,20 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
                                      data.getData().icons.getPx64x64(),
                                      data.getData().icons.getPx128x128(),
                                      data.getData().icons.getPx256x256(),
-                                     nullSafeBoolean(data.getData().sheet.getWarEligible(), false)));
-  }
+                                     nullSafeBoolean(data.getData().sheet.getWarEligible(), false));
 
+    String sheetHash = newSheet.dataHash();
+
+    if (cachedHash[0] == null || !cachedHash[0].equals(sheetHash)) {
+      cacheMiss();
+      cachedHash[0] = sheetHash;
+      updates.add(newSheet);
+    } else {
+      cacheHit();
+    }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
+  }
 
 }

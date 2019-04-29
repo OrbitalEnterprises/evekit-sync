@@ -143,7 +143,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       } else if (e.getCode() == 304) {
         // ETag hit
         cacheHit();
-        cachedHash[0] = extractETag(e, null);
+        cachedHash[1] = extractETag(e, null);
         resultData.members = null;
         expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
       } else {

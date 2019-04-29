@@ -24,6 +24,22 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
     List<GetCorporationsCorporationIdMembertracking200Ok> members;
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICorporationMemberTrackingSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -52,34 +68,41 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
   @Override
   protected ESIAccountServerResult<MemberData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
-    final String errTrap = "Character does not have required role";
     MemberData data = new MemberData();
     CorporationApi apiInstance = cp.getCorporationApi();
-
     long expiry;
+
+    // Check whether we have an ETAG to send for the skills call
+    // Since we make two calls we need to retain two separate ETags
+    String[] cachedHash = splitCachedContext(2);
+
     try {
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<Integer> result = apiInstance.getCorporationsCorporationIdMembersLimitWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
-          null,
+          cachedHash[0],
           accessToken());
       checkCommonProblems(result);
+      cacheMiss();
+      cachedHash[0] = extractETag(result, null);
       data.limit = result.getData();
       expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         data.limit = -1;
+      } else if (e.getCode() == 304) {
+        // ETag hit
+        cacheHit();
+        cachedHash[0] = extractETag(e, null);
+        data.limit = -1;
+        expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -89,27 +112,32 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
       ApiResponse<List<GetCorporationsCorporationIdMembertracking200Ok>> result = apiInstance.getCorporationsCorporationIdMembertrackingWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
-          null,
+          cachedHash[1],
           accessToken());
       checkCommonProblems(result);
       data.members = result.getData();
       expiry = Math.max(expiry, extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()));
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         data.members = Collections.emptyList();
+      } else if (e.getCode() == 304) {
+        // ETag hit
+        cacheHit();
+        cachedHash[1] = extractETag(e, null);
+        data.members = null;
+        expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
 
     return new ESIAccountServerResult<>(expiry, data);
   }
@@ -121,37 +149,40 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
                                    List<CachedData> updates) throws IOException {
 
     // Store limit update first
-    updates.add(new MemberLimit(data.getData().limit));
+    if (data.getData().limit >= 0)
+      updates.add(new MemberLimit(data.getData().limit));
 
-    // Now process members.  Keep track of members we've seen.
-    Set<Integer> seenMembers = new HashSet<>();
-    for (GetCorporationsCorporationIdMembertracking200Ok next : data.getData().members) {
-      updates.add(new MemberTracking(next.getCharacterId(),
-                                     nullSafeInteger(next.getBaseId(), 0),
-                                     nullSafeLong(next.getLocationId(), 0),
-                                     nullSafeDateTime(next.getLogoffDate(), new DateTime(new Date(0))).getMillis(),
-                                     nullSafeDateTime(next.getLogonDate(), new DateTime(new Date(0))).getMillis(),
-                                     nullSafeInteger(next.getShipTypeId(), 0),
-                                     nullSafeDateTime(next.getStartDate(), new DateTime(new Date(0))).getMillis()));
-      seenMembers.add(next.getCharacterId());
-    }
+    if (data.getData().members != null) {
+      // Now process members.  Keep track of members we've seen.
+      Set<Integer> seenMembers = new HashSet<>();
+      for (GetCorporationsCorporationIdMembertracking200Ok next : data.getData().members) {
+        updates.add(new MemberTracking(next.getCharacterId(),
+                                       nullSafeInteger(next.getBaseId(), 0),
+                                       nullSafeLong(next.getLocationId(), 0),
+                                       nullSafeDateTime(next.getLogoffDate(), new DateTime(new Date(0))).getMillis(),
+                                       nullSafeDateTime(next.getLogonDate(), new DateTime(new Date(0))).getMillis(),
+                                       nullSafeInteger(next.getShipTypeId(), 0),
+                                       nullSafeDateTime(next.getStartDate(), new DateTime(new Date(0))).getMillis()));
+        seenMembers.add(next.getCharacterId());
+      }
 
-    // Check for members that no longer exist and schedule for EOL
-    for (MemberTracking existing : retrieveAll(time,
-                                               (long contid, AttributeSelector at) -> MemberTracking.accessQuery(
-                                                   account, contid,
-                                                   1000,
-                                                   false, at,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR,
-                                                   ANY_SELECTOR))) {
-      if (!seenMembers.contains(existing.getCharacterID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
+      // Check for members that no longer exist and schedule for EOL
+      for (MemberTracking existing : retrieveAll(time,
+                                                 (long contid, AttributeSelector at) -> MemberTracking.accessQuery(
+                                                     account, contid,
+                                                     1000,
+                                                     false, at,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR,
+                                                     ANY_SELECTOR))) {
+        if (!seenMembers.contains(existing.getCharacterID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
     }
   }
