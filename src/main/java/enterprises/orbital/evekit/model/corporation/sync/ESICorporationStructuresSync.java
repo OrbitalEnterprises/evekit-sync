@@ -87,7 +87,6 @@ public class ESICorporationStructuresSync extends AbstractESIAccountSync<List<Ge
     }
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdStructures200Ok>> data,

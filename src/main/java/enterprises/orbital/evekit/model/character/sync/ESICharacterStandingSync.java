@@ -19,6 +19,22 @@ import java.util.logging.Logger;
 public class ESICharacterStandingSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdStandings200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterStandingSync.class.getName());
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICharacterStandingSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -28,6 +44,7 @@ public class ESICharacterStandingSync extends AbstractESIAccountSync<List<GetCha
     return ESISyncEndpoint.CHAR_STANDINGS;
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
@@ -45,18 +62,42 @@ public class ESICharacterStandingSync extends AbstractESIAccountSync<List<GetCha
   protected ESIAccountServerResult<List<GetCharactersCharacterIdStandings200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<List<GetCharactersCharacterIdStandings200Ok>> result = apiInstance.getCharactersCharacterIdStandingsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<List<GetCharactersCharacterIdStandings200Ok>> result = apiInstance.getCharactersCharacterIdStandingsWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
+
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<List<GetCharactersCharacterIdStandings200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
+
     // Add and record standings
     Set<Pair<String, Integer>> seenStandings = new HashSet<>();
     for (GetCharactersCharacterIdStandings200Ok next : data.getData()) {

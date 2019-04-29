@@ -18,6 +18,22 @@ import java.util.logging.Logger;
 public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdAgentsResearch200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterResearchAgentSync.class.getName());
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICharacterResearchAgentSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -43,19 +59,43 @@ public class ESICharacterResearchAgentSync extends AbstractESIAccountSync<List<G
   protected ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     CharacterApi apiInstance = cp.getCharacterApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<List<GetCharactersCharacterIdAgentsResearch200Ok>> result = apiInstance.getCharactersCharacterIdAgentsResearchWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
+
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdAgentsResearch200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
+
     // Add and record seen agents
     Set<Integer> seenAgents = new HashSet<>();
     for (GetCharactersCharacterIdAgentsResearch200Ok next : data.getData()) {

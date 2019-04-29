@@ -128,7 +128,7 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<TitleData> data,

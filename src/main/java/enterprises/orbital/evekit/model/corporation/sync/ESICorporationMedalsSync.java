@@ -101,7 +101,7 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
         // Any other error will be rethrown.
         // Document other 403 error response bodies in case we should add these in the future.
         if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+          log.warning("403 code with unmatched body: " + e.getResponseBody());
         }
         throw e;
       }
@@ -110,7 +110,7 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
     return new ESIAccountServerResult<>(Math.max(expiry, bkExpiry), data);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<MedalsData> data,

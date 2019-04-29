@@ -76,7 +76,6 @@ public class ESICorporationSheetSync extends AbstractESIAccountSync<ESICorporati
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<CorporationData> data,
                                    List<CachedData> updates) throws IOException {

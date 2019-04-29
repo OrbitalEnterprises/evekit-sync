@@ -114,7 +114,7 @@ public class ESICorporationMemberTrackingSync extends AbstractESIAccountSync<ESI
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<MemberData> data,

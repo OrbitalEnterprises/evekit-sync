@@ -27,6 +27,7 @@ public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetC
     return ESISyncEndpoint.CORP_STANDINGS;
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected void commit(long time,
                         CachedData item) throws IOException {
@@ -58,7 +59,7 @@ public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetC
         result.getRight());
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdStandings200Ok>> data,

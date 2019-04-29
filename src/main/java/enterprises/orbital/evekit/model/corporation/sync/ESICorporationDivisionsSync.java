@@ -70,14 +70,13 @@ public class ESICorporationDivisionsSync extends AbstractESIAccountSync<GetCorpo
         // Any other error will be rethrown.
         // Document other 403 error response bodies in case we should add these in the future.
         if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
+          log.warning("403 code with unmatched body: " + e.getResponseBody());
         }
         throw e;
       }
     }
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCorporationsCorporationIdDivisionsOk> data,
                                    List<CachedData> updates) throws IOException {
