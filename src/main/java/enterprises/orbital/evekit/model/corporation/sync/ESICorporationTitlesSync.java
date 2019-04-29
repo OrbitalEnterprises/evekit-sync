@@ -30,6 +30,22 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
     List<GetCorporationsCorporationIdMembersTitles200Ok> members;
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICorporationTitlesSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -66,34 +82,41 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
   @Override
   protected ESIAccountServerResult<TitleData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
-    final String errTrap = "Character does not have required role";
     CorporationApi apiInstance = cp.getCorporationApi();
     TitleData resultData = new TitleData();
     long expiry;
+
+    // Check whether we have an ETAG to send for the skills call
+    // Since we make two calls we need to retain two separate ETags
+    String[] cachedHash = splitCachedContext(2);
 
     try {
       ESIThrottle.throttle(endpoint().name(), account);
       ApiResponse<List<GetCorporationsCorporationIdTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
-          null,
+          cachedHash[0],
           accessToken());
       checkCommonProblems(apir);
+      cacheMiss();
+      cachedHash[0] = extractETag(apir, null);
       resultData.titles = apir.getData();
       expiry = extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay());
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         resultData.titles = Collections.emptyList();
+      } else if (e.getCode() == 304) {
+        // ETag hit
+        cacheHit();
+        cachedHash[0] = extractETag(e, null);
+        resultData.titles = null;
+        expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -103,27 +126,34 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
       ApiResponse<List<GetCorporationsCorporationIdMembersTitles200Ok>> apir = apiInstance.getCorporationsCorporationIdMembersTitlesWithHttpInfo(
           (int) account.getEveCorporationID(),
           null,
-          null,
+          cachedHash[1],
           accessToken());
       checkCommonProblems(apir);
+      cacheMiss();
+      cachedHash[1] = extractETag(apir, null);
       resultData.members = apir.getData();
       expiry = Math.max(expiry, extractExpiry(apir, OrbitalProperties.getCurrentTime() + maxDelay()));
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         resultData.members = Collections.emptyList();
+      } else if (e.getCode() == 304) {
+        // ETag hit
+        cacheHit();
+        cachedHash[0] = extractETag(e, null);
+        resultData.members = null;
+        expiry = extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
 
     return new ESIAccountServerResult<>(expiry, resultData);
   }
@@ -146,137 +176,141 @@ public class ESICorporationTitlesSync extends AbstractESIAccountSync<ESICorporat
     Set<Pair<Integer, Integer>> seenMembers = new HashSet<>();
 
     // Process data
-    for (GetCorporationsCorporationIdTitles200Ok next : data.getData().titles) {
-      seenTitles.add(nullSafeInteger(next.getTitleId(), 0));
-      updates.add(new CorporationTitle(nullSafeInteger(next.getTitleId(), 0), next.getName()));
-      for (GetCorporationsCorporationIdTitles200Ok.RolesEnum role : next.getRoles()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), 0));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             false,
-                                             false,
-                                             false,
-                                             false));
+    if (data.getData().titles != null) {
+      for (GetCorporationsCorporationIdTitles200Ok next : data.getData().titles) {
+        seenTitles.add(nullSafeInteger(next.getTitleId(), 0));
+        updates.add(new CorporationTitle(nullSafeInteger(next.getTitleId(), 0), next.getName()));
+        for (GetCorporationsCorporationIdTitles200Ok.RolesEnum role : next.getRoles()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), 0));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               false,
+                                               false,
+                                               false,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.RolesAtBaseEnum role : next.getRolesAtBase()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_BASE));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               false,
+                                               false,
+                                               true,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.RolesAtHqEnum role : next.getRolesAtHq()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_HQ));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               false,
+                                               true,
+                                               false,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.RolesAtOtherEnum role : next.getRolesAtOther()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_OTHER));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               false,
+                                               false,
+                                               false,
+                                               true));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesEnum role : next.getGrantableRoles()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               true,
+                                               false,
+                                               false,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtBaseEnum role : next.getGrantableRolesAtBase()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_BASE));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               true,
+                                               false,
+                                               true,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtHqEnum role : next.getGrantableRolesAtHq()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_HQ));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               true,
+                                               true,
+                                               false,
+                                               false));
+        }
+        for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtOtherEnum role : next.getGrantableRolesAtOther()) {
+          seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_OTHER));
+          updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
+                                               role.toString(),
+                                               true,
+                                               false,
+                                               false,
+                                               true));
+        }
       }
-      for (GetCorporationsCorporationIdTitles200Ok.RolesAtBaseEnum role : next.getRolesAtBase()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_BASE));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             false,
-                                             false,
-                                             true,
-                                             false));
+
+      // Check for data that no longer exists and schedule for EOL
+      for (CorporationTitle existing : retrieveAll(time,
+                                                   (long contid, AttributeSelector at) -> CorporationTitle.accessQuery(
+                                                       account, contid,
+                                                       1000,
+                                                       false, at,
+                                                       ANY_SELECTOR,
+                                                       ANY_SELECTOR))) {
+        if (!seenTitles.contains(existing.getTitleID())) {
+          // Mark for EOL.  Note that role deletion will be handled below.
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
-      for (GetCorporationsCorporationIdTitles200Ok.RolesAtHqEnum role : next.getRolesAtHq()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_HQ));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             false,
-                                             true,
-                                             false,
-                                             false));
+
+      for (CorporationTitleRole existing : retrieveAll(time,
+                                                       (contid, at) -> CorporationTitleRole.accessQuery(account, contid,
+                                                                                                        1000, false, at,
+                                                                                                        AttributeSelector.any(),
+                                                                                                        AttributeSelector.any(),
+                                                                                                        AttributeSelector.any(),
+                                                                                                        AttributeSelector.any(),
+                                                                                                        AttributeSelector.any(),
+                                                                                                        AttributeSelector.any()))) {
+        int mask = (existing.isGrantable() ? GRANTABLE : 0) |
+            (existing.isAtBase() ? AT_BASE : 0) |
+            (existing.isAtHQ() ? AT_HQ : 0) |
+            (existing.isAtOther() ? AT_OTHER : 0);
+        if (!seenRoles.contains(Triple.of(existing.getTitleID(), existing.getRoleName(), mask))) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
-      for (GetCorporationsCorporationIdTitles200Ok.RolesAtOtherEnum role : next.getRolesAtOther()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), AT_OTHER));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             false,
-                                             false,
-                                             false,
-                                             true));
-      }
-      for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesEnum role : next.getGrantableRoles()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             true,
-                                             false,
-                                             false,
-                                             false));
-      }
-      for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtBaseEnum role : next.getGrantableRolesAtBase()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_BASE));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             true,
-                                             false,
-                                             true,
-                                             false));
-      }
-      for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtHqEnum role : next.getGrantableRolesAtHq()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_HQ));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             true,
-                                             true,
-                                             false,
-                                             false));
-      }
-      for (GetCorporationsCorporationIdTitles200Ok.GrantableRolesAtOtherEnum role : next.getGrantableRolesAtOther()) {
-        seenRoles.add(Triple.of(nullSafeInteger(next.getTitleId(), 0), role.toString(), GRANTABLE | AT_OTHER));
-        updates.add(new CorporationTitleRole(nullSafeInteger(next.getTitleId(), 0),
-                                             role.toString(),
-                                             true,
-                                             false,
-                                             false,
-                                             true));
-      }
+
     }
 
-    for (GetCorporationsCorporationIdMembersTitles200Ok next : data.getData().members) {
-      for (Integer t : next.getTitles()) {
-        seenMembers.add(Pair.of(next.getCharacterId(), t));
-        updates.add(new MemberTitle(next.getCharacterId(), t));
+    if (data.getData().members != null) {
+      for (GetCorporationsCorporationIdMembersTitles200Ok next : data.getData().members) {
+        for (Integer t : next.getTitles()) {
+          seenMembers.add(Pair.of(next.getCharacterId(), t));
+          updates.add(new MemberTitle(next.getCharacterId(), t));
+        }
       }
-    }
 
-    // Check for data that no longer exists and schedule for EOL
-    for (CorporationTitle existing : retrieveAll(time,
-                                                 (long contid, AttributeSelector at) -> CorporationTitle.accessQuery(
-                                                     account, contid,
-                                                     1000,
-                                                     false, at,
-                                                     ANY_SELECTOR,
-                                                     ANY_SELECTOR))) {
-      if (!seenTitles.contains(existing.getTitleID())) {
-        // Mark for EOL.  Note that role deletion will be handled below.
-        existing.evolve(null, time);
-        updates.add(existing);
+      for (MemberTitle existing : retrieveAll(time,
+                                              (long contid, AttributeSelector at) -> MemberTitle.accessQuery(
+                                                  account, contid,
+                                                  1000,
+                                                  false, at,
+                                                  ANY_SELECTOR,
+                                                  ANY_SELECTOR))) {
+        if (!seenMembers.contains(Pair.of(existing.getCharacterID(), existing.getTitleID()))) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
-    }
 
-    for (CorporationTitleRole existing : retrieveAll(time,
-                                                     (contid, at) -> CorporationTitleRole.accessQuery(account, contid,
-                                                                                                      1000, false, at,
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any()))) {
-      int mask = (existing.isGrantable() ? GRANTABLE : 0) |
-          (existing.isAtBase() ? AT_BASE : 0) |
-          (existing.isAtHQ() ? AT_HQ : 0) |
-          (existing.isAtOther() ? AT_OTHER : 0);
-      if (!seenRoles.contains(Triple.of(existing.getTitleID(), existing.getRoleName(), mask))) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
     }
-
-    for (MemberTitle existing : retrieveAll(time,
-                                            (long contid, AttributeSelector at) -> MemberTitle.accessQuery(
-                                                account, contid,
-                                                1000,
-                                                false, at,
-                                                ANY_SELECTOR,
-                                                ANY_SELECTOR))) {
-      if (!seenMembers.contains(Pair.of(existing.getCharacterID(), existing.getTitleID()))) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
-
   }
-
 }
