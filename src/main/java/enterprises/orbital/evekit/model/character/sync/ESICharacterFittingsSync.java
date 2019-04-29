@@ -20,6 +20,22 @@ import java.util.stream.Collectors;
 public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdFittings200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterFittingsSync.class.getName());
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
   public ESICharacterFittingsSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -50,18 +66,42 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
   protected ESIAccountServerResult<List<GetCharactersCharacterIdFittings200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     FittingsApi apiInstance = cp.getFittingsApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<List<GetCharactersCharacterIdFittings200Ok>> result = apiInstance.getCharactersCharacterIdFittingsWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<List<GetCharactersCharacterIdFittings200Ok>> result = apiInstance.getCharactersCharacterIdFittingsWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
+
   }
 
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdFittings200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
 
     Map<Integer, Fitting> existingFittingMap = CachedData.retrieveAll(time,
                                                                       (contid, at) -> Fitting.accessQuery(account,
@@ -77,24 +117,24 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
                                                                                    AbstractMap.SimpleEntry::getValue));
 
     Map<Triple<Integer, Integer, String>, FittingItem> existingItemMap = CachedData.retrieveAll(time,
-                                                                                                 (contid, at) -> FittingItem.accessQuery(
-                                                                                                     account,
-                                                                                                     contid, 1000,
-                                                                                                     false, at,
-                                                                                                     AttributeSelector.any(),
-                                                                                                     AttributeSelector.any(),
-                                                                                                     AttributeSelector.any(),
-                                                                                                     AttributeSelector.any()))
-                                                                                    .stream()
-                                                                                    .map(
-                                                                                        x -> new AbstractMap.SimpleEntry<>(
-                                                                                            Triple.of(x.getFittingID(),
-                                                                                                      x.getTypeID(),
-                                                                                                      x.getFlag()),
-                                                                                            x))
-                                                                                    .collect(Collectors.toMap(
-                                                                                        AbstractMap.SimpleEntry::getKey,
-                                                                                        AbstractMap.SimpleEntry::getValue));
+                                                                                                (contid, at) -> FittingItem.accessQuery(
+                                                                                                    account,
+                                                                                                    contid, 1000,
+                                                                                                    false, at,
+                                                                                                    AttributeSelector.any(),
+                                                                                                    AttributeSelector.any(),
+                                                                                                    AttributeSelector.any(),
+                                                                                                    AttributeSelector.any()))
+                                                                                   .stream()
+                                                                                   .map(
+                                                                                       x -> new AbstractMap.SimpleEntry<>(
+                                                                                           Triple.of(x.getFittingID(),
+                                                                                                     x.getTypeID(),
+                                                                                                     x.getFlag()),
+                                                                                           x))
+                                                                                   .collect(Collectors.toMap(
+                                                                                       AbstractMap.SimpleEntry::getKey,
+                                                                                       AbstractMap.SimpleEntry::getValue));
 
     Set<Integer> seenFittings = new HashSet<>();
     Set<Triple<Integer, Integer, String>> seenItems = new HashSet<>();
@@ -113,13 +153,17 @@ public class ESICharacterFittingsSync extends AbstractESIAccountSync<List<GetCha
       for (GetCharactersCharacterIdFittingsItem item : next.getItems()) {
         FittingItem nextItem = new FittingItem(next.getFittingId(),
                                                item.getTypeId(),
-                                               item.getFlag().toString(),
+                                               item.getFlag()
+                                                   .toString(),
                                                item.getQuantity());
         // Only update if there is a change to reduce DB contention
-        if (!existingItemMap.containsKey(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag())) ||
-            !nextItem.equivalent(existingItemMap.get(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag()))))
+        if (!existingItemMap.containsKey(
+            Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag())) ||
+            !nextItem.equivalent(
+                existingItemMap.get(Triple.of(nextItem.getFittingID(), nextItem.getTypeID(), nextItem.getFlag()))))
           updates.add(nextItem);
-        seenItems.add(Triple.of(next.getFittingId(), item.getTypeId(), item.getFlag().toString()));
+        seenItems.add(Triple.of(next.getFittingId(), item.getTypeId(), item.getFlag()
+                                                                           .toString()));
       }
     }
 

@@ -10,14 +10,27 @@ import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.CharacterShip;
 
 import java.io.IOException;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.logging.Logger;
 
 public class ESICharacterShipSync extends AbstractESIAccountSync<GetCharactersCharacterIdShipOk> {
   protected static final Logger log = Logger.getLogger(ESICharacterShipSync.class.getName());
 
-  private CachedCharacterShip cacheUpdate;
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterShipSync(SynchronizedEveAccount account) {
     super(account);
@@ -43,54 +56,48 @@ public class ESICharacterShipSync extends AbstractESIAccountSync<GetCharactersCh
   protected ESIAccountServerResult<GetCharactersCharacterIdShipOk> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
     LocationApi apiInstance = cp.getLocationApi();
-    ESIThrottle.throttle(endpoint().name(), account);
-    ApiResponse<GetCharactersCharacterIdShipOk> result = apiInstance.getCharactersCharacterIdShipWithHttpInfo(
-        (int) account.getEveCharacterID(), null, null, accessToken());
-    checkCommonProblems(result);
-    return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
-                                        result.getData());
+
+    // Check whether we have an ETAG to send for the skills call
+    try {
+      currentETag = getCurrentTracker().getContext();
+    } catch (TrackerNotFoundException e) {
+      currentETag = null;
+    }
+
+    try {
+      ESIThrottle.throttle(endpoint().name(), account);
+      ApiResponse<GetCharactersCharacterIdShipOk> result = apiInstance.getCharactersCharacterIdShipWithHttpInfo(
+          (int) account.getEveCharacterID(), null, currentETag, accessToken());
+      checkCommonProblems(result);
+      cacheMiss();
+      currentETag = extractETag(result, null);
+      return new ESIAccountServerResult<>(extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay()),
+                                          result.getData());
+    } catch (ApiException e) {
+      // Trap 304 which indicates there are no changes from the last call
+      // Anything else is rethrown.
+      if (e.getCode() != 304) throw e;
+      cacheHit();
+      currentETag = extractETag(e, null);
+      return new ESIAccountServerResult<>(extractExpiry(e, OrbitalProperties.getCurrentTime() + maxDelay()), null);
+    }
+
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<GetCharactersCharacterIdShipOk> data,
                                    List<CachedData> updates) throws IOException {
-    CharacterShip shipUpdate = new CharacterShip(data.getData()
-                                                     .getShipTypeId(),
-                                                 data.getData()
-                                                     .getShipItemId(),
-                                                 data.getData()
-                                                     .getShipName());
+    if (data.getData() == null)
+      // Cache hit, no need to update
+      return;
 
-    // Only queue update if something has changed.
-    WeakReference<ModelCacheData> ref = ModelCache.get(account, ESISyncEndpoint.CHAR_SHIP_TYPE);
-    cacheUpdate = ref != null ? (CachedCharacterShip) ref.get() : null;
-    if (cacheUpdate == null) {
-      // No cache yet, populate from latest character ship
-      cacheInit();
-      cacheUpdate = new CachedCharacterShip();
-      cacheUpdate.cachedData = CharacterShip.get(account, time);
-    }
-
-    if (cacheUpdate.cachedData == null || !cacheUpdate.cachedData.equivalent(shipUpdate)) {
-      updates.add(shipUpdate);
-      cacheUpdate.cachedData = shipUpdate;
-      cacheMiss();
-    } else {
-      cacheHit();
-    }
-
+    updates.add(new CharacterShip(data.getData()
+                                      .getShipTypeId(),
+                                  data.getData()
+                                      .getShipItemId(),
+                                  data.getData()
+                                      .getShipName()));
   }
 
-  @Override
-  protected void commitComplete() {
-    // Update the character ship cache if we updated the value
-    if (cacheUpdate != null) ModelCache.set(account, ESISyncEndpoint.CHAR_SHIP_TYPE, cacheUpdate);
-    super.commitComplete();
-  }
-
-  private static class CachedCharacterShip implements ModelCacheData {
-    CharacterShip cachedData;
-  }
 
 }

@@ -159,7 +159,6 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<FleetData> data,
