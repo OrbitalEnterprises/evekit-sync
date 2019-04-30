@@ -17,14 +17,27 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKillmailsKillmailIdKillmailHashOk>> {
   protected static final Logger log = Logger.getLogger(ESICharacterKillMailSync.class.getName());
-  private String context;
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterKillMailSync(SynchronizedEveAccount account) {
     super(account);
@@ -33,11 +46,6 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
   @Override
   public ESISyncEndpoint endpoint() {
     return ESISyncEndpoint.CHAR_KILL_MAIL;
-  }
-
-  @Override
-  protected String getNextSyncContext() {
-    return context;
   }
 
   @SuppressWarnings("Duplicates")
@@ -64,6 +72,7 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
     evolveOrAdd(time, null, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<List<GetKillmailsKillmailIdKillmailHashOk>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -87,41 +96,35 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
     // Sort results in increasing order by killID so we insert in order
     results.sort(Comparator.comparingInt(GetCharactersCharacterIdKillmailsRecent200Ok::getKillmailId));
 
-    // If a context is present, use it to filter out which kill mail we'll process.
-    // We do this to batch the processing of kill mail which can be very large.
-    int mailFilter;
+    // Extract context.
+    String[] cachedHash = splitCachedContext(1);
+
+    // If a context is present, then it stores the highest killID that we have processed so far.
+    // We can therefore only insert kill IDs beyond this bound.  In order to avoid excessive
+    // delay, we also bound the number of inserts we'll do in one shot.  Since the kill endpoint
+    // has a short endtime (5 minutes), it won't take too long to catch up.
+    int maxKillID;
     try {
-      mailFilter = Integer.valueOf(getCurrentTracker().getContext());
-      mailFilter = Math.max(mailFilter, 0);
+      maxKillID = Integer.valueOf(cachedHash[0]);
+      maxKillID = Math.max(maxKillID, 0);
     } catch (Exception e) {
-      // No filter exists, assign a random filter
-      mailFilter = (int) ((OrbitalProperties.getCurrentTime() / 1000) % 10);
+      // no context, use 0 and we'll set a bound after processing
+      maxKillID = 0;
     }
 
-    // Filter headers by killmail ID to create a smaller processing batch.
-    // Eventually, all headers will be processed as the filter cycles.
-    final int mailBatch = mailFilter;
-    results = results.stream()
-                     .filter(x -> (x.getKillmailId() % 10) == mailBatch)
-                     .collect(Collectors.toList());
-
-    // Prepare filter and context for next tracker
-    mailFilter = (mailFilter + 1) % 10;
-    context = String.valueOf(mailFilter);
+    // We'll never retrieve more than this many records in one cycle.
+    final int BATCH_SIZE = 100;
 
     // Retrieve detailed kill information
     List<GetKillmailsKillmailIdKillmailHashOk> data = new ArrayList<>();
     for (GetCharactersCharacterIdKillmailsRecent200Ok next : results) {
-      try {
-        // Skip if we already have data for this kill.  Since kills are immutable, the
-        // query time can be MAX_VALUE (kills never eol)
-        if (Kill.get(account, Long.MAX_VALUE, next.getKillmailId()) != null) continue;
-      } catch (IOException e) {
-        // Log the error, but go ahead and retrieve the hash if possible
-        log.log(Level.WARNING, "Error checking for existing kill, continuing", e);
+      if (next.getKillmailId() <= maxKillID) {
+        cacheHit();
+        continue;
       }
 
       //noinspection Duplicates
+      cacheMiss();
       try {
         ESIThrottle.throttle(endpoint().name(), account);
         ApiResponse<GetKillmailsKillmailIdKillmailHashOk> nextHash = apiInstance.getKillmailsKillmailIdKillmailHashWithHttpInfo(
@@ -131,20 +134,28 @@ public class ESICharacterKillMailSync extends AbstractESIAccountSync<List<GetKil
             null);
         checkCommonProblems(nextHash);
         data.add(nextHash.getData());
+        maxKillID = Math.max(maxKillID, next.getKillmailId());
       } catch (ApiException | IOException e) {
-        // Log the error, continue to next kill hash
-        log.log(Level.WARNING, "Error retrieving kill information, continuing to next kill", e);
+        // Log the error, but short circuit so maxKillID remains correct
+        log.log(Level.WARNING, "Error retrieving kill information, short circuit", e);
         if (e instanceof ApiException)
           ESIThrottle.throttle((ApiException) e);
+        break;
       }
+
+      // Short circuit if we reach the batch limit
+      if (data.size() >= BATCH_SIZE)
+        break;
     }
 
-    // Speed up next query time since we batch the downloads
-    expiry -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
+    // Save maxKillID for next execution
+    cachedHash[0] = String.valueOf(maxKillID);
+    currentETag = String.join("|", cachedHash);
+
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetKillmailsKillmailIdKillmailHashOk>> data,

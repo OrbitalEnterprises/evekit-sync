@@ -169,7 +169,15 @@ public class ESICorporationCustomsOfficesSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < testData.length; i++) {
-      CustomsOffice nextEl = storedData.get(i);
+      CustomsOffice nextEl = null;
+      long officeID = (long) testData[i][0];
+      for (CustomsOffice j : storedData) {
+        if (j.getOfficeID() == officeID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) testData[i][0], nextEl.getOfficeID());
       Assert.assertEquals((int) testData[i][1], nextEl.getSolarSystemID());
       Assert.assertEquals((int) testData[i][2], nextEl.getReinforceExitStart());

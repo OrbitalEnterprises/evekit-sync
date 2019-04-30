@@ -130,9 +130,12 @@ public class ESICorporationWalletJournalSync extends AbstractESIAccountSync<Map<
       for (GetCorporationsCorporationIdWalletsDivisionJournal200Ok next : data.getData()
                                                                               .get(division)) {
         // Items below the bound have already been processed
-        if (next.getId() <= refIDBound[division - 1])
+        if (next.getId() <= refIDBound[division - 1]) {
+           cacheHit();
           continue;
+        }
 
+        cacheMiss();
         updates.add(new WalletJournal(division,
                                       next.getId(),
                                       next.getDate()

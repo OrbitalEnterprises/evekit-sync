@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("Duplicates")
@@ -38,7 +37,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     // Comparator for sorting test data in increasing order by killID (testData[i][1])
     Comparator<Object[]> killDataCompare = Comparator.comparingInt(x -> (Integer) x[0]);
 
-    int size = 100 + TestBase.getRandomInt(100);
+    int size = 50 + TestBase.getRandomInt(50);
     killmailTestData = new Object[size][8];
     for (int i = 0; i < size; i++) {
       // Killhash data
@@ -208,7 +207,6 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
         }).collect(Collectors.toList());
 
     // First setup kill list mock
-    @SuppressWarnings("unchecked")
     int last = 0;
     for (int i = 0; i < killmailPages.length; i++) {
       ApiResponse<List<GetCharactersCharacterIdKillmailsRecent200Ok>> apir = new ApiResponse<>(200,
@@ -369,7 +367,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
                                AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
-    int attackerLength = Arrays.stream(testData).map(x -> ((Object[][]) x[6]).length ).reduce(0, (x, y) -> x + y);
+    int attackerLength = Arrays.stream(testData).map(x -> ((Object[][]) x[6]).length ).reduce(0, Integer::sum);
     Assert.assertEquals(attackerLength, storedAttackers.size());
 
     // Check stored data
@@ -399,7 +397,7 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
                                  AbstractESIAccountSync.ANY_SELECTOR));
 
     // Check data matches test data
-    int itemLength = Arrays.stream(testData).map(x -> ((Object[][]) x[7]).length ).reduce(0, (x, y) -> x + y);
+    int itemLength = Arrays.stream(testData).map(x -> ((Object[][]) x[7]).length ).reduce(0, Integer::sum);
     Assert.assertEquals(itemLength, storedItems.size());
 
     // Check stored data
@@ -445,7 +443,6 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
-    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 
@@ -572,7 +569,6 @@ public class ESICharacterKillmailSyncTest extends SyncTestBase {
     // Verify new tracker was created with next sync time
     syncTracker = ESIEndpointSyncTracker.getUnfinishedTracker(charSyncAccount, ESISyncEndpoint.CHAR_KILL_MAIL);
     long schedTime = (new DateTime(2017, 12, 21, 12, 0, 0, DateTimeZone.UTC)).getMillis();
-    schedTime -= TimeUnit.MILLISECONDS.convert(150, TimeUnit.SECONDS);
     Assert.assertEquals(schedTime, syncTracker.getScheduled());
   }
 

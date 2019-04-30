@@ -10,15 +10,29 @@ import enterprises.orbital.evekit.model.corporation.CustomsOffice;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdCustomsOffices200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICorporationCustomsOfficesSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
 
   public ESICorporationCustomsOfficesSync(SynchronizedEveAccount account) {
     super(account);
@@ -61,19 +75,14 @@ public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<Lis
       long expiry = result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
       return new ESIAccountServerResult<>(expiry, result.getRight());
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
+        cacheHit();
         return new ESIAccountServerResult<>(expiry, Collections.emptyList());
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + e.getResponseBody());
-        }
         throw e;
       }
     }
@@ -85,53 +94,75 @@ public class ESICorporationCustomsOfficesSync extends AbstractESIAccountSync<Lis
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdCustomsOffices200Ok>> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Keep track of seen offices
-    Set<Long> seenOffices = new HashSet<>();
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
 
-    // Process offices
+    // Compute hash
+    List<CustomsOffice> retrievedOffices = new ArrayList<>();
     for (GetCorporationsCorporationIdCustomsOffices200Ok next : data.getData()) {
-      updates.add(new CustomsOffice(next.getOfficeId(),
-                                    next.getSystemId(),
-                                    next.getReinforceExitStart(),
-                                    next.getReinforceExitEnd(),
-                                    next.getAllowAllianceAccess(),
-                                    next.getAllowAccessWithStandings(),
-                                    nullSafeEnum(next.getStandingLevel(), null),
-                                    nullSafeFloat(next.getAllianceTaxRate(), 0F),
-                                    nullSafeFloat(next.getCorporationTaxRate(), 0F),
-                                    nullSafeFloat(next.getExcellentStandingTaxRate(), 0F),
-                                    nullSafeFloat(next.getGoodStandingTaxRate(), 0F),
-                                    nullSafeFloat(next.getNeutralStandingTaxRate(), 0F),
-                                    nullSafeFloat(next.getBadStandingTaxRate(), 0F),
-                                    nullSafeFloat(next.getTerribleStandingTaxRate(), 0F)));
-      seenOffices.add(next.getOfficeId());
+      retrievedOffices.add(new CustomsOffice(next.getOfficeId(),
+                                             next.getSystemId(),
+                                             next.getReinforceExitStart(),
+                                             next.getReinforceExitEnd(),
+                                             next.getAllowAllianceAccess(),
+                                             next.getAllowAccessWithStandings(),
+                                             nullSafeEnum(next.getStandingLevel(), null),
+                                             nullSafeFloat(next.getAllianceTaxRate(), 0F),
+                                             nullSafeFloat(next.getCorporationTaxRate(), 0F),
+                                             nullSafeFloat(next.getExcellentStandingTaxRate(), 0F),
+                                             nullSafeFloat(next.getGoodStandingTaxRate(), 0F),
+                                             nullSafeFloat(next.getNeutralStandingTaxRate(), 0F),
+                                             nullSafeFloat(next.getBadStandingTaxRate(), 0F),
+                                             nullSafeFloat(next.getTerribleStandingTaxRate(), 0F)));
+    }
+    retrievedOffices.sort(Comparator.comparingLong(CustomsOffice::getOfficeID));
+    String officeHashResult = CachedData.dataHashHelper(retrievedOffices.stream()
+                                                                        .map(CustomsOffice::dataHash)
+                                                                        .toArray());
+
+    // Check hash
+    if (cachedHash[0] == null || !cachedHash[0].equals(officeHashResult)) {
+      cacheMiss();
+      cachedHash[0] = officeHashResult;
+      updates.addAll(retrievedOffices);
+
+      // Check for offices that no longer exist and schedule for EOL
+      Set<Long> seenOffices = retrievedOffices.stream()
+                                              .map(CustomsOffice::getOfficeID)
+                                              .collect(Collectors.toSet());
+
+      for (CustomsOffice existing : retrieveAll(time,
+                                                (long contid, AttributeSelector at) -> CustomsOffice.accessQuery(
+                                                    account, contid,
+                                                    1000,
+                                                    false, at,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR,
+                                                    ANY_SELECTOR))) {
+        if (!seenOffices.contains(existing.getOfficeID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
-    // Check for offices that no longer exist and schedule for EOL
-    for (CustomsOffice existing : retrieveAll(time,
-                                              (long contid, AttributeSelector at) -> CustomsOffice.accessQuery(
-                                                  account, contid,
-                                                  1000,
-                                                  false, at,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR,
-                                                  ANY_SELECTOR))) {
-      if (!seenOffices.contains(existing.getOfficeID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
   }
 
 }

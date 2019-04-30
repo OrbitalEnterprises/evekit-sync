@@ -90,9 +90,12 @@ public class ESICharacterWalletJournalSync extends AbstractESIAccountSync<List<G
 
     for (GetCharactersCharacterIdWalletJournal200Ok next : data.getData()) {
       // Items below the bound have already been processed
-      if (next.getId() <= refIDBound)
+      if (next.getId() <= refIDBound) {
+        cacheHit();
         continue;
+      }
 
+      cacheMiss();
       updates.add(new WalletJournal(1,
                                     next.getId(),
                                     next.getDate()

@@ -50,6 +50,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
     evolveOrAdd(time, null, item);
   }
 
+  @SuppressWarnings("Duplicates")
   @Override
   protected ESIAccountServerResult<List<GetCharactersCharacterIdWalletTransactions200Ok>> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
@@ -72,6 +73,7 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
     while (!result.getData()
                   .isEmpty()) {
       results.addAll(result.getData());
+      //noinspection OptionalGetWithoutIsPresent
       txnIdLimit = result.getData()
                          .stream()
                          .min(Comparator.comparingLong(
@@ -88,22 +90,25 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
       expiry = extractExpiry(result, OrbitalProperties.getCurrentTime() + maxDelay());
 
       // TODO: workaround for https://github.com/ccpgames/esi-issues/issues/715
-      if (!result.getData().isEmpty()) {
+      if (!result.getData()
+                 .isEmpty()) {
         // Check whether min transaction ID is less than previous transaction ID.  If it's not
         // then we're seeing the bug and we need to empty the result set.
+        @SuppressWarnings("OptionalGetWithoutIsPresent")
         long testLimit = result.getData()
                                .stream()
                                .min(Comparator.comparingLong(
                                    GetCharactersCharacterIdWalletTransactions200Ok::getTransactionId))
                                .get()
                                .getTransactionId();
-        if (testLimit >= txnIdLimit) result.getData().clear();
+        if (testLimit >= txnIdLimit) result.getData()
+                                           .clear();
       }
     }
 
     // Sort results by transaction ID so we insert into the DB in order
     results.sort(Comparator.comparingLong(GetCharactersCharacterIdWalletTransactions200Ok::getTransactionId));
-    
+
     return new ESIAccountServerResult<>(expiry, results);
   }
 
@@ -123,9 +128,12 @@ public class ESICharacterWalletTransactionSync extends AbstractESIAccountSync<Li
 
     for (GetCharactersCharacterIdWalletTransactions200Ok next : data.getData()) {
       // Items below the bound have already been processed
-      if (next.getTransactionId() <= txnIDBound)
+      if (next.getTransactionId() <= txnIDBound) {
+        cacheHit();
         continue;
+      }
 
+      cacheMiss();
       updates.add(new WalletTransaction(1, next.getTransactionId(),
                                         next.getDate()
                                             .getMillis(),

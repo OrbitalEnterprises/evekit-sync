@@ -94,7 +94,7 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
         while (!result.getData()
                       .isEmpty()) {
           resultObject.appendDivision(division, result.getData());
-          //noinspection ConstantConditions
+          //noinspection OptionalGetWithoutIsPresent
           txnIdLimit = result.getData()
                              .stream()
                              .min(Comparator.comparingLong(
@@ -117,18 +117,18 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
                      .isEmpty()) {
             // Check whether min transaction ID is less than previous transaction ID.  If it's not
             // then we're seeing the bug and we need to empty the result set.
+            @SuppressWarnings("OptionalGetWithoutIsPresent")
             long testLimit = result.getData()
-                                                                           .stream()
-                                                                           .min(Comparator.comparingLong(
-                                                                               GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
-                                                                           .get()
-                                                                           .getTransactionId();
+                                   .stream()
+                                   .min(Comparator.comparingLong(
+                                       GetCorporationsCorporationIdWalletsDivisionTransactions200Ok::getTransactionId))
+                                   .get()
+                                   .getTransactionId();
             if (testLimit >= txnIdLimit) result.getData()
                                                .clear();
           }
         }
       } catch (ApiException e) {
-        final String errTrap = "Character does not have required role";
         if (e.getCode() == 403) {
           // Trap 403 - Character does not have required role(s)
           log.info("Trapped 403 - Character does not have required role");
@@ -184,9 +184,12 @@ public class ESICorporationWalletTransactionSync extends AbstractESIAccountSync<
     for (int division = 1; division <= 7; division++) {
       for (GetCorporationsCorporationIdWalletsDivisionTransactions200Ok next : data.getData().txns.get(division)) {
         // Items below the bound have already been processed
-        if (next.getTransactionId() <= txnIDBound[division - 1])
+        if (next.getTransactionId() <= txnIDBound[division - 1]) {
+          cacheHit();
           continue;
+        }
 
+        cacheMiss();
         updates.add(new WalletTransaction(division, next.getTransactionId(),
                                           next.getDate()
                                               .getMillis(),

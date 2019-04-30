@@ -208,7 +208,15 @@ public class ESICorporationStructuresSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < testData.length; i++) {
-      Structure nextEl = storedData.get(i);
+      Structure nextEl = null;
+      long structureID = (long) testData[i][0];
+      for (Structure j : storedData) {
+        if (j.getStructureID() == structureID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) testData[i][0], nextEl.getStructureID());
       Assert.assertEquals((int) testData[i][1], nextEl.getCorporationID());
       Assert.assertEquals((long) testData[i][2], nextEl.getFuelExpires());
