@@ -252,7 +252,15 @@ public class ESICharacterMarketOrderSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < marketTestData.length; i++) {
-      MarketOrder nextEl = storedData.get(i);
+      MarketOrder nextEl = null;
+      long orderID = (long) (Long) marketTestData[i][0];
+      for (MarketOrder j : storedData) {
+        if (j.getOrderID() == orderID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) (Long) marketTestData[i][0], nextEl.getOrderID());
       Assert.assertEquals((int) (Integer) marketTestData[i][1], nextEl.getWalletDivision());
       Assert.assertEquals(marketTestData[i][2], nextEl.isBid());

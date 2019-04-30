@@ -91,7 +91,7 @@ public class ESICorporationStructuresSync extends AbstractESIAccountSync<List<Ge
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
         cacheHit();
-        return new ESIAccountServerResult<>(expiry, Collections.emptyList());
+        return new ESIAccountServerResult<>(expiry, null);
       } else {
         // Any other error will be rethrown.
         throw e;
@@ -103,6 +103,10 @@ public class ESICorporationStructuresSync extends AbstractESIAccountSync<List<Ge
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdStructures200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+
+    if (data.getData() == null)
+      // Incorrect role, nothing to do.
+      return;
 
     // If we have tracker context, then it will be the hash of any previous call to this endpoint.
     // Check to see if the most recent data has a different hash.  If not, then results haven't changed
