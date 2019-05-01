@@ -10,13 +10,27 @@ import enterprises.orbital.evekit.model.common.Standing;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdStandings200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICorporationStandingSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
 
   public ESICorporationStandingSync(SynchronizedEveAccount account) {
     super(account);
@@ -64,30 +78,58 @@ public class ESICorporationStandingSync extends AbstractESIAccountSync<List<GetC
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdStandings200Ok>> data,
                                    List<CachedData> updates) throws IOException {
-    // Add and record standings
-    Set<Pair<String, Integer>> seenStandings = new HashSet<>();
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    // Check hash
+    List<Standing> retrievedStandings = new ArrayList<>();
     for (GetCorporationsCorporationIdStandings200Ok next : data.getData()) {
       Standing nextStanding = new Standing(next.getFromType()
                                                .toString(), next.getFromId(), next.getStanding());
-      seenStandings.add(Pair.of(next.getFromType()
-                                    .toString(), next.getFromId()));
-      updates.add(nextStanding);
+      retrievedStandings.add(nextStanding);
     }
+    retrievedStandings.sort((o1, o2) -> {
+      int fid = Comparator.comparing(Standing::getStandingEntity, String::compareTo).compare(o1, o2);
+      return fid != 0 ? fid : Comparator.comparingInt(Standing::getFromID).compare(o1, o2);
+    });
+    String hash = CachedData.dataHashHelper(retrievedStandings.toArray());
 
-    // Check for standings that no longer exist and schedule for EOL
-    for (Standing existing : retrieveAll(time,
-                                         (long contid, AttributeSelector at) -> Standing.accessQuery(account, contid,
-                                                                                                     1000,
-                                                                                                     false, at,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR,
-                                                                                                     ANY_SELECTOR))) {
-      if (!seenStandings.contains(Pair.of(existing.getStandingEntity(), existing.getFromID()))) {
-        existing.evolve(null, time);
-        updates.add(existing);
+    if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+      cacheMiss();
+      cachedHash[0] = hash;
+
+      // Add and record standings
+      Set<Pair<String, Integer>> seenStandings = new HashSet<>();
+      for (GetCorporationsCorporationIdStandings200Ok next : data.getData()) {
+        Standing nextStanding = new Standing(next.getFromType()
+                                                 .toString(), next.getFromId(), next.getStanding());
+        seenStandings.add(Pair.of(next.getFromType()
+                                      .toString(), next.getFromId()));
+        updates.add(nextStanding);
       }
+
+      // Check for standings that no longer exist and schedule for EOL
+      for (Standing existing : retrieveAll(time,
+                                           (long contid, AttributeSelector at) -> Standing.accessQuery(account, contid,
+                                                                                                       1000,
+                                                                                                       false, at,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR,
+                                                                                                       ANY_SELECTOR))) {
+        if (!seenStandings.contains(Pair.of(existing.getStandingEntity(), existing.getFromID()))) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 

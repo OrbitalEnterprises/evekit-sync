@@ -12,12 +12,10 @@ import enterprises.orbital.evekit.model.corporation.CorporationMemberMedal;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporationMedalsSync.MedalsData> {
   protected static final Logger log = Logger.getLogger(ESICorporationMedalsSync.class.getName());
@@ -25,6 +23,22 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
   class MedalsData {
     List<GetCorporationsCorporationIdMedals200Ok> medals;
     List<GetCorporationsCorporationIdMedalsIssued200Ok> issued;
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICorporationMedalsSync(SynchronizedEveAccount account) {
@@ -90,19 +104,13 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
       bkExpiry = bkResult.getLeft() > 0 ? bkResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay();
       data.issued = bkResult.getRight();
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         bkExpiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
-        data.issued = Collections.emptyList();
+        data.issued = null;
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + e.getResponseBody());
-        }
         throw e;
       }
     }
@@ -116,46 +124,81 @@ public class ESICorporationMedalsSync extends AbstractESIAccountSync<ESICorporat
                                    ESIAccountServerResult<MedalsData> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Track seen medals.  Issued medals can't be removed, so no point in tracking those.
-    Set<Integer> seenMedals = new HashSet<>();
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(2);
 
+    // Check hash for medals
+    List<CorporationMedal> retrievedMedals = new ArrayList<>();
     for (GetCorporationsCorporationIdMedals200Ok next : data.getData().medals) {
-      updates.add(new CorporationMedal(next.getMedalId(),
+      retrievedMedals.add(new CorporationMedal(next.getMedalId(),
                                        next.getDescription(),
                                        next.getTitle(),
                                        next.getCreatedAt()
                                            .getMillis(),
                                        next.getCreatorId()));
-      seenMedals.add(next.getMedalId());
     }
+    retrievedMedals.sort(Comparator.comparingInt(CorporationMedal::getMedalID));
+    String medalHash = CachedData.dataHashHelper(retrievedMedals.toArray());
 
-    for (GetCorporationsCorporationIdMedalsIssued200Ok next : data.getData().issued) {
-      updates.add(new CorporationMemberMedal(next.getMedalId(),
-                                             next.getCharacterId(),
-                                             next.getIssuedAt()
-                                                 .getMillis(),
-                                             next.getIssuerId(),
-                                             next.getReason(),
-                                             next.getStatus()
-                                                 .toString()));
-    }
+    if (cachedHash[0] == null || !cachedHash[0].equals(medalHash)) {
+      cacheMiss();
+      cachedHash[0] = medalHash;
+      updates.addAll(retrievedMedals);
 
-    // Check for medals that no longer exist and schedule for EOL
-    for (CorporationMedal existing : retrieveAll(time,
-                                                 (long contid, AttributeSelector at) -> CorporationMedal.accessQuery(
-                                                     account, contid,
-                                                     1000,
-                                                     false, at,
-                                                     ANY_SELECTOR,
-                                                     ANY_SELECTOR,
-                                                     ANY_SELECTOR,
-                                                     ANY_SELECTOR,
-                                                     ANY_SELECTOR))) {
-      if (!seenMedals.contains(existing.getMedalID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
+      Set<Integer> seenMedals = retrievedMedals.stream().map(CorporationMedal::getMedalID).collect(Collectors.toSet());
+
+      // Check for medals that no longer exist and schedule for EOL
+      for (CorporationMedal existing : retrieveAll(time,
+                                                   (long contid, AttributeSelector at) -> CorporationMedal.accessQuery(
+                                                       account, contid,
+                                                       1000,
+                                                       false, at,
+                                                       ANY_SELECTOR,
+                                                       ANY_SELECTOR,
+                                                       ANY_SELECTOR,
+                                                       ANY_SELECTOR,
+                                                       ANY_SELECTOR))) {
+        if (!seenMedals.contains(existing.getMedalID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
       }
+    } else {
+      cacheHit();
     }
+
+    // Check hash for issued
+    if (data.getData().issued != null) {
+      List<CorporationMemberMedal> issuedRetrieved = new ArrayList<>();
+      for (GetCorporationsCorporationIdMedalsIssued200Ok next : data.getData().issued) {
+        issuedRetrieved.add(new CorporationMemberMedal(next.getMedalId(),
+                                               next.getCharacterId(),
+                                               next.getIssuedAt()
+                                                   .getMillis(),
+                                               next.getIssuerId(),
+                                               next.getReason(),
+                                               next.getStatus()
+                                                   .toString()));
+      }
+      issuedRetrieved.sort(Comparator.comparingLong(CorporationMemberMedal::getIssued));
+      String issuedHash = CachedData.dataHashHelper(issuedRetrieved.toArray());
+
+      if (cachedHash[1] == null || !cachedHash[1].equals(issuedHash)) {
+        cacheMiss();
+        cachedHash[1] = issuedHash;
+        updates.addAll(issuedRetrieved);
+      } else {
+        cacheHit();
+      }
+
+    } else {
+      cacheHit();
+    }
+
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 }

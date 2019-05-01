@@ -213,7 +213,15 @@ public class ESICorporationMedalsSyncTest extends SyncTestBase {
 
       // Check stored data
       for (int i = 0; i < testMedalData.length; i++) {
-        CorporationMedal nextEl = storedData.get(i);
+        CorporationMedal nextEl = null;
+        int medalID = (int) testMedalData[i][0];
+        for (CorporationMedal j : storedData) {
+          if (j.getMedalID() == medalID) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals((int) testMedalData[i][0], nextEl.getMedalID());
         Assert.assertEquals(testMedalData[i][1], nextEl.getDescription());
         Assert.assertEquals(testMedalData[i][2], nextEl.getTitle());
@@ -242,7 +250,19 @@ public class ESICorporationMedalsSyncTest extends SyncTestBase {
 
       // Check stored data
       for (int i = 0; i < testIssuedData.length; i++) {
-        CorporationMemberMedal nextEl = storedData.get(i);
+        CorporationMemberMedal nextEl = null;
+        int medalID = (int) testIssuedData[i][0];
+        int characterID = (int) testIssuedData[i][1];
+        long issued = (long) testIssuedData[i][2];
+        for (CorporationMemberMedal j : storedData) {
+          if (j.getMedalID() == medalID &&
+              j.getCharacterID() == characterID &&
+              j.getIssued() == issued) {
+            nextEl = j;
+            break;
+          }
+        }
+        Assert.assertNotNull(nextEl);
         Assert.assertEquals((int) testIssuedData[i][0], nextEl.getMedalID());
         Assert.assertEquals((int) testIssuedData[i][1], nextEl.getCharacterID());
         Assert.assertEquals((long) testIssuedData[i][2], nextEl.getIssued());

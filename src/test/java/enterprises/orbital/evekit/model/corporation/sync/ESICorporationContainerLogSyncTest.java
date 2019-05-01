@@ -162,7 +162,16 @@ public class ESICorporationContainerLogSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < testData.length; i++) {
-      ContainerLog nextEl = storedData.get(i);
+      ContainerLog nextEl = null;
+      long logTime = (long) (Long) testData[i][0];
+      long containerID = (long) (Long) testData[i][4];
+      for (ContainerLog j : storedData) {
+        if (j.getLogTime() == logTime && j.getContainerID() == containerID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((long) (Long) testData[i][0], nextEl.getLogTime());
       Assert.assertEquals(String.valueOf(testData[i][1]), nextEl.getAction());
       Assert.assertEquals((int) (Integer) testData[i][2], nextEl.getCharacterID());

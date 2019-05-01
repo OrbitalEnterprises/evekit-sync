@@ -10,13 +10,30 @@ import enterprises.orbital.evekit.model.corporation.ContainerLog;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
 public class ESICorporationContainerLogSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdContainersLogs200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICorporationContainerLogSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
 
   public ESICorporationContainerLogSync(SynchronizedEveAccount account) {
     super(account);
@@ -61,29 +78,37 @@ public class ESICorporationContainerLogSync extends AbstractESIAccountSync<List<
           result.getLeft() > 0 ? result.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay(),
           result.getRight());
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
-        return new ESIAccountServerResult<>(expiry, Collections.emptyList());
+        cacheHit();
+        return new ESIAccountServerResult<>(expiry, null);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdContainersLogs200Ok>> data,
                                    List<CachedData> updates) throws IOException {
+    if (data.getData() == null)
+      // 403 so nothing to do
+      return;
+
+    // Compute and check hash
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    List<ContainerLog> retrievedLogs = new ArrayList<>();
+
     // Add container logs
     for (GetCorporationsCorporationIdContainersLogs200Ok next : data.getData()) {
       ContainerLog nextLog = new ContainerLog(next.getLoggedAt()
@@ -102,8 +127,21 @@ public class ESICorporationContainerLogSync extends AbstractESIAccountSync<List<
                                                                                           .toString(),
                                               nullSafeInteger(next.getQuantity(), 0),
                                               nullSafeInteger(next.getTypeId(), 0));
-      updates.add(nextLog);
+      retrievedLogs.add(nextLog);
     }
+    retrievedLogs.sort(Comparator.comparingLong(ContainerLog::getLogTime));
+    String hash = CachedData.dataHashHelper(retrievedLogs.toArray());
+
+    if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+      cacheMiss();
+      cachedHash[0] = hash;
+      updates.addAll(retrievedLogs);
+    } else {
+      cacheHit();
+    }
+
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 }
