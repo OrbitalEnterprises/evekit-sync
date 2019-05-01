@@ -24,6 +24,22 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
     Map<Integer, GetCharactersCharacterIdPlanetsPlanetIdOk> planetData = new HashMap<>();
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
   public ESICharacterPlanetsSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -91,11 +107,136 @@ public class ESICharacterPlanetsSync extends AbstractESIAccountSync<ESICharacter
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<PlanetData> data,
                                    List<CachedData> updates) throws IOException {
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    // Compute and check hash
+    {
+      List<PlanetaryColony> retrievedColonies = new ArrayList<>();
+      List<PlanetaryRoute> retrievedRoutes = new ArrayList<>();
+      List<PlanetaryPin> retrievedPins = new ArrayList<>();
+      List<PlanetaryLink> retrievedLinks = new ArrayList<>();
+      for (GetCharactersCharacterIdPlanets200Ok next : data.getData().planets) {
+        retrievedColonies.add(new PlanetaryColony(
+            next.getPlanetId(),
+            next.getSolarSystemId(),
+            next.getPlanetType()
+                .toString(),
+            next.getOwnerId(),
+            next.getLastUpdate()
+                .getMillis(),
+            next.getUpgradeLevel(),
+            next.getNumPins()
+        ));
+        GetCharactersCharacterIdPlanetsPlanetIdOk pInfo = data.getData().planetData.get(next.getPlanetId());
+
+        // Create routes
+        for (GetCharactersCharacterIdPlanetsPlanetIdRoute route : pInfo.getRoutes()) {
+          PlanetaryRoute newRoute = new PlanetaryRoute(
+              next.getPlanetId(),
+              route.getRouteId(),
+              route.getSourcePinId(),
+              route.getDestinationPinId(),
+              route.getContentTypeId(),
+              route.getQuantity(),
+              new ArrayList<>()
+          );
+          for (long waypoint : route.getWaypoints())
+            newRoute.getWaypoints()
+                    .add(waypoint);
+          retrievedRoutes.add(newRoute);
+        }
+
+        // Create pins
+        for (GetCharactersCharacterIdPlanetsPlanetIdPin pin : pInfo.getPins()) {
+          GetCharactersCharacterIdPlanetsPlanetIdExtractorDetails extractor = pin.getExtractorDetails();
+          PlanetaryPin newPin = new PlanetaryPin(
+              next.getPlanetId(),
+              pin.getPinId(),
+              pin.getTypeId(),
+              nullSafeInteger(pin.getSchematicId(), 0),
+              nullSafeDateTime(pin.getLastCycleStart(), new DateTime(new Date(0L))).getMillis(),
+              extractor == null ? 0 : nullSafeInteger(extractor.getCycleTime(), 0),
+              extractor == null ? 0 : nullSafeInteger(extractor.getQtyPerCycle(), 0),
+              nullSafeDateTime(pin.getInstallTime(), new DateTime(new Date(0L))).getMillis(),
+              nullSafeDateTime(pin.getExpiryTime(), new DateTime(new Date(0L))).getMillis(),
+              extractor == null ? 0 : nullSafeInteger(extractor.getProductTypeId(), 0),
+              pin.getLongitude(),
+              pin.getLatitude(),
+              extractor == null ? 0 : nullSafeFloat(extractor.getHeadRadius(), 0),
+              new HashSet<>(),
+              new HashSet<>());
+          for (GetCharactersCharacterIdPlanetsPlanetIdContent content : pin.getContents())
+            newPin.getContents()
+                  .add(new PlanetaryPinContent(content.getTypeId(), content.getAmount()));
+          if (extractor != null) {
+            for (GetCharactersCharacterIdPlanetsPlanetIdHead head : extractor.getHeads())
+              newPin.getHeads()
+                    .add(new PlanetaryPinHead(head.getHeadId(), head.getLatitude(), head.getLongitude()));
+          }
+          retrievedPins.add(newPin);
+        }
+
+        // Create links
+        for (GetCharactersCharacterIdPlanetsPlanetIdLink link : pInfo.getLinks()) {
+          retrievedLinks.add(new PlanetaryLink(
+              next.getPlanetId(),
+              link.getSourcePinId(),
+              link.getDestinationPinId(),
+              link.getLinkLevel()
+          ));
+        }
+      }
+      retrievedColonies.sort(Comparator.comparingInt(PlanetaryColony::getPlanetID));
+      retrievedRoutes.sort((o1, o2) -> {
+        int pid = Comparator.comparingInt(PlanetaryRoute::getPlanetID)
+                            .compare(o1, o2);
+        return pid != 0 ? pid : Comparator.comparingLong(PlanetaryRoute::getRouteID)
+                                          .compare(o1, o2);
+      });
+      retrievedPins.sort((o1, o2) -> {
+        int pid = Comparator.comparingInt(PlanetaryPin::getPlanetID)
+                            .compare(o1, o2);
+        return pid != 0 ? pid : Comparator.comparingLong(PlanetaryPin::getPinID)
+                                          .compare(o1, o2);
+      });
+      retrievedLinks.sort((o1, o2) -> {
+        int pid = Comparator.comparingInt(PlanetaryLink::getPlanetID)
+                            .compare(o1, o2);
+        if (pid != 0) return pid;
+        pid = Comparator.comparingLong(PlanetaryLink::getSourcePinID)
+                        .compare(o1, o2);
+        return pid != 0 ? pid : Comparator.comparingLong(PlanetaryLink::getDestinationPinID)
+                                          .compare(o1, o2);
+      });
+
+      String hash = CachedData.dataHashHelper(CachedData.dataHashHelper(retrievedColonies.toArray()),
+                                              CachedData.dataHashHelper(retrievedRoutes.toArray()),
+                                              CachedData.dataHashHelper(retrievedPins.toArray()),
+                                              CachedData.dataHashHelper(retrievedLinks.toArray()));
+
+      if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+        // New data to process
+        cacheMiss();
+        cachedHash[0] = hash;
+      } else {
+        // We've seen this data, short circuit
+        cacheHit();
+        currentETag = String.join("|", cachedHash);
+        return;
+      }
+
+      // Save new hash
+      currentETag = String.join("|", cachedHash);
+    }
 
     // Save seen planets, routes, pins and links
     Set<Integer> seenPlanets = new HashSet<>(); // planetID

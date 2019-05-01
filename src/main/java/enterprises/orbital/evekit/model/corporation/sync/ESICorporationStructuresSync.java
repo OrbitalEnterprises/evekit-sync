@@ -127,7 +127,7 @@ public class ESICorporationStructuresSync extends AbstractESIAccountSync<List<Ge
                                             nullSafeInteger(nextStruct.getNextReinforceWeekday(), -1),
                                             nextStruct.getProfileId(),
                                             nextStruct.getReinforceHour(),
-                                            nextStruct.getReinforceWeekday(),
+                                            nullSafeInteger(nextStruct.getReinforceWeekday(), -1),
                                             nextStruct.getState()
                                                       .toString(),
                                             nullSafeDateTime(nextStruct.getStateTimerEnd(),
