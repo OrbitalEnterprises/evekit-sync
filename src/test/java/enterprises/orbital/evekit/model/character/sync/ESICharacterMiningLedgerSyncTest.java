@@ -46,7 +46,8 @@ public class ESICharacterMiningLedgerSyncTest extends SyncTestBase {
       // Note that date must be on a day boundary, hence the multiplication
       // by the number of milliseconds in a day.
       LocalDate dt = LocalDate.fromDateFields(new Date(TestBase.getUniqueRandomLong()));
-      mlTestData[i][0] = dt.toDate().getTime();
+      mlTestData[i][0] = dt.toDate()
+                           .getTime();
       mlTestData[i][1] = TestBase.getRandomInt();
       mlTestData[i][2] = TestBase.getRandomInt();
       mlTestData[i][3] = TestBase.getRandomLong();
@@ -143,7 +144,19 @@ public class ESICharacterMiningLedgerSyncTest extends SyncTestBase {
     // Compare against test data
     Assert.assertEquals(testData.length, storedMLs.size());
     for (int i = 0; i < testData.length; i++) {
-      MiningLedger nextLP = storedMLs.get(i);
+      MiningLedger nextLP = null;
+      long dt = (long) testData[i][0];
+      int solarSystemID = (int) testData[i][1];
+      int typeID = (int) testData[i][2];
+      for (MiningLedger j : storedMLs) {
+        if (j.getDate() == dt &&
+            j.getSolarSystemID() == solarSystemID &&
+            j.getTypeID() == typeID) {
+          nextLP = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextLP);
       Assert.assertEquals((long) testData[i][0], nextLP.getDate());
       Assert.assertEquals((int) testData[i][1], nextLP.getSolarSystemID());
       Assert.assertEquals((int) testData[i][2], nextLP.getTypeID());

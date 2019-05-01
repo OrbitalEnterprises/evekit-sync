@@ -8,15 +8,31 @@ import enterprises.orbital.evekit.account.SynchronizedEveAccount;
 import enterprises.orbital.evekit.model.*;
 import enterprises.orbital.evekit.model.character.MiningLedger;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
 
 public class ESICharacterMiningLedgerSync extends AbstractESIAccountSync<List<GetCharactersCharacterIdMining200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICharacterMiningLedgerSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
 
   public ESICharacterMiningLedgerSync(SynchronizedEveAccount account) {
     super(account);
@@ -33,6 +49,9 @@ public class ESICharacterMiningLedgerSync extends AbstractESIAccountSync<List<Ge
     assert item instanceof MiningLedger;
     MiningLedger it = (MiningLedger) item;
     CachedData existing = MiningLedger.get(account, time, it.getDate(), it.getSolarSystemID(), it.getTypeID());
+    if (existing != null && it.equivalent(existing))
+      // No change, skip update.
+      return;
     evolveOrAdd(time, existing, item);
   }
 
@@ -58,33 +77,17 @@ public class ESICharacterMiningLedgerSync extends AbstractESIAccountSync<List<Ge
     return new ESIAccountServerResult<>(expiry, results);
   }
 
-  @SuppressWarnings("RedundantThrows")
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<List<GetCharactersCharacterIdMining200Ok>> data,
                                    List<CachedData> updates) throws IOException {
 
-    Map<Triple<Long, Integer, Integer>, MiningLedger> existingMLMap = CachedData.retrieveAll(time,
-                                                                                             (contid, at) -> MiningLedger.accessQuery(
-                                                                                                 account,
-                                                                                                 contid, 1000,
-                                                                                                 false, at,
-                                                                                                 AttributeSelector.any(),
-                                                                                                 AttributeSelector.any(),
-                                                                                                 AttributeSelector.any(),
-                                                                                                 AttributeSelector.any()))
-                                                                                .stream()
-                                                                                .map(x -> new AbstractMap.SimpleEntry<>(
-                                                                                    Triple.of(x.getDate(),
-                                                                                              x.getSolarSystemID(),
-                                                                                              x.getTypeID()),
-                                                                                    x))
-                                                                                .collect(Collectors.toMap(
-                                                                                    AbstractMap.SimpleEntry::getKey,
-                                                                                    AbstractMap.SimpleEntry::getValue));
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
 
-    Set<Triple<Long, Integer, Integer>> seenMLs = new HashSet<>();
-
+    List<MiningLedger> retrieved = new ArrayList<>();
     for (GetCharactersCharacterIdMining200Ok next : data.getData()) {
       MiningLedger nextML = new MiningLedger(next.getDate()
                                                  .toDate()
@@ -92,13 +95,27 @@ public class ESICharacterMiningLedgerSync extends AbstractESIAccountSync<List<Ge
                                              next.getSolarSystemId(),
                                              next.getTypeId(),
                                              next.getQuantity());
-      Triple<Long, Integer, Integer> key = Triple.of(nextML.getDate(), nextML.getSolarSystemID(), nextML.getTypeID());
-      // Only update if there is a change to reduce DB contention
-      if (!existingMLMap.containsKey(key) ||
-          !nextML.equivalent(existingMLMap.get(key)))
-        updates.add(nextML);
-      seenMLs.add(key);
+      retrieved.add(nextML);
     }
+    retrieved.sort((o1, o2) -> {
+      int did = Comparator.comparingLong(MiningLedger::getDate).compare(o1, o2);
+      if (did != 0) return did;
+      did = Comparator.comparingInt(MiningLedger::getSolarSystemID).compare(o1, o2);
+      if (did != 0) return did;
+      return Comparator.comparingInt(MiningLedger::getTypeID).compare(o1, o2);
+    });
+    String hash = CachedData.dataHashHelper(retrieved.toArray());
+
+    if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+      cacheMiss();
+      cachedHash[0] = hash;
+      updates.addAll(retrieved);
+    } else {
+      cacheHit();
+    }
+
+    // Save hashes for next execution
+    currentETag = String.join("|", cachedHash);
 
     // No need to check for deleted MLs.  The current day's ML may change, but they should never disappear.
     // They MAY fall off the update list after 30 days.

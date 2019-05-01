@@ -12,10 +12,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
@@ -27,6 +24,22 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
     GetFleetsFleetIdOk fleetInfo;
     List<GetFleetsFleetIdMembers200Ok> fleetMembers = Collections.emptyList();
     List<GetFleetsFleetIdWings200Ok> fleetWings = Collections.emptyList();
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
   }
 
   public ESICharacterFleetsSync(SynchronizedEveAccount account) {
@@ -94,9 +107,10 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
       } catch (ApiException e) {
         // This call will 404 if the character is not in a fleet, in which case we can immediately return
         // data and exit.
-        if (e.getCode() == HttpStatus.SC_NOT_FOUND)
+        if (e.getCode() == HttpStatus.SC_NOT_FOUND) {
           return new ESIAccountServerResult<>(
               OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(60, TimeUnit.SECONDS), data);
+        }
 
         // Otherwise, something we didn't expect so throw it
         throw e;
@@ -165,6 +179,92 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
                                    List<CachedData> updates) throws IOException {
 
     FleetData source = data.getData();
+
+    // Compute hash of all fleet data and only continue if the data is new
+    {
+      CharacterFleet hFleet = null;
+      FleetInfo hFleetInfo = null;
+      List<FleetMember> retrievedMembers = new ArrayList<>();
+      List<FleetWing> retrievedWings = new ArrayList<>();
+      List<FleetSquad> retrievedSquads = new ArrayList<>();
+      if (source.charFleet != null) {
+        hFleet = new CharacterFleet(source.charFleet.getFleetId(),
+                                       source.charFleet.getRole()
+                                                       .toString(),
+                                       source.charFleet.getSquadId(),
+                                       source.charFleet.getWingId());
+
+        if (source.fleetInfo != null) {
+          hFleetInfo = new FleetInfo(hFleet.getFleetID(),
+                                    source.fleetInfo.getIsFreeMove(),
+                                    source.fleetInfo.getIsRegistered(),
+                                    source.fleetInfo.getIsVoiceEnabled(),
+                                    source.fleetInfo.getMotd());
+
+          for (GetFleetsFleetIdMembers200Ok mem : source.fleetMembers) {
+            retrievedMembers.add(new FleetMember(hFleet.getFleetID(),
+                                        mem.getCharacterId(),
+                                        mem.getJoinTime()
+                                           .getMillis(),
+                                        mem.getRole()
+                                           .toString(),
+                                        mem.getRoleName(),
+                                        mem.getShipTypeId(),
+                                        mem.getSolarSystemId(),
+                                        mem.getSquadId(),
+                                        nullSafeLong(mem.getStationId(), 0),
+                                        mem.getTakesFleetWarp(),
+                                        mem.getWingId()));
+          }
+
+          for (GetFleetsFleetIdWings200Ok wing : source.fleetWings) {
+            retrievedWings.add(new FleetWing(hFleet.getFleetID(),
+                                      wing.getId(),
+                                      wing.getName()));
+
+            for (GetFleetsFleetIdWingsSquad squad : wing.getSquads()) {
+              retrievedSquads.add(new FleetSquad(hFleet.getFleetID(),
+                                         wing.getId(),
+                                         squad.getId(),
+                                         squad.getName()));
+            }
+          }
+        }
+      }
+
+      // Prepare hash
+      retrievedMembers.sort(Comparator.comparingInt(FleetMember::getCharacterID));
+      retrievedWings.sort(Comparator.comparingLong(FleetWing::getWingID));
+      retrievedSquads.sort((o1, o2) -> {
+        int wid = Comparator.comparingLong(FleetSquad::getWingID).compare(o1, o2);
+        return wid != 0 ? wid : Comparator.comparingLong(FleetSquad::getSquadID).compare(o1, o2);
+      });
+      String updateHash = CachedData.dataHashHelper(hFleet == null ? hFleet : hFleet.dataHash(),
+                                                    hFleetInfo == null ? hFleetInfo : hFleetInfo.dataHash(),
+                                                    CachedData.dataHashHelper(retrievedMembers.toArray()),
+                                                    CachedData.dataHashHelper(retrievedWings.toArray()),
+                                                    CachedData.dataHashHelper(retrievedSquads.toArray()));
+
+      // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+      // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+      // and we can skip this update.
+      String[] cachedHash = splitCachedContext(1);
+
+      if (cachedHash[0] == null || !cachedHash[0].equals(updateHash)) {
+        // Update changed, process below
+        cacheMiss();
+        cachedHash[0] = updateHash;
+      } else {
+        // Same update as last time so we can immediately return.
+        // Make sure we save the hash state again before exiting.
+        cacheHit();
+        currentETag = String.join("|", cachedHash);
+        return;
+      }
+
+      // Save hashes for next execution
+      currentETag = String.join("|", cachedHash);
+    }
 
     // Only set if it turns out the character is currently in a fleet.
     long currentFleet = -1;
@@ -345,7 +445,6 @@ public class ESICharacterFleetsSync extends AbstractESIAccountSync<ESICharacterF
         updates.add(f);
       }
     }
-
   }
 
 }
