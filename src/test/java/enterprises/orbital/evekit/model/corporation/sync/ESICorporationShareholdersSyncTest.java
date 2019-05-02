@@ -131,7 +131,15 @@ public class ESICorporationShareholdersSyncTest extends SyncTestBase {
 
     // Check stored data
     for (int i = 0; i < testData.length; i++) {
-      Shareholder nextEl = storedData.get(i);
+      Shareholder nextEl = null;
+      int sharedholderID = (int) testData[i][0];
+      for (Shareholder j : storedData) {
+        if (j.getShareholderID() == sharedholderID) {
+          nextEl = j;
+          break;
+        }
+      }
+      Assert.assertNotNull(nextEl);
       Assert.assertEquals((int) testData[i][0], nextEl.getShareholderID());
       Assert.assertEquals(String.valueOf(testData[i][1]), nextEl.getShareholderType());
       Assert.assertEquals((long) testData[i][2], nextEl.getShares());

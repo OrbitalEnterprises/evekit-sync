@@ -10,15 +10,29 @@ import enterprises.orbital.evekit.model.corporation.Shareholder;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationShareholdersSync extends AbstractESIAccountSync<List<GetCorporationsCorporationIdShareholders200Ok>> {
   protected static final Logger log = Logger.getLogger(ESICorporationShareholdersSync.class.getName());
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
 
   public ESICorporationShareholdersSync(SynchronizedEveAccount account) {
     super(account);
@@ -65,7 +79,8 @@ public class ESICorporationShareholdersSync extends AbstractESIAccountSync<List<
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
-        return new ESIAccountServerResult<>(expiry, Collections.emptyList());
+        cacheHit();
+        return new ESIAccountServerResult<>(expiry, null);
       } else {
         // Any other error will be rethrown.
         throw e;
@@ -80,32 +95,56 @@ public class ESICorporationShareholdersSync extends AbstractESIAccountSync<List<
                                    ESIAccountServerResult<List<GetCorporationsCorporationIdShareholders200Ok>> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Keep track of seen shareholders
-    Set<Integer> seenShareholders = new HashSet<>();
+    if (data.getData() == null)
+      // 403 - nothing to do
+      return;
 
-    // Process shareholders
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    // Compute and check hash
+    List<Shareholder> retrievedShareholders = new ArrayList<>();
     for (GetCorporationsCorporationIdShareholders200Ok next : data.getData()) {
-      updates.add(new Shareholder(next.getShareholderId(),
+      retrievedShareholders.add(new Shareholder(next.getShareholderId(),
                                   next.getShareholderType()
                                       .toString(),
                                   next.getShareCount()));
-      seenShareholders.add(next.getShareholderId());
+    }
+    retrievedShareholders.sort(Comparator.comparingInt(Shareholder::getShareholderID));
+    String hash = CachedData.dataHashHelper(retrievedShareholders.toArray());
+
+    if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+      cacheMiss();
+      cachedHash[0] = hash;
+      updates.addAll(retrievedShareholders);
+
+      // Keep track of seen shareholders
+      Set<Integer> seenShareholders = retrievedShareholders.stream().map(Shareholder::getShareholderID).collect(
+          Collectors.toSet());
+
+      // Check for shareholders that no longer exist and schedule for EOL
+      for (Shareholder existing : retrieveAll(time,
+                                              (long contid, AttributeSelector at) -> Shareholder.accessQuery(
+                                                  account, contid,
+                                                  1000,
+                                                  false, at,
+                                                  ANY_SELECTOR,
+                                                  ANY_SELECTOR,
+                                                  ANY_SELECTOR))) {
+        if (!seenShareholders.contains(existing.getShareholderID())) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
-    // Check for shareholders that no longer exist and schedule for EOL
-    for (Shareholder existing : retrieveAll(time,
-                                            (long contid, AttributeSelector at) -> Shareholder.accessQuery(
-                                                account, contid,
-                                                1000,
-                                                false, at,
-                                                ANY_SELECTOR,
-                                                ANY_SELECTOR,
-                                                ANY_SELECTOR))) {
-      if (!seenShareholders.contains(existing.getShareholderID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
+
   }
 
 }

@@ -29,6 +29,22 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
     Map<Long, List<GetCorporationCorporationIdMiningObserversObserverId200Ok>> observations;
   }
 
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
+  }
+
   public ESICorporationMiningLedgerSync(SynchronizedEveAccount account) {
     super(account);
   }
@@ -64,7 +80,6 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
   @Override
   protected ESIAccountServerResult<MiningLedgerData> getServerData(
       ESIAccountClientProvider cp) throws ApiException, IOException {
-    final String errTrap = "Character does not have required role";
     MiningLedgerData data = new MiningLedgerData();
     IndustryApi apiInstance = cp.getIndustryApi();
 
@@ -80,18 +95,14 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
             accessToken());
       });
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         result = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
-                         Collections.emptyList());
+                         null);
+        cacheHit();
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -110,18 +121,13 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
             accessToken());
       });
     } catch (ApiException e) {
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         bkResult = Pair.of(OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS),
-                           Collections.emptyList());
+                           null);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -151,133 +157,161 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
     return new ESIAccountServerResult<>(expiry, data);
   }
 
-  @SuppressWarnings({"RedundantThrows", "Duplicates"})
+  @SuppressWarnings({"Duplicates"})
   @Override
   protected void processServerData(long time,
                                    ESIAccountServerResult<MiningLedgerData> data,
                                    List<CachedData> updates) throws IOException {
 
-    // Update extractions
-    Set<Triple<Integer, Long, Long>> seenExtractions = new HashSet<>();
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(3);
 
-    Map<Triple<Integer, Long, Long>, MiningExtraction> storedExtractions = CachedData.retrieveAll(time,
-                                                                                                  (contid, at) -> MiningExtraction.accessQuery(
-                                                                                                      account, contid,
-                                                                                                      1000, false, at,
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any(),
-                                                                                                      AttributeSelector.any()))
-                                                                                     .stream()
-                                                                                     .map(
-                                                                                         x -> new AbstractMap.SimpleEntry<>(
-                                                                                             Triple.of(x.getMoonID(),
-                                                                                                       x.getStructureID(),
-                                                                                                       x.getExtractionStartTime()),
-                                                                                             x
-                                                                                         ))
-                                                                                     .collect(Collectors.toMap(
-                                                                                         AbstractMap.SimpleEntry::getKey,
-                                                                                         AbstractMap.SimpleEntry::getValue));
+    if (data.getData().extractions != null) {
+      // Compute and check hash
+      List<MiningExtraction> retrievedExtractions = new ArrayList<>();
+      for (GetCorporationCorporationIdMiningExtractions200Ok next : data.getData().extractions) {
+        MiningExtraction nextExtraction = new MiningExtraction(next.getMoonId(),
+                                                               next.getStructureId(),
+                                                               next.getExtractionStartTime()
+                                                                   .getMillis(),
+                                                               next.getChunkArrivalTime()
+                                                                   .getMillis(),
+                                                               next.getNaturalDecayTime()
+                                                                   .getMillis());
+        retrievedExtractions.add(nextExtraction);
+      }
+      String hash = CachedData.dataHashHelper(retrievedExtractions.toArray());
 
-    for (GetCorporationCorporationIdMiningExtractions200Ok next : data.getData().extractions) {
-      MiningExtraction nextExtraction = new MiningExtraction(next.getMoonId(),
-                                                             next.getStructureId(),
-                                                             next.getExtractionStartTime()
-                                                                 .getMillis(),
-                                                             next.getChunkArrivalTime()
-                                                                 .getMillis(),
-                                                             next.getNaturalDecayTime()
-                                                                 .getMillis());
-      Triple<Integer, Long, Long> key = Triple.of(nextExtraction.getMoonID(),
-                                                  nextExtraction.getStructureID(),
-                                                  nextExtraction.getExtractionStartTime());
-      // Only update if there is a change to reduce DB contention
-      if (!storedExtractions.containsKey(key) ||
-          !nextExtraction.equivalent(storedExtractions.get(key)))
-        updates.add(nextExtraction);
-      seenExtractions.add(key);
-    }
+      if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+        cacheMiss();
+        cachedHash[0] = hash;
 
-    for (MiningExtraction existing : storedExtractions.values()) {
-      if (!seenExtractions.contains(
-          Triple.of(existing.getMoonID(), existing.getStructureID(), existing.getExtractionStartTime()))) {
-        existing.evolve(null, time);
-        updates.add(existing);
+        // Update extractions
+        Set<Triple<Integer, Long, Long>> seenExtractions = new HashSet<>();
+
+        Map<Triple<Integer, Long, Long>, MiningExtraction> storedExtractions = CachedData.retrieveAll(time,
+                                                                                                      (contid, at) -> MiningExtraction.accessQuery(
+                                                                                                          account,
+                                                                                                          contid,
+                                                                                                          1000, false,
+                                                                                                          at,
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any(),
+                                                                                                          AttributeSelector.any()))
+                                                                                         .stream()
+                                                                                         .map(
+                                                                                             x -> new AbstractMap.SimpleEntry<>(
+                                                                                                 Triple.of(
+                                                                                                     x.getMoonID(),
+                                                                                                     x.getStructureID(),
+                                                                                                     x.getExtractionStartTime()),
+                                                                                                 x
+                                                                                             ))
+                                                                                         .collect(Collectors.toMap(
+                                                                                             AbstractMap.SimpleEntry::getKey,
+                                                                                             AbstractMap.SimpleEntry::getValue));
+
+        for (GetCorporationCorporationIdMiningExtractions200Ok next : data.getData().extractions) {
+          MiningExtraction nextExtraction = new MiningExtraction(next.getMoonId(),
+                                                                 next.getStructureId(),
+                                                                 next.getExtractionStartTime()
+                                                                     .getMillis(),
+                                                                 next.getChunkArrivalTime()
+                                                                     .getMillis(),
+                                                                 next.getNaturalDecayTime()
+                                                                     .getMillis());
+          Triple<Integer, Long, Long> key = Triple.of(nextExtraction.getMoonID(),
+                                                      nextExtraction.getStructureID(),
+                                                      nextExtraction.getExtractionStartTime());
+          // Only update if there is a change to reduce DB contention
+          if (!storedExtractions.containsKey(key) ||
+              !nextExtraction.equivalent(storedExtractions.get(key)))
+            updates.add(nextExtraction);
+          seenExtractions.add(key);
+        }
+
+        for (MiningExtraction existing : storedExtractions.values()) {
+          if (!seenExtractions.contains(
+              Triple.of(existing.getMoonID(), existing.getStructureID(), existing.getExtractionStartTime()))) {
+            existing.evolve(null, time);
+            updates.add(existing);
+          }
+        }
+      } else {
+        cacheHit();
       }
     }
 
-    // Update observers
-    Set<Long> seenObservers = new HashSet<>();
+    if (data.getData().observers != null) {
+      // Compute and check hash
+      List<MiningObserver> retrievedObservers = new ArrayList<>();
+      for (GetCorporationCorporationIdMiningObservers200Ok next : data.getData().observers) {
+        MiningObserver nextObserver = new MiningObserver(next.getObserverId(),
+                                                         next.getObserverType()
+                                                             .toString(),
+                                                         next.getLastUpdated()
+                                                             .toDate()
+                                                             .getTime());
+        retrievedObservers.add(nextObserver);
+      }
+      String hash = CachedData.dataHashHelper(retrievedObservers.toArray());
 
-    Map<Long, MiningObserver> storedObservers = CachedData.retrieveAll(time,
-                                                                       (contid, at) -> MiningObserver.accessQuery(
-                                                                           account, contid,
-                                                                           1000, false, at,
-                                                                           AttributeSelector.any(),
-                                                                           AttributeSelector.any(),
-                                                                           AttributeSelector.any()))
-                                                          .stream()
-                                                          .map(
-                                                              x -> new AbstractMap.SimpleEntry<>(
-                                                                  x.getObserverID(),
-                                                                  x
-                                                              ))
-                                                          .collect(Collectors.toMap(
-                                                              AbstractMap.SimpleEntry::getKey,
-                                                              AbstractMap.SimpleEntry::getValue));
+      if (cachedHash[1] == null || !cachedHash[1].equals(hash)) {
+        cacheMiss();
+        cachedHash[1] = hash;
 
-    for (GetCorporationCorporationIdMiningObservers200Ok next : data.getData().observers) {
-      MiningObserver nextObserver = new MiningObserver(next.getObserverId(),
-                                                       next.getObserverType()
-                                                           .toString(),
-                                                       next.getLastUpdated()
-                                                           .toDate()
-                                                           .getTime());
-      Long key = nextObserver.getObserverID();
-      // Only update if there is a change to reduce DB contention
-      if (!storedObservers.containsKey(key) ||
-          !nextObserver.equivalent(storedObservers.get(key)))
-        updates.add(nextObserver);
-      seenObservers.add(key);
-    }
+        // Update observers
+        Set<Long> seenObservers = new HashSet<>();
 
-    for (MiningObserver existing : storedObservers.values()) {
-      if (!seenObservers.contains(existing.getObserverID())) {
-        existing.evolve(null, time);
-        updates.add(existing);
+        Map<Long, MiningObserver> storedObservers = CachedData.retrieveAll(time,
+                                                                           (contid, at) -> MiningObserver.accessQuery(
+                                                                               account, contid,
+                                                                               1000, false, at,
+                                                                               AttributeSelector.any(),
+                                                                               AttributeSelector.any(),
+                                                                               AttributeSelector.any()))
+                                                              .stream()
+                                                              .map(
+                                                                  x -> new AbstractMap.SimpleEntry<>(
+                                                                      x.getObserverID(),
+                                                                      x
+                                                                  ))
+                                                              .collect(Collectors.toMap(
+                                                                  AbstractMap.SimpleEntry::getKey,
+                                                                  AbstractMap.SimpleEntry::getValue));
+
+        for (GetCorporationCorporationIdMiningObservers200Ok next : data.getData().observers) {
+          MiningObserver nextObserver = new MiningObserver(next.getObserverId(),
+                                                           next.getObserverType()
+                                                               .toString(),
+                                                           next.getLastUpdated()
+                                                               .toDate()
+                                                               .getTime());
+          Long key = nextObserver.getObserverID();
+          // Only update if there is a change to reduce DB contention
+          if (!storedObservers.containsKey(key) ||
+              !nextObserver.equivalent(storedObservers.get(key)))
+            updates.add(nextObserver);
+          seenObservers.add(key);
+        }
+
+        for (MiningObserver existing : storedObservers.values()) {
+          if (!seenObservers.contains(existing.getObserverID())) {
+            existing.evolve(null, time);
+            updates.add(existing);
+          }
+        }
+      } else {
+        cacheHit();
       }
     }
 
-    // Update observations
-    Set<Triple<Long, Integer, Integer>> seenObservations = new HashSet<>();
-
-    Map<Triple<Long, Integer, Integer>, MiningObservation> storedObservations = CachedData.retrieveAll(time,
-                                                                                                       (contid, at) -> MiningObservation.accessQuery(
-                                                                                                           account,
-                                                                                                           contid,
-                                                                                                           1000, false,
-                                                                                                           at,
-                                                                                                           AttributeSelector.any(),
-                                                                                                           AttributeSelector.any(),
-                                                                                                           AttributeSelector.any(),
-                                                                                                           AttributeSelector.any(),
-                                                                                                           AttributeSelector.any(),
-                                                                                                           AttributeSelector.any()))
-                                                                                          .stream()
-                                                                                          .map(
-                                                                                              x -> new AbstractMap.SimpleEntry<>(
-                                                                                                  Triple.of(
-                                                                                                      x.getObserverID(),
-                                                                                                      x.getCharacterID(),
-                                                                                                      x.getTypeID()),
-                                                                                                  x
-                                                                                              ))
-                                                                                          .collect(Collectors.toMap(
-                                                                                              AbstractMap.SimpleEntry::getKey,
-                                                                                              AbstractMap.SimpleEntry::getValue));
-
+    // Compute and check hash
+    List<MiningObservation> retrievedObservations = new ArrayList<>();
     for (Long nextObsKey : data.getData().observations.keySet()) {
       for (GetCorporationCorporationIdMiningObserversObserverId200Ok next : data.getData().observations.get(
           nextObsKey)) {
@@ -289,26 +323,80 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
                                                                   next.getLastUpdated()
                                                                       .toDate()
                                                                       .getTime());
-        Triple<Long, Integer, Integer> key = Triple.of(nextObservation.getObserverID(),
-                                                       nextObservation.getCharacterID(),
-                                                       nextObservation.getTypeID());
-        // Only update if there is a change to reduce DB contention
-        if (!storedObservations.containsKey(key) ||
-            !nextObservation.equivalent(storedObservations.get(key)))
-          updates.add(nextObservation);
-        seenObservations.add(key);
+        retrievedObservations.add(nextObservation);
       }
     }
+    String hash = CachedData.dataHashHelper(retrievedObservations.toArray());
 
-    for (MiningObservation existing : storedObservations.values()) {
-      if (!seenObservations.contains(Triple.of(existing.getObserverID(),
-                                               existing.getCharacterID(),
-                                               existing.getTypeID()))) {
-        existing.evolve(null, time);
-        updates.add(existing);
+    if (cachedHash[2] == null || !cachedHash[2].equals(hash)) {
+      cacheMiss();
+      cachedHash[2] = hash;
+
+      // Update observations
+      Set<Triple<Long, Integer, Integer>> seenObservations = new HashSet<>();
+
+      Map<Triple<Long, Integer, Integer>, MiningObservation> storedObservations = CachedData.retrieveAll(time,
+                                                                                                         (contid, at) -> MiningObservation.accessQuery(
+                                                                                                             account,
+                                                                                                             contid,
+                                                                                                             1000,
+                                                                                                             false,
+                                                                                                             at,
+                                                                                                             AttributeSelector.any(),
+                                                                                                             AttributeSelector.any(),
+                                                                                                             AttributeSelector.any(),
+                                                                                                             AttributeSelector.any(),
+                                                                                                             AttributeSelector.any(),
+                                                                                                             AttributeSelector.any()))
+                                                                                            .stream()
+                                                                                            .map(
+                                                                                                x -> new AbstractMap.SimpleEntry<>(
+                                                                                                    Triple.of(
+                                                                                                        x.getObserverID(),
+                                                                                                        x.getCharacterID(),
+                                                                                                        x.getTypeID()),
+                                                                                                    x
+                                                                                                ))
+                                                                                            .collect(Collectors.toMap(
+                                                                                                AbstractMap.SimpleEntry::getKey,
+                                                                                                AbstractMap.SimpleEntry::getValue));
+
+      for (Long nextObsKey : data.getData().observations.keySet()) {
+        for (GetCorporationCorporationIdMiningObserversObserverId200Ok next : data.getData().observations.get(
+            nextObsKey)) {
+          MiningObservation nextObservation = new MiningObservation(nextObsKey,
+                                                                    next.getCharacterId(),
+                                                                    next.getTypeId(),
+                                                                    next.getRecordedCorporationId(),
+                                                                    next.getQuantity(),
+                                                                    next.getLastUpdated()
+                                                                        .toDate()
+                                                                        .getTime());
+          Triple<Long, Integer, Integer> key = Triple.of(nextObservation.getObserverID(),
+                                                         nextObservation.getCharacterID(),
+                                                         nextObservation.getTypeID());
+          // Only update if there is a change to reduce DB contention
+          if (!storedObservations.containsKey(key) ||
+              !nextObservation.equivalent(storedObservations.get(key)))
+            updates.add(nextObservation);
+          seenObservations.add(key);
+        }
       }
+
+      for (MiningObservation existing : storedObservations.values()) {
+        if (!seenObservations.contains(Triple.of(existing.getObserverID(),
+                                                 existing.getCharacterID(),
+                                                 existing.getTypeID()))) {
+          existing.evolve(null, time);
+          updates.add(existing);
+        }
+      }
+    } else {
+      cacheHit();
     }
 
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 }

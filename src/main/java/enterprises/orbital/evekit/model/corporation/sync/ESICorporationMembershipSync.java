@@ -15,12 +15,10 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorporationMembershipSync.MembershipData> {
   protected static final Logger log = Logger.getLogger(ESICorporationMembershipSync.class.getName());
@@ -29,6 +27,22 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
     List<Integer> members;
     List<GetCorporationsCorporationIdRoles200Ok> roles;
     List<GetCorporationsCorporationIdRolesHistory200Ok> history;
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICorporationMembershipSync(SynchronizedEveAccount account) {
@@ -87,7 +101,8 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
-        resultData.members = Collections.emptyList();
+        resultData.members = null;
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
@@ -111,7 +126,8 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
-        resultData.roles = Collections.emptyList();
+        resultData.roles = null;
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
@@ -138,7 +154,8 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
       if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role
         log.info("Trapped 403 - Character does not have required role");
-        resultData.history = Collections.emptyList();
+        resultData.history = null;
+        cacheHit();
         expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
       } else {
         // Any other error will be rethrown.
@@ -161,148 +178,194 @@ public class ESICorporationMembershipSync extends AbstractESIAccountSync<ESICorp
     final int AT_BASE = 1 << 2;
     final int AT_OTHER = 1 << 3;
 
-    // Keep track of seen members and roles.  History is immutable, so we don't need
-    // to track deletions.
-    Set<Integer> seenMembers = new HashSet<>();
-    Set<Triple<Integer, String, Integer>> seenRoles = new HashSet<>();
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(3);
 
-    // Process data
-    for (Integer next : data.getData().members) {
-      seenMembers.add(next);
-      updates.add(new Member(next));
-    }
+    // Compute and check hash for members
+    if (data.getData().members != null) {
 
-    for (GetCorporationsCorporationIdRoles200Ok next : data.getData().roles) {
-      for (GetCorporationsCorporationIdRoles200Ok.RolesEnum role : next.getRoles()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), 0));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   false,
-                                   false,
-                                   false,
-                                   false));
+      List<Member> retrievedMembers = new ArrayList<>();
+      for (Integer next : data.getData().members) {
+        retrievedMembers.add(new Member(next));
       }
-      for (GetCorporationsCorporationIdRoles200Ok.RolesAtBaseEnum role : next.getRolesAtBase()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_BASE));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   false,
-                                   false,
-                                   true,
-                                   false));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.RolesAtHqEnum role : next.getRolesAtHq()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_HQ));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   false,
-                                   true,
-                                   false,
-                                   false));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.RolesAtOtherEnum role : next.getRolesAtOther()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_OTHER));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   false,
-                                   false,
-                                   false,
-                                   true));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesEnum role : next.getGrantableRoles()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   true,
-                                   false,
-                                   false,
-                                   false));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtBaseEnum role : next.getGrantableRolesAtBase()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_BASE));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   true,
-                                   false,
-                                   true,
-                                   false));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtHqEnum role : next.getGrantableRolesAtHq()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_HQ));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   true,
-                                   true,
-                                   false,
-                                   false));
-      }
-      for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtOtherEnum role : next.getGrantableRolesAtOther()) {
-        seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_OTHER));
-        updates.add(new MemberRole(next.getCharacterId(),
-                                   role.toString(),
-                                   true,
-                                   false,
-                                   false,
-                                   true));
+      retrievedMembers.sort(Comparator.comparingInt(Member::getCharacterID));
+      String hash = CachedData.dataHashHelper(retrievedMembers.toArray());
+
+      if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+        cacheMiss();
+        cachedHash[0] = hash;
+        updates.addAll(retrievedMembers);
+        Set<Integer> seenMembers = retrievedMembers.stream()
+                                                   .map(Member::getCharacterID)
+                                                   .collect(Collectors.toSet());
+
+        // Check for data that no longer exists and schedule for EOL
+        for (Member existing : retrieveAll(time,
+                                           (long contid, AttributeSelector at) -> Member.accessQuery(
+                                               account, contid,
+                                               1000,
+                                               false, at,
+                                               ANY_SELECTOR))) {
+          if (!seenMembers.contains(existing.getCharacterID())) {
+            // Mark for EOL.
+            existing.evolve(null, time);
+            updates.add(existing);
+          }
+        }
+      } else {
+        cacheHit();
       }
     }
 
-    for (GetCorporationsCorporationIdRolesHistory200Ok next : data.getData().history) {
-      for (GetCorporationsCorporationIdRolesHistory200Ok.OldRolesEnum oo : next.getOldRoles()) {
-        updates.add(new MemberRoleHistory(next.getCharacterId(),
-                                          next.getChangedAt()
-                                              .getMillis(),
-                                          next.getIssuerId(),
-                                          next.getRoleType()
-                                              .toString(),
-                                          oo.toString(),
-                                          true));
+    if (data.getData().roles != null) {
+      // Keep track of seen members and roles.  History is immutable, so we don't need
+      // to track deletions.
+      Set<Triple<Integer, String, Integer>> seenRoles = new HashSet<>();
+      List<MemberRole> retrievedRoles = new ArrayList<>();
+
+      for (GetCorporationsCorporationIdRoles200Ok next : data.getData().roles) {
+        for (GetCorporationsCorporationIdRoles200Ok.RolesEnum role : next.getRoles()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), 0));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            false,
+                                            false,
+                                            false,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.RolesAtBaseEnum role : next.getRolesAtBase()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_BASE));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            false,
+                                            false,
+                                            true,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.RolesAtHqEnum role : next.getRolesAtHq()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_HQ));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            false,
+                                            true,
+                                            false,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.RolesAtOtherEnum role : next.getRolesAtOther()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), AT_OTHER));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            false,
+                                            false,
+                                            false,
+                                            true));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesEnum role : next.getGrantableRoles()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            true,
+                                            false,
+                                            false,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtBaseEnum role : next.getGrantableRolesAtBase()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_BASE));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            true,
+                                            false,
+                                            true,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtHqEnum role : next.getGrantableRolesAtHq()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_HQ));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            true,
+                                            true,
+                                            false,
+                                            false));
+        }
+        for (GetCorporationsCorporationIdRoles200Ok.GrantableRolesAtOtherEnum role : next.getGrantableRolesAtOther()) {
+          seenRoles.add(Triple.of(next.getCharacterId(), role.toString(), GRANTABLE | AT_OTHER));
+          retrievedRoles.add(new MemberRole(next.getCharacterId(),
+                                            role.toString(),
+                                            true,
+                                            false,
+                                            false,
+                                            true));
+        }
       }
-      for (GetCorporationsCorporationIdRolesHistory200Ok.NewRolesEnum nn : next.getNewRoles()) {
-        updates.add(new MemberRoleHistory(next.getCharacterId(),
-                                          next.getChangedAt()
-                                              .getMillis(),
-                                          next.getIssuerId(),
-                                          next.getRoleType()
-                                              .toString(),
-                                          nn.toString(),
-                                          false));
+      String hash = CachedData.dataHashHelper(retrievedRoles.toArray());
+
+      if (cachedHash[1] == null || !cachedHash[1].equals(hash)) {
+        cacheMiss();
+        cachedHash[1] = hash;
+        updates.addAll(retrievedRoles);
+
+        for (MemberRole existing : retrieveAll(time,
+                                               (contid, at) -> MemberRole.accessQuery(account, contid,
+                                                                                      1000, false, at,
+                                                                                      AttributeSelector.any(),
+                                                                                      AttributeSelector.any(),
+                                                                                      AttributeSelector.any(),
+                                                                                      AttributeSelector.any(),
+                                                                                      AttributeSelector.any(),
+                                                                                      AttributeSelector.any()))) {
+          int mask = (existing.isGrantable() ? GRANTABLE : 0) |
+              (existing.isAtBase() ? AT_BASE : 0) |
+              (existing.isAtHQ() ? AT_HQ : 0) |
+              (existing.isAtOther() ? AT_OTHER : 0);
+          if (!seenRoles.contains(Triple.of(existing.getCharacterID(), existing.getRoleName(), mask))) {
+            existing.evolve(null, time);
+            updates.add(existing);
+          }
+        }
+      } else {
+        cacheHit();
       }
     }
 
-    // Check for data that no longer exists and schedule for EOL
-    for (Member existing : retrieveAll(time,
-                                       (long contid, AttributeSelector at) -> Member.accessQuery(
-                                           account, contid,
-                                           1000,
-                                           false, at,
-                                           ANY_SELECTOR))) {
-      if (!seenMembers.contains(existing.getCharacterID())) {
-        // Mark for EOL.
-        existing.evolve(null, time);
-        updates.add(existing);
+    if (data.getData().history != null) {
+      List<MemberRoleHistory> retrievedHistory = new ArrayList<>();
+      for (GetCorporationsCorporationIdRolesHistory200Ok next : data.getData().history) {
+        for (GetCorporationsCorporationIdRolesHistory200Ok.OldRolesEnum oo : next.getOldRoles()) {
+          retrievedHistory.add(new MemberRoleHistory(next.getCharacterId(),
+                                                     next.getChangedAt()
+                                                         .getMillis(),
+                                                     next.getIssuerId(),
+                                                     next.getRoleType()
+                                                         .toString(),
+                                                     oo.toString(),
+                                                     true));
+        }
+        for (GetCorporationsCorporationIdRolesHistory200Ok.NewRolesEnum nn : next.getNewRoles()) {
+          retrievedHistory.add(new MemberRoleHistory(next.getCharacterId(),
+                                                     next.getChangedAt()
+                                                         .getMillis(),
+                                                     next.getIssuerId(),
+                                                     next.getRoleType()
+                                                         .toString(),
+                                                     nn.toString(),
+                                                     false));
+        }
+      }
+      String hash = CachedData.dataHashHelper(retrievedHistory.toArray());
+
+      if (cachedHash[2] == null || !cachedHash[2].equals(hash)) {
+        cacheMiss();
+        cachedHash[2] = hash;
+        updates.addAll(retrievedHistory);
+      } else {
+        cacheHit();
       }
     }
 
-    for (MemberRole existing : retrieveAll(time,
-                                           (contid, at) -> MemberRole.accessQuery(account, contid,
-                                                                                  1000, false, at,
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any()))) {
-      int mask = (existing.isGrantable() ? GRANTABLE : 0) |
-          (existing.isAtBase() ? AT_BASE : 0) |
-          (existing.isAtHQ() ? AT_HQ : 0) |
-          (existing.isAtOther() ? AT_OTHER : 0);
-      if (!seenRoles.contains(Triple.of(existing.getCharacterID(), existing.getRoleName(), mask))) {
-        existing.evolve(null, time);
-        updates.add(existing);
-      }
-    }
-
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 }
