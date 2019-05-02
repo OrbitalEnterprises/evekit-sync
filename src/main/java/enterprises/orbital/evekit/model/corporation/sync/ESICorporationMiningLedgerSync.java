@@ -136,21 +136,23 @@ public class ESICorporationMiningLedgerSync extends AbstractESIAccountSync<ESICo
     data.observers = bkResult.getRight();
 
     Map<Long, List<GetCorporationCorporationIdMiningObserversObserverId200Ok>> observations = new HashMap<>();
-    for (GetCorporationCorporationIdMiningObservers200Ok nextObserver : data.observers) {
-      Pair<Long, List<GetCorporationCorporationIdMiningObserversObserverId200Ok>> observerResult =
-          pagedResultRetriever((page) -> {
-            ESIThrottle.throttle(endpoint().name(), account);
-            return apiInstance.getCorporationCorporationIdMiningObserversObserverIdWithHttpInfo(
-                (int) account.getEveCorporationID(),
-                nextObserver.getObserverId(),
-                null,
-                null,
-                page,
-                accessToken());
-          });
-      expiry = Math.max(expiry,
-                        observerResult.getLeft() > 0 ? observerResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
-      observations.put(nextObserver.getObserverId(), observerResult.getRight());
+    if (data.observers != null) {
+      for (GetCorporationCorporationIdMiningObservers200Ok nextObserver : data.observers) {
+        Pair<Long, List<GetCorporationCorporationIdMiningObserversObserverId200Ok>> observerResult =
+            pagedResultRetriever((page) -> {
+              ESIThrottle.throttle(endpoint().name(), account);
+              return apiInstance.getCorporationCorporationIdMiningObserversObserverIdWithHttpInfo(
+                  (int) account.getEveCorporationID(),
+                  nextObserver.getObserverId(),
+                  null,
+                  null,
+                  page,
+                  accessToken());
+            });
+        expiry = Math.max(expiry,
+                          observerResult.getLeft() > 0 ? observerResult.getLeft() : OrbitalProperties.getCurrentTime() + maxDelay());
+        observations.put(nextObserver.getObserverId(), observerResult.getRight());
+      }
     }
     data.observations = observations;
 
