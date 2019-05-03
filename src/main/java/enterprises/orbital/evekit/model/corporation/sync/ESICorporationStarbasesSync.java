@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorporationStarbasesSync.StarbaseData> {
   protected static final Logger log = Logger.getLogger(ESICorporationStarbasesSync.class.getName());
@@ -25,6 +26,22 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
   class StarbaseData {
     List<GetCorporationsCorporationIdStarbases200Ok> bases;
     Map<Long, GetCorporationsCorporationIdStarbasesStarbaseIdOk> baseInfo = new HashMap<>();
+  }
+
+  // Current ETag.  On successful commit, this will be copied to nextETag.
+  private String currentETag;
+
+  // ETag to save for next tracker.
+  private String nextETag;
+
+  @Override
+  protected String getNextSyncContext() {
+    return nextETag;
+  }
+
+  @Override
+  protected void commitComplete() {
+    nextETag = currentETag;
   }
 
   public ESICorporationStarbasesSync(SynchronizedEveAccount account) {
@@ -72,19 +89,14 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
             accessToken());
       });
     } catch (ApiException e) {
-      final String errTrap = "Character does not have required role";
-      if (e.getCode() == 403 && e.getResponseBody() != null && e.getResponseBody()
-                                                                .contains(errTrap)) {
+      if (e.getCode() == 403) {
         // Trap 403 - Character does not have required role(s)
         log.info("Trapped 403 - Character does not have required role");
         long expiry = OrbitalProperties.getCurrentTime() + TimeUnit.MILLISECONDS.convert(1, TimeUnit.HOURS);
-        result = Pair.of(expiry, Collections.emptyList());
+        cacheHit();
+        result = Pair.of(expiry, null);
       } else {
         // Any other error will be rethrown.
-        // Document other 403 error response bodies in case we should add these in the future.
-        if (e.getCode() == 403) {
-          log.warning("403 code with unmatched body: " + String.valueOf(e.getResponseBody()));
-        }
         throw e;
       }
     }
@@ -92,32 +104,45 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
 
     // Retrieve base info for each base
     resultData.bases = result.getRight();
-    for (GetCorporationsCorporationIdStarbases200Ok nextBase : resultData.bases) {
-      ESIThrottle.throttle(endpoint().name(), account);
-      ApiResponse<GetCorporationsCorporationIdStarbasesStarbaseIdOk> item = apiInstance.getCorporationsCorporationIdStarbasesStarbaseIdWithHttpInfo(
-          (int) account.getEveCorporationID(),
-          nextBase.getStarbaseId(),
-          nextBase.getSystemId(),
-          null,
-          null,
-          accessToken());
-      checkCommonProblems(item);
-      resultData.baseInfo.put(nextBase.getStarbaseId(), item.getData());
-      expiry = Math.max(expiry, extractExpiry(item, OrbitalProperties.getCurrentTime() + maxDelay()));
+    if (resultData.bases != null) {
+      for (GetCorporationsCorporationIdStarbases200Ok nextBase : resultData.bases) {
+        ESIThrottle.throttle(endpoint().name(), account);
+        ApiResponse<GetCorporationsCorporationIdStarbasesStarbaseIdOk> item = apiInstance.getCorporationsCorporationIdStarbasesStarbaseIdWithHttpInfo(
+            (int) account.getEveCorporationID(),
+            nextBase.getStarbaseId(),
+            nextBase.getSystemId(),
+            null,
+            null,
+            accessToken());
+        checkCommonProblems(item);
+        resultData.baseInfo.put(nextBase.getStarbaseId(), item.getData());
+        expiry = Math.max(expiry, extractExpiry(item, OrbitalProperties.getCurrentTime() + maxDelay()));
+      }
     }
     return new ESIAccountServerResult<>(expiry, resultData);
   }
 
-  @SuppressWarnings("RedundantThrows")
+  @SuppressWarnings("Duplicates")
   @Override
   protected void processServerData(long time, ESIAccountServerResult<StarbaseData> data,
                                    List<CachedData> updates) throws IOException {
-    // Add bases and fuel
-    Set<Long> seenBases = new HashSet<>();
-    Set<Pair<Long, Integer>> seenFuels = new HashSet<>();
+
+    if (data.getData() == null)
+      // 403 - nothing to do
+      return;
+
+    // If we have tracker context, then it will be the hash of any previous call to this endpoint.
+    // Check to see if the most recent data has a different hash.  If not, then results haven't changed
+    // and we can skip this update.
+    String[] cachedHash = splitCachedContext(1);
+
+    // Compute and check hash
+    List<Starbase> retrievedBases = new ArrayList<>();
+    List<Fuel> retrievedFuel = new ArrayList<>();
+
     for (GetCorporationsCorporationIdStarbases200Ok nextBase : data.getData().bases) {
       GetCorporationsCorporationIdStarbasesStarbaseIdOk info = data.getData().baseInfo.get(nextBase.getStarbaseId());
-      updates.add(new Starbase(nextBase.getStarbaseId(),
+      retrievedBases.add(new Starbase(nextBase.getStarbaseId(),
                                nextBase.getTypeId(),
                                nextBase.getSystemId(),
                                nullSafeInteger(nextBase.getMoonId(), 0),
@@ -144,54 +169,72 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
                                nullSafeFloat(info.getAttackSecurityStatusThreshold(), 0),
                                info.getAttackIfOtherSecurityStatusDropping(),
                                info.getAttackIfAtWar()));
-      seenBases.add(nextBase.getStarbaseId());
       for (GetCorporationsCorporationIdStarbasesStarbaseIdFuel f : info.getFuels()) {
-        updates.add(new Fuel(nextBase.getStarbaseId(),
+        retrievedFuel.add(new Fuel(nextBase.getStarbaseId(),
                              f.getTypeId(),
                              f.getQuantity()));
-        seenFuels.add(Pair.of(nextBase.getStarbaseId(), f.getTypeId()));
       }
     }
 
-    // Clean up removed starbases and fuels
-    for (Starbase s : CachedData.retrieveAll(time,
-                                             (contid, at) -> Starbase.accessQuery(account, contid, 1000, false, at,
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
-                                                                                  AttributeSelector.any(),
+    String hash = CachedData.dataHashHelper(CachedData.dataHashHelper(retrievedBases.toArray()),
+                                            CachedData.dataHashHelper(retrievedFuel.toArray()));
+
+    if (cachedHash[0] == null || !cachedHash[0].equals(hash)) {
+      cacheMiss();
+      cachedHash[0] = hash;
+
+      // Add bases and fuel
+      updates.addAll(retrievedBases);
+      updates.addAll(retrievedFuel);
+      Set<Long> seenBases = retrievedBases.stream().map(Starbase::getStarbaseID).collect(Collectors.toSet());
+      Set<Pair<Long, Integer>> seenFuels = retrievedFuel.stream()
+                                                        .map(x -> Pair.of(x.getStarbaseID(), x.getTypeID()))
+                                                        .collect(Collectors.toSet());
+
+      // Clean up removed starbases and fuels
+      for (Starbase s : CachedData.retrieveAll(time,
+                                               (contid, at) -> Starbase.accessQuery(account, contid, 1000, false, at,
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any(),
+                                                                                    AttributeSelector.any()))) {
+        if (!seenBases.contains(s.getStarbaseID())) {
+          s.evolve(null, time);
+          updates.add(s);
+        }
+      }
+      for (Fuel f : CachedData.retrieveAll(time, (contid, at) -> Fuel.accessQuery(account, contid, 1000, false, at,
                                                                                   AttributeSelector.any(),
                                                                                   AttributeSelector.any(),
                                                                                   AttributeSelector.any()))) {
-      if (!seenBases.contains(s.getStarbaseID())) {
-        s.evolve(null, time);
-        updates.add(s);
+        if (!seenFuels.contains(Pair.of(f.getStarbaseID(), f.getTypeID()))) {
+          f.evolve(null, time);
+          updates.add(f);
+        }
       }
-    }
-    for (Fuel f : CachedData.retrieveAll(time, (contid, at) -> Fuel.accessQuery(account, contid, 1000, false, at,
-                                                                                AttributeSelector.any(),
-                                                                                AttributeSelector.any(),
-                                                                                AttributeSelector.any()))) {
-      if (!seenFuels.contains(Pair.of(f.getStarbaseID(), f.getTypeID()))) {
-        f.evolve(null, time);
-        updates.add(f);
-      }
+    } else {
+      cacheHit();
     }
 
+    // Save new hash
+    currentETag = String.join("|", cachedHash);
   }
 
 }
