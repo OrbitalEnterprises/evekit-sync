@@ -127,7 +127,7 @@ public class ESICorporationStarbasesSync extends AbstractESIAccountSync<ESICorpo
   protected void processServerData(long time, ESIAccountServerResult<StarbaseData> data,
                                    List<CachedData> updates) throws IOException {
 
-    if (data.getData() == null)
+    if (data.getData().bases == null)
       // 403 - nothing to do
       return;
 
