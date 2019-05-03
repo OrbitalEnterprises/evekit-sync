@@ -182,7 +182,7 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
    */
   @Override
   public String getContext() {
-    return "[" + getClass().getSimpleName() + "-" + String.valueOf(account) + "]";
+    return "[" + getClass().getSimpleName() + "-" + account + "]";
   }
 
   /**
@@ -437,10 +437,9 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
   // Cache counters for stats during synchronization
   private int cacheHits;
   private int cacheMisses;
-  private int cacheInit;
 
   protected void resetCacheCounters() {
-    cacheHits = cacheMisses = cacheInit = 0;
+    cacheHits = cacheMisses = 0;
   }
 
   protected void cacheHit() {
@@ -449,10 +448,6 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
 
   protected void cacheMiss() {
     cacheMisses++;
-  }
-
-  protected void cacheInit() {
-    cacheInit++;
   }
 
   /**
@@ -629,7 +624,6 @@ public abstract class AbstractESIAccountSync<ServerDataType> implements ESIAccou
         if (commitTime > -1) builder.append(" COMMIT (ms): ").append(commitTime);
         builder.append(" CACHE HITS: ").append(cacheHits);
         builder.append(" CACHE MISSES: ").append(cacheMisses);
-        builder.append(" CACHE INITS: ").append(cacheInit);
         log.log(Level.INFO, builder.toString());
       }
 
