@@ -63,8 +63,13 @@ public class ESIThrottle {
     }
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static int extractErrorLimitRemain(ApiException e, int def) {
     try {
+      if (e.getResponseHeaders() == null) {
+        log.fine("No response headers, returning default.");
+        return def;
+      }
       List<String> errorLimits = e.getResponseHeaders()
                                   .get("X-Esi-Error-Limit-Remain");
       if (errorLimits != null && !errorLimits.isEmpty())
@@ -75,6 +80,7 @@ public class ESIThrottle {
     return def;
   }
 
+  @SuppressWarnings("SameParameterValue")
   private static int extractErrorLimitReset(ApiException e, int def) {
     try {
       List<String> errorLimits = e.getResponseHeaders()
